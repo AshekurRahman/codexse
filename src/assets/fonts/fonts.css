@@ -1,0 +1,48 @@
+@font-face {
+    font-family: 'proxima-nova';
+    src: url('proxima_nova_regular.eot');
+    src: url('proxima_nova_regular.eot?#iefix') format('embedded-opentype'),
+        url('proxima_nova_regular.woff2') format('woff2'),
+        url('proxima_nova_regular.woff') format('woff'),
+        url('proxima_nova_regular.ttf') format('truetype'),
+        url('proxima_nova_regular.svg#proxima_nova_rgregular') format('svg');
+    font-weight: 400;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'proxima-nova';
+    src: url('proxima_nova_semibold.eot');
+    src: url('proxima_nova_semibold.eot?#iefix') format('embedded-opentype'),
+        url('proxima_nova_semibold.woff2') format('woff2'),
+        url('proxima_nova_semibold.woff') format('woff'),
+        url('proxima_nova_semibold.ttf') format('truetype'),
+        url('proxima_nova_semibold.svg#proxima_nova_ltsemibold') format('svg');
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'brandon-grotesque';
+    src: url("hinted-BrandonGrotesque-Medium.eot");
+    src: local("Brandon Grotesque Medium"), local("BrandonGrotesque-Medium"), url("hinted-BrandonGrotesque-Medium.eot?#iefix") format("embedded-opentype"), url("hinted-BrandonGrotesque-Medium.woff2") format("woff2"), url("hinted-BrandonGrotesque-Medium.woff") format("woff"), url("hinted-BrandonGrotesque-Medium.ttf") format("truetype");
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'brandon-grotesque';
+    src: url("hinted-BrandonGrotesque-Regular.eot");
+    src: local("Brandon Grotesque Regular"), local("BrandonGrotesque-Regular"), url("hinted-BrandonGrotesque-Regular.eot?#iefix") format("embedded-opentype"), url("hinted-BrandonGrotesque-Regular.woff2") format("woff2"), url("hinted-BrandonGrotesque-Regular.woff") format("woff"), url("hinted-BrandonGrotesque-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'brandon-grotesque';
+    src: url("hinted-BrandonGrotesque-Bold.eot");
+    src: local("Brandon Grotesque Bold"), local("BrandonGrotesque-Bold"), url("hinted-BrandonGrotesque-Bold.eot?#iefix") format("embedded-opentype"), url("hinted-BrandonGrotesque-Bold.woff2") format("woff2"), url("hinted-BrandonGrotesque-Bold.woff") format("woff"), url("hinted-BrandonGrotesque-Bold.ttf") format("truetype");
+    font-weight: 700;
+    font-style: normal;
+}
