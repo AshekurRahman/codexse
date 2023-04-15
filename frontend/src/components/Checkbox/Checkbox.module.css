@@ -1,0 +1,59 @@
+.Checkbox {
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+}
+
+.Checkbox input {
+    display: none;
+}
+
+.Checkbox label {
+    padding-left: 32px;
+    position: relative;
+    z-index: 1;
+    cursor: pointer;
+}
+
+.Checkbox label a {
+    color: rgba(var(--primary-color), 0.8);
+}
+
+.Checkbox label:after,
+.Checkbox label:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    background-color: rgba(var(--secondary-color), 0.01);
+    border: 1px solid rgba(var(--secondary-color), 0.2);
+    transition: 0.1s;
+}
+
+.Checkbox label:after {
+    border: none;
+    background: none;
+    border-left: 2px solid;
+    border-bottom: 2px solid;
+    border-color: rgba(var(--secondary-color), 0);
+    width: 8px;
+    height: 4px;
+    border-radius: 0px;
+    transform: rotate(-45deg);
+    left: 4px;
+    top: 4.2px;
+}
+
+.Checkbox input:checked~label:before {
+    background-color: rgba(var(--secondary-color), 0.02);
+    border-color: rgba(var(--secondary-color), 0.6);
+}
+
+.Checkbox input:checked~label:after {
+    border-color: rgba(var(--secondary-color), 0.6);
+}

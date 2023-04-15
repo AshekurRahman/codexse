@@ -1,0 +1,116 @@
+.forgot_page {
+    min-height: 100vh;
+    padding: 60px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+}
+
+.forgot_form {
+    background-color: rgb(var(--dark-color));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid rgba(var(--heading-color), 0.06);
+    border-radius: 6px;
+    padding: 40px 20px;
+    position: relative;
+    width: 100%;
+}
+
+.forgot_text {
+    margin-top: 15px;
+    font-size: 14px;
+    color: rgba(var(--text-color), 0.8);
+    text-align: center;
+}
+
+.forgot_text a {
+    position: relative;
+    color: rgba(var(--primary-color), 0.8);
+}
+
+.forgot_text a:hover {
+    color: rgba(var(--secondary-color), 0.8);
+    text-decoration: underline;
+}
+
+.forgot_delimiter {
+    font-size: 13px;
+    color: #dbdada;
+    line-height: 100%;
+}
+
+.forgot_social {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 15px;
+    margin-top: 15px;
+}
+
+.forgot_social a {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    height: 44px;
+    width: calc(33% - 10px);
+    border-radius: 6px;
+    color: #fff;
+}
+
+.forgot_social a svg {
+    width: 18px;
+    height: auto;
+    stroke: #fff;
+    fill: #fff;
+    transition: 0.5s ease;
+    transition-property: stroke, fill;
+}
+
+.forgot_social a.fb {
+    background-color: #3b5999;
+}
+
+.forgot_social a.gl {
+    background-color: #df4a32;
+}
+
+.forgot_social a.tw {
+    background-color: #1da1f2;
+}
+
+.forgot_social a:hover {
+    background-color: #fff;
+}
+
+.forgot_social a:hover.fb svg {
+    stroke: #3b5999;
+    fill: #3b5999;
+}
+
+.forgot_social a:hover.gl svg {
+    stroke: #df4a32;
+    fill: #df4a32;
+}
+
+.forgot_social a:hover.tw svg {
+    stroke: #1da1f2;
+    fill: #1da1f2;
+}
+
+@media (min-width: 576px) {
+    .forgot_form {
+        padding: 50px;
+    }
+
+    .forgot_logo {
+        margin-bottom: 50px;
+    }
+}

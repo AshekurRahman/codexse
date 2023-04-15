@@ -1,0 +1,46 @@
+/* -- Social-Share-Options -- */
+.share_links {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.share_links .label {
+    margin-right: 24px;
+}
+
+.share_links .icons {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: -8px;
+}
+
+.share_links .icons .icon {
+    display: inline-flex;
+    min-width: 40px;
+    height: 40px;
+    background-color: rgba(var(--heading-color), 0.05);
+    color: rgb(var(--text-color));
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border-radius: 100px;
+    margin: 8px;
+    border: none;
+}
+
+.share_links .icons .icon:hover {
+    background-color: rgba(var(--heading-color), 1);
+    color: rgb(var(--dark-color));
+}
+
+.share_links .icons .icon span {
+    margin-left: 8px;
+}
+
+.share_links .icons .icon.copy {
+    padding-left: 18px;
+    padding-right: 18px;
+}

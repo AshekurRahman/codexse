@@ -1,0 +1,136 @@
+.product_box {
+    border-radius: 6px;
+    overflow: hidden;
+    background-color: rgb(var(--dark-color));
+}
+
+.product_box .thumb {
+    width: 100%;
+    margin: 0;
+
+}
+
+.product_box .thumb img {
+    width: 100%;
+}
+
+.product_box .content {
+    padding: 24px;
+}
+
+.product_box .content .title {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.product_box .content .tags {
+    color: rgb(var(--text-color));
+}
+
+.product_box .content .price {
+    display: inline-block;
+    min-width: 74px;
+    text-align: center;
+    font-size: 12px;
+    color: rgb(var(--secondary-color));
+    border: 1px solid rgba(var(--secondary-color), 0.3);
+    background-color: rgba(var(--secondary-color), 0.06);
+    border-radius: 6px;
+    padding: 2px 8px;
+    letter-spacing: 0.4px;
+}
+
+/* Single-Product-Actions */
+.product_actions {
+    display: flex;
+    align-items: center;
+    padding-top: 24px;
+    margin: -12px;
+}
+
+.product_actions>* {
+    margin: 12px;
+    width: calc(50% - 12px);
+}
+
+
+/* --- info_list --- */
+.info_list {
+    list-style: none;
+    margin: -8px -16px;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.info_list li {
+    margin: 8px 16px;
+    display: flex;
+    align-items: center;
+}
+
+.info_list li .icon {
+    width: 24px;
+    display: inline-block;
+    line-height: 1;
+
+}
+
+.info_list li .label {
+    display: inline-block;
+    margin-right: 16px;
+    text-transform: capitalize;
+}
+
+.info_list li .text {
+    margin: -4px;
+    display: inline-block;
+    color: rgb(var(--heading-color));
+    text-transform: capitalize;
+}
+
+.info_list li .text a {
+    display: inline-block;
+    min-width: 74px;
+    text-align: center;
+    font-size: 12px;
+    color: rgb(var(--text-color));
+    border: 1px solid rgba(var(--secondary-color), 0.1);
+    background-color: rgba(var(--secondary-color), 0.02);
+    border-radius: 6px;
+    padding: 2px 10px;
+    letter-spacing: 0.4px;
+    margin: 4px;
+}
+
+.info_list li .text a:hover {
+    color: rgb(var(--secondary-color));
+    border: 1px solid rgba(var(--secondary-color), 0.3);
+    background-color: rgba(var(--secondary-color), 0.04);
+}
+
+.single_bg {
+    height: 50%;
+    max-height: 600px;
+    width: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-attachment: fixed;
+    z-index: -1;
+}
+
+.single_bg:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: rgb(var(--black-color));
+    background: linear-gradient(0deg, rgba(var(--black-color), 1) 50%, rgb(var(--black-color), 0.94) 100%);
+}
