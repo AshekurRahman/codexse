@@ -1,0 +1,39 @@
+.review_form {
+    display: flex;
+    flex-direction: column;
+    width: 500px;
+    margin: 0 auto;
+}
+
+.review_form label {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.review_form input[type="text"],
+.review_form textarea {
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    margin-bottom: 20px;
+}
+
+.review_form textarea {
+    height: 120px;
+}
+
+.review_form input[type="submit"] {
+    background-color: #0077cc;
+    color: #fff;
+    font-size: 18px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.review_form input[type="submit"]:hover {
+    background-color: #0065a8;
+}
