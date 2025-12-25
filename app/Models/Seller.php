@@ -89,6 +89,16 @@ class Seller extends Model
         return $this->hasMany(Payout::class);
     }
 
+    public function bundles(): HasMany
+    {
+        return $this->hasMany(ProductBundle::class);
+    }
+
+    public function followers(): HasMany
+    {
+        return $this->hasMany(SellerFollow::class);
+    }
+
     public function getLogoUrlAttribute(): string
     {
         if ($this->logo) {

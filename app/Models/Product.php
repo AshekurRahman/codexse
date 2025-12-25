@@ -117,6 +117,11 @@ class Product extends Model implements HasMedia
         return $this->hasMany(Wishlist::class);
     }
 
+    public function bundles(): BelongsToMany
+    {
+        return $this->belongsToMany(ProductBundle::class, 'product_bundle_product', 'product_id', 'product_bundle_id');
+    }
+
     public function getThumbnailUrlAttribute(): string
     {
         if ($this->thumbnail) {
