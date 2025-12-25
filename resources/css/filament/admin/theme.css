@@ -1,0 +1,42 @@
+/* Custom Filament Admin Theme */
+
+/* White background for sidebar navigation */
+.fi-sidebar {
+    background-color: #ffffff !important;
+    border-right: 1px solid #e5e7eb;
+}
+
+.fi-sidebar-nav {
+    background-color: #ffffff !important;
+}
+
+/* Sidebar header */
+.fi-sidebar-header {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+/* Navigation items styling for light background */
+.fi-sidebar-item-button {
+    color: #374151 !important;
+}
+
+.fi-sidebar-item-button:hover {
+    background-color: #f3f4f6 !important;
+}
+
+.fi-sidebar-item-button.fi-active {
+    background-color: #ede9fe !important;
+    color: #7c3aed !important;
+}
+
+/* Navigation group labels */
+.fi-sidebar-group-label {
+    color: #6b7280 !important;
+}
+
+/* Sidebar footer */
+.fi-sidebar-footer {
+    background-color: #ffffff !important;
+    border-top: 1px solid #e5e7eb;
+}

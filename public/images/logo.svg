@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="gradient" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="48" height="48" rx="12" fill="url(#gradient)"/>
+
+  <!-- Code brackets -->
+  <path d="M18 14L10 24L18 34" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M30 14L38 24L30 34" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Center X mark -->
+  <path d="M21 19L27 29" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <path d="M27 19L21 29" stroke="white" stroke-width="3" stroke-linecap="round"/>
+</svg>
