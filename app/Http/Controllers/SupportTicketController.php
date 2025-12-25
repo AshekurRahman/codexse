@@ -80,7 +80,7 @@ class SupportTicketController extends Controller
             'support_ticket_id' => $ticket->id,
             'user_id' => auth()->id(),
             'message' => $validated['message'],
-            'is_staff' => false,
+            'is_staff_reply' => false,
         ]);
 
         $ticket->update(['status' => 'waiting']);

@@ -64,14 +64,14 @@
 
                 <!-- Replies -->
                 @foreach($ticket->replies as $reply)
-                    <div class="rounded-xl border {{ $reply->is_staff ? 'border-primary-200 dark:border-primary-800' : 'border-surface-200 dark:border-surface-700' }} bg-white dark:bg-surface-800 overflow-hidden">
-                        <div class="px-6 py-4 border-b {{ $reply->is_staff ? 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20' : 'border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900' }}">
+                    <div class="rounded-xl border {{ $reply->is_staff_reply ? 'border-primary-200 dark:border-primary-800' : 'border-surface-200 dark:border-surface-700' }} bg-white dark:bg-surface-800 overflow-hidden">
+                        <div class="px-6 py-4 border-b {{ $reply->is_staff_reply ? 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20' : 'border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900' }}">
                             <div class="flex items-center gap-3">
                                 <img src="{{ $reply->user->avatar_url }}" alt="{{ $reply->user->name }}" class="h-10 w-10 rounded-full object-cover">
                                 <div>
                                     <div class="flex items-center gap-2">
                                         <p class="font-medium text-surface-900 dark:text-white">{{ $reply->user->name }}</p>
-                                        @if($reply->is_staff)
+                                        @if($reply->is_staff_reply)
                                             <span class="inline-flex items-center rounded-full bg-primary-100 dark:bg-primary-900/30 px-2 py-0.5 text-xs font-medium text-primary-700 dark:text-primary-400">Staff</span>
                                         @endif
                                     </div>
