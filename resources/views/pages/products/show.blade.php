@@ -21,29 +21,8 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Product Preview -->
                 <div class="lg:col-span-2 space-y-6">
-                    <!-- Main Image -->
-                    <div class="aspect-video rounded-2xl overflow-hidden bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700">
-                        @if($product->thumbnail)
-                            <img src="{{ $product->thumbnail_url }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
-                        @else
-                            <div class="w-full h-full flex items-center justify-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-surface-300 dark:text-surface-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- Preview Images -->
-                    @if($product->preview_images && count($product->preview_images) > 0)
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                            @foreach($product->preview_images as $image)
-                                <div class="aspect-video rounded-lg overflow-hidden bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 cursor-pointer hover:border-primary-500 transition-colors">
-                                    <img src="{{ $image }}" alt="Preview" class="w-full h-full object-cover">
-                                </div>
-                            @endforeach
-                        </div>
-                    @endif
+                    <!-- Product Gallery with Lightbox and Video Support -->
+                    <x-product-gallery :product="$product" />
 
                     <!-- Tabs -->
                     <div x-data="{ tab: 'description' }" class="rounded-2xl border border-surface-200 dark:border-surface-700 overflow-hidden">

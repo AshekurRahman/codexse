@@ -75,6 +75,11 @@ class ProductResource extends Resource
                     ->schema([
                         Forms\Components\TextInput::make('thumbnail')
                             ->maxLength(255),
+                        Forms\Components\TextInput::make('video_url')
+                            ->label('Video URL')
+                            ->url()
+                            ->maxLength(255)
+                            ->helperText('YouTube or Vimeo URL for product video'),
                         Forms\Components\TextInput::make('file_path')
                             ->label('Product File')
                             ->maxLength(255),

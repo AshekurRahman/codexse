@@ -105,6 +105,18 @@
                 <div class="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-6 space-y-6">
                     <h2 class="text-lg font-semibold text-surface-900 dark:text-white pb-4 border-b border-surface-200 dark:border-surface-700">Preview & Demo Links</h2>
 
+                    <div>
+                        <label for="video_url" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                            Product Video URL
+                            <span class="text-surface-400 font-normal">(optional)</span>
+                        </label>
+                        <input type="url" id="video_url" name="video_url" value="{{ old('video_url') }}" class="w-full px-4 py-2.5 bg-white dark:bg-surface-900 border border-surface-300 dark:border-surface-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 text-surface-900 dark:text-white placeholder-surface-400" placeholder="https://youtube.com/watch?v=...">
+                        <p class="mt-2 text-sm text-surface-500 dark:text-surface-400">YouTube or Vimeo URL to showcase your product</p>
+                        @error('video_url')
+                            <p class="mt-2 text-sm text-danger-600 dark:text-danger-400">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
                             <label for="demo_url" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
