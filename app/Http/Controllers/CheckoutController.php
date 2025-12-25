@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\LicenseService;
 use App\Services\StripeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -304,6 +305,8 @@ class CheckoutController extends Controller
 
             // Create order items if they don't exist
             if ($order->items->isEmpty() && !empty($orderItems)) {
+                $licenseService = app(LicenseService::class);
+
                 foreach ($orderItems as $item) {
                     $product = Product::find($item['product_id']);
                     if (!$product) continue;
@@ -312,7 +315,8 @@ class CheckoutController extends Controller
                     $platformFee = $item['price'] * $commissionRate;
                     $sellerAmount = $item['price'] - $platformFee;
 
-                    $order->items()->create([
+                    // Create order item (license_key generated automatically by model)
+                    $orderItem = $order->items()->create([
                         'product_id' => $item['product_id'],
                         'seller_id' => $item['seller_id'],
                         'product_name' => $item['product_name'],
@@ -320,9 +324,11 @@ class CheckoutController extends Controller
                         'price' => $item['price'],
                         'seller_amount' => $sellerAmount,
                         'platform_fee' => $platformFee,
-                        'license_key' => strtoupper(Str::random(16)),
                         'download_limit' => 5,
                     ]);
+
+                    // Create License record for tracking activations
+                    $licenseService->createForOrderItem($orderItem);
 
                     // Update seller balance
                     $product->seller->increment('available_balance', $sellerAmount);

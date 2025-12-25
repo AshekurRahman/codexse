@@ -106,6 +106,7 @@ Route::middleware(['auth', 'verified', 'seller'])->prefix('seller')->name('selle
     Route::get('/dashboard', [App\Http\Controllers\Seller\DashboardController::class, 'index'])->name('dashboard');
     Route::resource('products', App\Http\Controllers\Seller\ProductController::class);
     Route::get('/orders', [App\Http\Controllers\Seller\OrderController::class, 'index'])->name('orders.index');
+    Route::get('/licenses', [App\Http\Controllers\Seller\LicenseController::class, 'index'])->name('licenses.index');
     Route::get('/payouts', [App\Http\Controllers\Seller\PayoutController::class, 'index'])->name('payouts.index');
     Route::post('/payouts/request', [App\Http\Controllers\Seller\PayoutController::class, 'request'])->name('payouts.request');
 });

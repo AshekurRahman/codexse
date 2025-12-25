@@ -13,7 +13,7 @@ class DashboardController extends Controller
 
     public function purchases()
     {
-        $orders = auth()->user()->orders()->with('items.product')->latest()->paginate(10);
+        $orders = auth()->user()->orders()->with(['items.product', 'items.license'])->latest()->paginate(10);
         return view('pages.purchases', compact('orders'));
     }
 

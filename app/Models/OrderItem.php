@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Services\LicenseService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class OrderItem extends Model
 {
@@ -44,7 +45,10 @@ class OrderItem extends Model
         parent::boot();
 
         static::creating(function ($item) {
-            $item->license_key = strtoupper(Str::random(4) . '-' . Str::random(4) . '-' . Str::random(4) . '-' . Str::random(4));
+            // Generate license key using the service for consistent format
+            if (empty($item->license_key)) {
+                $item->license_key = app(LicenseService::class)->generate();
+            }
         });
     }
 
@@ -66,6 +70,11 @@ class OrderItem extends Model
     public function downloads(): HasMany
     {
         return $this->hasMany(Download::class);
+    }
+
+    public function license(): HasOne
+    {
+        return $this->hasOne(License::class);
     }
 
     public function canDownload(): bool
