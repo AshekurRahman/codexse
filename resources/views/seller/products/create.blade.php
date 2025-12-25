@@ -83,23 +83,25 @@
                 <div class="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-6 space-y-6">
                     <h2 class="text-lg font-semibold text-surface-900 dark:text-white pb-4 border-b border-surface-200 dark:border-surface-700">Files</h2>
 
-                    <div>
-                        <label for="thumbnail" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Thumbnail Image *</label>
-                        <input type="file" id="thumbnail" name="thumbnail" accept="image/*" required class="w-full px-4 py-2.5 bg-white dark:bg-surface-900 border border-surface-300 dark:border-surface-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 text-surface-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 dark:file:bg-primary-900/30 dark:file:text-primary-400 hover:file:bg-primary-100 dark:hover:file:bg-primary-900/50">
-                        <p class="mt-2 text-sm text-surface-500 dark:text-surface-400">Recommended size: 800x600px. Max 2MB.</p>
-                        @error('thumbnail')
-                            <p class="mt-2 text-sm text-danger-600 dark:text-danger-400">{{ $message }}</p>
-                        @enderror
-                    </div>
+                    <x-file-upload
+                        name="thumbnail"
+                        label="Thumbnail Image"
+                        accept="image/*"
+                        :required="true"
+                        icon="image"
+                        hint="PNG, JPG or WebP. Recommended: 800x600px. Max 2MB."
+                        maxSize="2MB"
+                    />
 
-                    <div>
-                        <label for="file" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Product File *</label>
-                        <input type="file" id="file" name="file" required class="w-full px-4 py-2.5 bg-white dark:bg-surface-900 border border-surface-300 dark:border-surface-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 text-surface-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 dark:file:bg-primary-900/30 dark:file:text-primary-400 hover:file:bg-primary-100 dark:hover:file:bg-primary-900/50">
-                        <p class="mt-2 text-sm text-surface-500 dark:text-surface-400">Upload a ZIP file. Max 100MB.</p>
-                        @error('file')
-                            <p class="mt-2 text-sm text-danger-600 dark:text-danger-400">{{ $message }}</p>
-                        @enderror
-                    </div>
+                    <x-file-upload
+                        name="file"
+                        label="Product File"
+                        accept=".zip,.rar,.7z"
+                        :required="true"
+                        icon="file"
+                        hint="ZIP, RAR or 7Z archive. Max 100MB."
+                        maxSize="100MB"
+                    />
                 </div>
 
                 <div class="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-6 space-y-6">
