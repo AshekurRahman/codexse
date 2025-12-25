@@ -19,6 +19,7 @@ use App\Http\Controllers\SupportTicketController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\AffiliateController;
 use App\Http\Controllers\ProductBundleController;
+use App\Http\Controllers\Auth\SocialLoginController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -78,6 +79,10 @@ Route::get('/newsletter/confirm/{token}', [NewsletterController::class, 'confirm
 
 // Stripe Webhook (must be outside auth middleware)
 Route::post('/stripe/webhook', [CheckoutController::class, 'webhook'])->name('stripe.webhook');
+
+// Social Login
+Route::get('/auth/{provider}/redirect', [SocialLoginController::class, 'redirect'])->name('social.redirect');
+Route::get('/auth/{provider}/callback', [SocialLoginController::class, 'callback'])->name('social.callback');
 
 /*
 |--------------------------------------------------------------------------

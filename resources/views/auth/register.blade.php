@@ -63,4 +63,7 @@
             </p>
         </div>
     </form>
+
+    <!-- Social Login -->
+    <x-social-login-buttons />
 </x-guest-layout>

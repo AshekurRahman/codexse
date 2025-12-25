@@ -28,6 +28,11 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
         'avatar',
         'bio',
         'website',
+        'google_id',
+        'facebook_id',
+        'github_id',
+        'twitter_id',
+        'social_avatar',
     ];
 
     /**
@@ -163,6 +168,15 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
             return asset('storage/' . $this->avatar);
         }
 
+        if ($this->social_avatar) {
+            return $this->social_avatar;
+        }
+
         return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=6366f1&color=fff';
+    }
+
+    public function hasSocialLogin(): bool
+    {
+        return $this->google_id || $this->facebook_id || $this->github_id || $this->twitter_id;
     }
 }
