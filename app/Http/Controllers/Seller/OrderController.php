@@ -10,7 +10,7 @@ class OrderController extends Controller
     public function index()
     {
         $orderItems = auth()->user()->seller->orderItems()
-            ->with(['order.user', 'product'])
+            ->with(['order.user', 'product', 'license'])
             ->latest()
             ->paginate(20);
 

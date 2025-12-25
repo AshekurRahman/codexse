@@ -99,6 +99,46 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
     }
 
     /**
+     * Get the user's licenses.
+     */
+    public function licenses(): HasMany
+    {
+        return $this->hasMany(License::class);
+    }
+
+    /**
+     * Get the user's affiliate profile.
+     */
+    public function affiliate(): HasOne
+    {
+        return $this->hasOne(Affiliate::class);
+    }
+
+    /**
+     * Get the sellers the user follows.
+     */
+    public function followedSellers(): HasMany
+    {
+        return $this->hasMany(SellerFollow::class);
+    }
+
+    /**
+     * Get the user's support tickets.
+     */
+    public function supportTickets(): HasMany
+    {
+        return $this->hasMany(SupportTicket::class);
+    }
+
+    /**
+     * Get the user's conversations.
+     */
+    public function conversations(): HasMany
+    {
+        return $this->hasMany(Conversation::class, 'buyer_id');
+    }
+
+    /**
      * Check if user is a seller.
      */
     public function isSeller(): bool

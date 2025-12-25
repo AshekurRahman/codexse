@@ -8,7 +8,30 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        return view('pages.dashboard');
+        $user = auth()->user();
+
+        $totalOrders = $user->orders()->count();
+        $totalDownloads = $user->orders()
+            ->where('status', 'completed')
+            ->withCount('items')
+            ->get()
+            ->sum('items_count');
+        $wishlistCount = $user->wishlists()->count();
+        $activeLicenses = $user->licenses()->where('status', 'active')->count();
+
+        $recentOrders = $user->orders()
+            ->with(['items.product', 'items.license'])
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return view('pages.dashboard', compact(
+            'totalOrders',
+            'totalDownloads',
+            'wishlistCount',
+            'activeLicenses',
+            'recentOrders'
+        ));
     }
 
     public function purchases()

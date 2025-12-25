@@ -17,6 +17,7 @@
                                     <th class="text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider px-6 py-3">Order</th>
                                     <th class="text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider px-6 py-3">Product</th>
                                     <th class="text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider px-6 py-3">Customer</th>
+                                    <th class="text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider px-6 py-3">License</th>
                                     <th class="text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider px-6 py-3">Date</th>
                                     <th class="text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider px-6 py-3">Price</th>
                                     <th class="text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider px-6 py-3">Your Earnings</th>
@@ -46,6 +47,43 @@
                                         </td>
                                         <td class="px-6 py-4 text-sm text-surface-600 dark:text-surface-400">
                                             {{ $orderItem->order->user->name ?? 'Guest' }}
+                                        </td>
+                                        <td class="px-6 py-4" x-data="{ copied: false }">
+                                            @if($orderItem->license)
+                                                <div class="space-y-1">
+                                                    <div class="flex items-center gap-2">
+                                                        <code class="text-xs font-mono bg-surface-100 dark:bg-surface-700 px-2 py-1 rounded text-surface-700 dark:text-surface-300">{{ $orderItem->license_key }}</code>
+                                                        <button @click="navigator.clipboard.writeText('{{ $orderItem->license_key }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                                                            class="text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 transition-colors">
+                                                            <svg x-show="!copied" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                            </svg>
+                                                            <svg x-show="copied" x-cloak class="w-4 h-4 text-success-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                                                            @if($orderItem->license->status === 'active') bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400
+                                                            @elseif($orderItem->license->status === 'suspended') bg-warning-100 dark:bg-warning-900/30 text-warning-700 dark:text-warning-400
+                                                            @else bg-surface-100 dark:bg-surface-700 text-surface-700 dark:text-surface-300 @endif">
+                                                            {{ ucfirst($orderItem->license->status) }}
+                                                        </span>
+                                                        <span class="text-xs text-surface-500">
+                                                            @if($orderItem->license->max_activations === 0)
+                                                                {{ $orderItem->license->activations_count }} uses
+                                                            @else
+                                                                {{ $orderItem->license->activations_count }}/{{ $orderItem->license->max_activations }}
+                                                            @endif
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            @elseif($orderItem->license_key)
+                                                <code class="text-xs font-mono bg-surface-100 dark:bg-surface-700 px-2 py-1 rounded text-surface-700 dark:text-surface-300">{{ $orderItem->license_key }}</code>
+                                            @else
+                                                <span class="text-surface-400">—</span>
+                                            @endif
                                         </td>
                                         <td class="px-6 py-4 text-sm text-surface-600 dark:text-surface-400">
                                             {{ $orderItem->created_at->format('M d, Y') }}

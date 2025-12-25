@@ -36,6 +36,8 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'thumbnail' => 'required|image|max:2048',
             'file' => 'required|file|max:102400', // 100MB
+            'demo_url' => 'nullable|url|max:255',
+            'preview_url' => 'nullable|url|max:255',
         ]);
 
         $seller = auth()->user()->seller;
@@ -47,6 +49,8 @@ class ProductController extends Controller
             'price' => $validated['price'],
             'sale_price' => $validated['sale_price'] ?? null,
             'category_id' => $validated['category_id'],
+            'demo_url' => $validated['demo_url'] ?? null,
+            'preview_url' => $validated['preview_url'] ?? null,
             'status' => 'pending',
         ]);
 
@@ -87,6 +91,8 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
             'thumbnail' => 'nullable|image|max:2048',
             'file' => 'nullable|file|max:102400',
+            'demo_url' => 'nullable|url|max:255',
+            'preview_url' => 'nullable|url|max:255',
         ]);
 
         $product->update([
@@ -96,6 +102,8 @@ class ProductController extends Controller
             'price' => $validated['price'],
             'sale_price' => $validated['sale_price'] ?? null,
             'category_id' => $validated['category_id'],
+            'demo_url' => $validated['demo_url'] ?? null,
+            'preview_url' => $validated['preview_url'] ?? null,
         ]);
 
         if ($request->hasFile('thumbnail')) {

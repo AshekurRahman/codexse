@@ -29,28 +29,71 @@
 
                 <hr class="border-surface-200 dark:border-surface-700 mb-6">
 
-                <!-- Order Items -->
-                <div class="space-y-4 mb-6">
+                <!-- Order Items with License Keys -->
+                <div class="space-y-6 mb-6">
                     @foreach($order->items as $item)
-                        <div class="flex items-center gap-4">
-                            <div class="w-16 h-16 rounded-lg overflow-hidden bg-surface-100 dark:bg-surface-700 shrink-0">
-                                @if($item->product && $item->product->thumbnail)
-                                    <img src="{{ asset('storage/' . $item->product->thumbnail) }}" alt="{{ $item->product_name }}" class="w-full h-full object-cover">
-                                @else
-                                    <div class="w-full h-full flex items-center justify-center">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
+                        <div class="rounded-xl border border-surface-200 dark:border-surface-700 p-4">
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="w-16 h-16 rounded-lg overflow-hidden bg-surface-100 dark:bg-surface-700 shrink-0">
+                                    @if($item->product && $item->product->thumbnail)
+                                        <img src="{{ $item->product->thumbnail_url }}" alt="{{ $item->product_name }}" class="w-full h-full object-cover">
+                                    @else
+                                        <div class="w-full h-full flex items-center justify-center">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                    @endif
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="font-medium text-surface-900 dark:text-white">{{ $item->product_name }}</h3>
+                                    <p class="text-sm text-surface-500 dark:text-surface-400">{{ ucfirst($item->license_type) }} License</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-semibold text-surface-900 dark:text-white">${{ number_format($item->price, 2) }}</p>
+                                </div>
+                            </div>
+
+                            <!-- License Key -->
+                            @if($item->license_key)
+                                <div class="bg-surface-50 dark:bg-surface-900 rounded-lg p-4" x-data="{ copied: false }">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-xs font-medium text-surface-500 dark:text-surface-400 mb-1">License Key</p>
+                                            <code class="text-sm font-mono font-semibold text-surface-900 dark:text-white">{{ $item->license_key }}</code>
+                                        </div>
+                                        <button
+                                            @click="navigator.clipboard.writeText('{{ $item->license_key }}'); copied = true; setTimeout(() => copied = false, 2000)"
+                                            class="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                                            :class="copied ? 'bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400' : 'bg-surface-200 dark:bg-surface-700 text-surface-700 dark:text-surface-300 hover:bg-surface-300 dark:hover:bg-surface-600'"
+                                        >
+                                            <svg x-show="!copied" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                            </svg>
+                                            <svg x-show="copied" x-cloak class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span x-text="copied ? 'Copied!' : 'Copy'"></span>
+                                        </button>
                                     </div>
-                                @endif
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h3 class="font-medium text-surface-900 dark:text-white">{{ $item->product_name }}</h3>
-                                <p class="text-sm text-surface-500 dark:text-surface-400">License: {{ ucfirst($item->license_type) }}</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="font-semibold text-surface-900 dark:text-white">${{ number_format($item->price, 2) }}</p>
-                            </div>
+                                    @if($item->license)
+                                        <div class="flex items-center gap-4 mt-3 pt-3 border-t border-surface-200 dark:border-surface-700">
+                                            <span class="text-xs text-surface-500 dark:text-surface-400">
+                                                <span class="font-medium">Status:</span>
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400 ml-1">Active</span>
+                                            </span>
+                                            <span class="text-xs text-surface-500 dark:text-surface-400">
+                                                <span class="font-medium">Activations:</span>
+                                                @if($item->license->max_activations === 0)
+                                                    Unlimited
+                                                @else
+                                                    0 / {{ $item->license->max_activations }}
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                     @endforeach
                 </div>

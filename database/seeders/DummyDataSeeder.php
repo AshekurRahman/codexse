@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Review;
 use App\Models\Seller;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -206,6 +207,93 @@ class DummyDataSeeder extends Seeder
             ]);
         }
 
+        // Create Reviews
+        $reviewComments = [
+            5 => [
+                'Absolutely fantastic! This exceeded all my expectations. The code quality is top-notch and the documentation is excellent.',
+                'Best purchase I\'ve made. Clean code, great design, and amazing support from the seller.',
+                'Perfect for my project! Easy to customize and works flawlessly. Highly recommended!',
+                'Outstanding quality. The attention to detail is impressive. Will definitely buy more from this seller.',
+                'Exactly what I was looking for. Professional, well-documented, and easy to integrate.',
+            ],
+            4 => [
+                'Great product overall. A few minor issues but nothing major. Good value for the price.',
+                'Very good quality. Could use a bit more documentation but the code is clean and well-organized.',
+                'Solid purchase. Works as advertised with only minor customization needed.',
+                'Good product with nice features. Support was helpful when I had questions.',
+            ],
+            3 => [
+                'Decent product but took some effort to customize. Documentation could be better.',
+                'It works but has some rough edges. Average quality for the price.',
+                'Okay product. Does what it says but nothing exceptional.',
+            ],
+            2 => [
+                'Not what I expected. Had several issues getting it to work properly.',
+                'Below average quality. Needs significant improvements.',
+            ],
+            1 => [
+                'Very disappointed. Did not work as described.',
+            ],
+        ];
+
+        foreach ($createdProducts as $product) {
+            if ($product->status !== 'published') continue;
+
+            $reviewCount = rand(3, 12);
+            $usedUsers = [];
+
+            for ($i = 0; $i < $reviewCount; $i++) {
+                // Get a unique user for this product
+                $availableUsers = array_filter($createdUsers, fn($u) => !in_array($u->id, $usedUsers));
+                if (empty($availableUsers)) break;
+
+                $user = $availableUsers[array_rand($availableUsers)];
+                $usedUsers[] = $user->id;
+
+                // Weighted rating (more likely to be 4-5 stars)
+                $ratingWeights = [1 => 5, 2 => 10, 3 => 15, 4 => 30, 5 => 40];
+                $rating = $this->weightedRandom($ratingWeights);
+
+                $comments = $reviewComments[$rating];
+                $comment = $comments[array_rand($comments)];
+
+                Review::create([
+                    'user_id' => $user->id,
+                    'product_id' => $product->id,
+                    'rating' => $rating,
+                    'comment' => $comment,
+                    'status' => 'approved',
+                    'is_verified_purchase' => rand(0, 1),
+                    'helpful_count' => rand(0, 20),
+                    'created_at' => now()->subDays(rand(1, 90)),
+                ]);
+            }
+
+            // Update product stats
+            $approvedReviews = Review::where('product_id', $product->id)->where('status', 'approved');
+            $product->update([
+                'reviews_count' => $approvedReviews->count(),
+                'average_rating' => round($approvedReviews->avg('rating'), 2),
+            ]);
+        }
+
         $this->command->info('Dummy data created successfully!');
+    }
+
+    /**
+     * Get a weighted random value
+     */
+    private function weightedRandom(array $weights): int
+    {
+        $total = array_sum($weights);
+        $random = rand(1, $total);
+        $cumulative = 0;
+        foreach ($weights as $value => $weight) {
+            $cumulative += $weight;
+            if ($random <= $cumulative) {
+                return $value;
+            }
+        }
+        return array_key_first($weights);
     }
 }

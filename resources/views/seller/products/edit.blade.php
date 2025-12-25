@@ -109,6 +109,36 @@
                     </div>
                 </div>
 
+                <div class="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-6 space-y-6">
+                    <h2 class="text-lg font-semibold text-surface-900 dark:text-white pb-4 border-b border-surface-200 dark:border-surface-700">Preview & Demo Links</h2>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div>
+                            <label for="demo_url" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                                Live Demo URL
+                                <span class="text-surface-400 font-normal">(optional)</span>
+                            </label>
+                            <input type="url" id="demo_url" name="demo_url" value="{{ old('demo_url', $product->demo_url) }}" class="w-full px-4 py-2.5 bg-white dark:bg-surface-900 border border-surface-300 dark:border-surface-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 text-surface-900 dark:text-white placeholder-surface-400" placeholder="https://demo.example.com">
+                            <p class="mt-2 text-sm text-surface-500 dark:text-surface-400">Link to a live demo of your product</p>
+                            @error('demo_url')
+                                <p class="mt-2 text-sm text-danger-600 dark:text-danger-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div>
+                            <label for="preview_url" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                                Preview URL
+                                <span class="text-surface-400 font-normal">(optional)</span>
+                            </label>
+                            <input type="url" id="preview_url" name="preview_url" value="{{ old('preview_url', $product->preview_url) }}" class="w-full px-4 py-2.5 bg-white dark:bg-surface-900 border border-surface-300 dark:border-surface-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:focus:ring-primary-400 text-surface-900 dark:text-white placeholder-surface-400" placeholder="https://preview.example.com">
+                            <p class="mt-2 text-sm text-surface-500 dark:text-surface-400">Link to preview images or documentation</p>
+                            @error('preview_url')
+                                <p class="mt-2 text-sm text-danger-600 dark:text-danger-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex items-center justify-end gap-4">
                     <a href="{{ route('seller.products.index') }}" class="px-6 py-2.5 border border-surface-300 dark:border-surface-600 text-surface-700 dark:text-surface-300 rounded-lg hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors">Cancel</a>
                     <button type="submit" class="px-6 py-2.5 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors">Update Product</button>

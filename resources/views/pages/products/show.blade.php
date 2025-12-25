@@ -67,16 +67,110 @@
 
                             <!-- Reviews -->
                             <div x-show="tab === 'reviews'" x-cloak>
-                                @if($product->reviews && $product->reviews->count() > 0)
+                                @php
+                                    $approvedReviews = $product->reviews()->approved()->with('user')->latest()->get();
+                                    $userReview = auth()->check() ? $product->reviews()->where('user_id', auth()->id())->first() : null;
+                                    $canReview = auth()->check() && !$userReview && auth()->user()->orders()
+                                        ->where('status', 'completed')
+                                        ->whereHas('items', fn($q) => $q->where('product_id', $product->id))
+                                        ->exists();
+                                @endphp
+
+                                <!-- Write Review Form -->
+                                @auth
+                                    @if($canReview)
+                                        <div class="mb-8 p-6 rounded-xl bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700">
+                                            <h3 class="font-semibold text-surface-900 dark:text-white mb-4">Write a Review</h3>
+                                            <form action="{{ route('reviews.store', $product) }}" method="POST" x-data="{ rating: 5 }">
+                                                @csrf
+                                                <div class="mb-4">
+                                                    <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Rating</label>
+                                                    <div class="flex items-center gap-1">
+                                                        @for($i = 1; $i <= 5; $i++)
+                                                            <button type="button" @click="rating = {{ $i }}" class="focus:outline-none">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 transition-colors" :class="rating >= {{ $i }} ? 'text-yellow-500 fill-current' : 'text-surface-300 dark:text-surface-600'" viewBox="0 0 20 20" fill="currentColor">
+                                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                                </svg>
+                                                            </button>
+                                                        @endfor
+                                                    </div>
+                                                    <input type="hidden" name="rating" :value="rating">
+                                                </div>
+                                                <div class="mb-4">
+                                                    <label for="comment" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Your Review</label>
+                                                    <textarea name="comment" id="comment" rows="4" required minlength="10" maxlength="2000"
+                                                        class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-900 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-primary-500"
+                                                        placeholder="Share your experience with this product..."></textarea>
+                                                    @error('comment')
+                                                        <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
+                                                    @enderror
+                                                </div>
+                                                <button type="submit" class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors">
+                                                    Submit Review
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @elseif($userReview)
+                                        <div class="mb-6 p-4 rounded-lg bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-800">
+                                            <p class="text-sm text-info-700 dark:text-info-300">
+                                                You have already reviewed this product.
+                                                @if($userReview->status === 'pending')
+                                                    <span class="font-medium">Your review is pending approval.</span>
+                                                @endif
+                                            </p>
+                                        </div>
+                                    @endif
+                                @endauth
+
+                                @if($approvedReviews->count() > 0)
                                     <div class="space-y-6">
-                                        @foreach($product->reviews as $review)
-                                            <div class="flex gap-4">
+                                        @foreach($approvedReviews as $review)
+                                            <div class="flex gap-4 p-4 rounded-xl bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700" x-data="{
+                                                voted: {{ auth()->check() && \DB::table('review_votes')->where('user_id', auth()->id())->where('review_id', $review->id)->exists() ? 'true' : 'false' }},
+                                                helpfulCount: {{ $review->helpful_count }},
+                                                loading: false,
+                                                async vote() {
+                                                    @guest
+                                                        window.location.href = '{{ route('login') }}';
+                                                        return;
+                                                    @endguest
+                                                    if (this.loading) return;
+                                                    this.loading = true;
+                                                    try {
+                                                        const response = await fetch('{{ route('reviews.vote', $review) }}', {
+                                                            method: 'POST',
+                                                            headers: {
+                                                                'Content-Type': 'application/json',
+                                                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                                'Accept': 'application/json'
+                                                            }
+                                                        });
+                                                        const data = await response.json();
+                                                        if (!data.error) {
+                                                            this.voted = data.voted;
+                                                            this.helpfulCount = data.helpful_count;
+                                                        }
+                                                    } catch (error) {
+                                                        console.error('Error:', error);
+                                                    } finally {
+                                                        this.loading = false;
+                                                    }
+                                                }
+                                            }">
                                                 <div class="h-10 w-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
                                                     <span class="text-sm font-medium text-primary-600 dark:text-primary-400">{{ substr($review->user->name, 0, 1) }}</span>
                                                 </div>
                                                 <div class="flex-1">
-                                                    <div class="flex items-center gap-2 mb-1">
+                                                    <div class="flex flex-wrap items-center gap-2 mb-1">
                                                         <span class="font-medium text-surface-900 dark:text-white">{{ $review->user->name }}</span>
+                                                        @if($review->is_verified_purchase)
+                                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium bg-success-100 dark:bg-success-900/30 text-success-700 dark:text-success-400">
+                                                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                                </svg>
+                                                                Verified Purchase
+                                                            </span>
+                                                        @endif
                                                         <div class="flex items-center text-yellow-500">
                                                             @for($i = 1; $i <= 5; $i++)
                                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 {{ $i <= $review->rating ? 'fill-current' : 'text-surface-300' }}" viewBox="0 0 20 20" fill="currentColor">
@@ -84,9 +178,34 @@
                                                                 </svg>
                                                             @endfor
                                                         </div>
+                                                        <span class="text-xs text-surface-400">{{ $review->created_at->diffForHumans() }}</span>
                                                     </div>
-                                                    <p class="text-surface-600 dark:text-surface-400">{{ $review->comment }}</p>
-                                                    <span class="text-xs text-surface-400 mt-2 block">{{ $review->created_at->diffForHumans() }}</span>
+                                                    <p class="text-surface-600 dark:text-surface-400 mb-3">{{ $review->comment }}</p>
+
+                                                    <!-- Seller Response -->
+                                                    @if($review->seller_response)
+                                                        <div class="mt-4 ml-4 pl-4 border-l-2 border-primary-500">
+                                                            <div class="flex items-center gap-2 mb-1">
+                                                                <span class="text-sm font-medium text-primary-600 dark:text-primary-400">Seller Response</span>
+                                                                <span class="text-xs text-surface-400">{{ $review->seller_responded_at?->diffForHumans() }}</span>
+                                                            </div>
+                                                            <p class="text-sm text-surface-600 dark:text-surface-400">{{ $review->seller_response }}</p>
+                                                        </div>
+                                                    @endif
+
+                                                    <!-- Helpful Vote -->
+                                                    @if(auth()->id() !== $review->user_id)
+                                                        <div class="mt-3 pt-3 border-t border-surface-100 dark:border-surface-700">
+                                                            <button @click="vote()" :disabled="loading"
+                                                                class="inline-flex items-center gap-2 text-sm transition-colors"
+                                                                :class="voted ? 'text-primary-600 dark:text-primary-400' : 'text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-300'">
+                                                                <svg class="w-4 h-4" :fill="voted ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                                                                </svg>
+                                                                <span x-text="'Helpful (' + helpfulCount + ')'"></span>
+                                                            </button>
+                                                        </div>
+                                                    @endif
                                                 </div>
                                             </div>
                                         @endforeach
@@ -96,7 +215,16 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-surface-300 dark:text-surface-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                         </svg>
-                                        <p class="text-surface-600 dark:text-surface-400">No reviews yet. Be the first to review this product!</p>
+                                        <p class="text-surface-600 dark:text-surface-400 mb-2">No reviews yet.</p>
+                                        @guest
+                                            <p class="text-sm text-surface-500 dark:text-surface-400">
+                                                <a href="{{ route('login') }}" class="text-primary-600 dark:text-primary-400 hover:underline">Sign in</a> to write a review.
+                                            </p>
+                                        @else
+                                            @if(!$canReview && !$userReview)
+                                                <p class="text-sm text-surface-500 dark:text-surface-400">Purchase this product to leave a review.</p>
+                                            @endif
+                                        @endguest
                                     </div>
                                 @endif
                             </div>
@@ -166,12 +294,79 @@
                             </button>
                         </form>
 
-                        <button class="w-full mt-3 rounded-xl border-2 border-surface-200 dark:border-surface-700 px-6 py-4 text-base font-semibold text-surface-700 dark:text-surface-300 hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                            </svg>
-                            Add to Wishlist
-                        </button>
+                        <div x-data="{
+                            inWishlist: {{ auth()->check() && auth()->user()->wishlists()->where('product_id', $product->id)->exists() ? 'true' : 'false' }},
+                            loading: false,
+                            async toggleWishlist() {
+                                @guest
+                                    window.location.href = '{{ route('login') }}';
+                                    return;
+                                @endguest
+
+                                if (this.loading) return;
+                                this.loading = true;
+
+                                try {
+                                    const response = await fetch('{{ route('wishlist.toggle', $product) }}', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                            'Accept': 'application/json'
+                                        }
+                                    });
+                                    const data = await response.json();
+                                    this.inWishlist = data.in_wishlist;
+                                } catch (error) {
+                                    console.error('Error:', error);
+                                } finally {
+                                    this.loading = false;
+                                }
+                            }
+                        }">
+                            <button
+                                @click="toggleWishlist()"
+                                :disabled="loading"
+                                class="w-full mt-3 rounded-xl border-2 px-6 py-4 text-base font-semibold transition-all flex items-center justify-center gap-2"
+                                :class="inWishlist
+                                    ? 'border-danger-500 bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-400'
+                                    : 'border-surface-200 dark:border-surface-700 text-surface-700 dark:text-surface-300 hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400'"
+                            >
+                                <svg x-show="!loading" class="h-5 w-5" :fill="inWishlist ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                                <svg x-show="loading" class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24" x-cloak>
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span x-text="inWishlist ? 'In Wishlist' : 'Add to Wishlist'"></span>
+                            </button>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        @if($product->demo_url || $product->preview_url)
+                            <div class="mt-4 flex gap-3">
+                                @if($product->demo_url)
+                                    <a href="{{ $product->demo_url }}" target="_blank" rel="noopener noreferrer"
+                                        class="flex-1 rounded-xl border-2 border-surface-200 dark:border-surface-700 px-4 py-3 text-sm font-semibold text-surface-700 dark:text-surface-300 hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition-all flex items-center justify-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        Live Demo
+                                    </a>
+                                @endif
+                                @if($product->preview_url)
+                                    <a href="{{ $product->preview_url }}" target="_blank" rel="noopener noreferrer"
+                                        class="flex-1 rounded-xl border-2 border-surface-200 dark:border-surface-700 px-4 py-3 text-sm font-semibold text-surface-700 dark:text-surface-300 hover:border-accent-500 hover:text-accent-600 dark:hover:text-accent-400 transition-all flex items-center justify-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                        </svg>
+                                        Preview
+                                    </a>
+                                @endif
+                            </div>
+                        @endif
 
                         <!-- Product Info -->
                         <div class="mt-6 pt-6 border-t border-surface-200 dark:border-surface-700 space-y-4">

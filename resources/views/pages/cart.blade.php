@@ -53,6 +53,52 @@
                         <div class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-6 sticky top-24">
                             <h2 class="text-lg font-semibold text-surface-900 dark:text-white mb-6">Order Summary</h2>
 
+                            <!-- Coupon Code -->
+                            <div class="mb-6">
+                                @if(session('coupon'))
+                                    <div class="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-xl border border-green-200 dark:border-green-800">
+                                        <div class="flex items-center gap-2">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                            </svg>
+                                            <span class="text-sm font-medium text-green-700 dark:text-green-300">{{ session('coupon.code') }}</span>
+                                        </div>
+                                        <form action="{{ route('coupon.remove') }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="text-red-500 hover:text-red-600">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    </div>
+                                @else
+                                    <form action="{{ route('coupon.apply') }}" method="POST" class="flex gap-2">
+                                        @csrf
+                                        <input type="text" name="code" placeholder="Enter coupon code"
+                                            class="flex-1 rounded-xl border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 px-4 py-2.5 text-sm text-surface-900 dark:text-white placeholder-surface-400 focus:border-primary-500 focus:ring-primary-500"
+                                            value="{{ old('code') }}">
+                                        <button type="submit" class="rounded-xl bg-surface-900 dark:bg-surface-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-surface-800 dark:hover:bg-surface-500 transition-colors">
+                                            Apply
+                                        </button>
+                                    </form>
+                                    @error('code')
+                                        <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
+                                    @enderror
+                                @endif
+                                @if(session('coupon_error'))
+                                    <p class="mt-2 text-sm text-red-500">{{ session('coupon_error') }}</p>
+                                @endif
+                                @if(session('coupon_success'))
+                                    <p class="mt-2 text-sm text-green-500">{{ session('coupon_success') }}</p>
+                                @endif
+                            </div>
+
+                            @php
+                                $discount = session('coupon.discount', 0);
+                                $finalTotal = $total - $discount;
+                            @endphp
+
                             <div class="space-y-4">
                                 <div class="flex items-center justify-between text-sm">
                                     <span class="text-surface-600 dark:text-surface-400">Subtotal ({{ count($products) }} items)</span>
@@ -60,12 +106,12 @@
                                 </div>
                                 <div class="flex items-center justify-between text-sm">
                                     <span class="text-surface-600 dark:text-surface-400">Discount</span>
-                                    <span class="font-medium text-green-500">-$0.00</span>
+                                    <span class="font-medium text-green-500">-${{ number_format($discount, 2) }}</span>
                                 </div>
                                 <hr class="border-surface-200 dark:border-surface-700">
                                 <div class="flex items-center justify-between">
                                     <span class="font-semibold text-surface-900 dark:text-white">Total</span>
-                                    <span class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($total, 2) }}</span>
+                                    <span class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($finalTotal, 2) }}</span>
                                 </div>
                             </div>
 

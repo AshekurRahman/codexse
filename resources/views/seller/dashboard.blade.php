@@ -16,11 +16,11 @@
             </div>
 
             <!-- Stats Grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
                 <div class="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-surface-600 dark:text-surface-400">Total Products</p>
+                            <p class="text-sm font-medium text-surface-600 dark:text-surface-400">Products</p>
                             <p class="text-2xl font-bold text-surface-900 dark:text-white mt-1">{{ number_format($stats['total_products']) }}</p>
                         </div>
                         <div class="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center text-primary-600 dark:text-primary-400">
@@ -48,7 +48,7 @@
                 <div class="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-surface-600 dark:text-surface-400">Total Orders</p>
+                            <p class="text-sm font-medium text-surface-600 dark:text-surface-400">Orders</p>
                             <p class="text-2xl font-bold text-surface-900 dark:text-white mt-1">{{ number_format($stats['total_orders']) }}</p>
                         </div>
                         <div class="w-12 h-12 bg-accent-100 dark:bg-accent-900/30 rounded-lg flex items-center justify-center text-accent-600 dark:text-accent-400">
@@ -62,7 +62,21 @@
                 <div class="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-medium text-surface-600 dark:text-surface-400">Available Balance</p>
+                            <p class="text-sm font-medium text-surface-600 dark:text-surface-400">Active Licenses</p>
+                            <p class="text-2xl font-bold text-surface-900 dark:text-white mt-1">{{ number_format($stats['active_licenses']) }}</p>
+                        </div>
+                        <div class="w-12 h-12 bg-info-100 dark:bg-info-900/30 rounded-lg flex items-center justify-center text-info-600 dark:text-info-400">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-surface-600 dark:text-surface-400">Balance</p>
                             <p class="text-2xl font-bold text-surface-900 dark:text-white mt-1">${{ number_format($stats['pending_payouts'], 2) }}</p>
                         </div>
                         <div class="w-12 h-12 bg-warning-100 dark:bg-warning-900/30 rounded-lg flex items-center justify-center text-warning-600 dark:text-warning-400">

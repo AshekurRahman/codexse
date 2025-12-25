@@ -33,4 +33,16 @@ class Download extends Model
     {
         return $this->belongsTo(OrderItem::class);
     }
+
+    public static function recordDownload(User $user, Product $product, OrderItem $orderItem): self
+    {
+        return self::create([
+            'user_id' => $user->id,
+            'product_id' => $product->id,
+            'order_item_id' => $orderItem->id,
+            'version' => $product->version ?? '1.0.0',
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+    }
 }

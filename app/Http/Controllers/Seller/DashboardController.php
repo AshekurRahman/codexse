@@ -15,11 +15,12 @@ class DashboardController extends Controller
             'total_products' => $seller->products()->count(),
             'total_sales' => $seller->orderItems()->sum('price'),
             'total_orders' => $seller->orderItems()->count(),
+            'active_licenses' => \App\Models\License::whereIn('product_id', $seller->products()->pluck('id'))->where('status', 'active')->count(),
             'pending_payouts' => $seller->balance,
         ];
 
         $recentOrders = $seller->orderItems()
-            ->with(['order.user', 'product'])
+            ->with(['order.user', 'product', 'license'])
             ->latest()
             ->take(5)
             ->get();
