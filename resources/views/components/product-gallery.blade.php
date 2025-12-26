@@ -29,8 +29,9 @@
 }" @keydown.escape.window="closeLightbox()" @keydown.arrow-right.window="lightboxOpen && next()" @keydown.arrow-left.window="lightboxOpen && prev()" class="space-y-4">
 
     <!-- Main Display -->
-    <div class="relative aspect-video rounded-2xl overflow-hidden bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 cursor-pointer group"
-         @click="openLightbox(activeIndex)">
+    <div class="relative aspect-video rounded-2xl overflow-hidden bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700"
+         :class="items.length > 0 ? 'cursor-pointer group' : ''"
+         @click="items.length > 0 && openLightbox(activeIndex)">
         <template x-if="activeItem && activeItem.type === 'image'">
             <img :src="activeItem.url" :alt="'{{ $product->name }}'" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
         </template>
@@ -55,12 +56,14 @@
             </div>
         </template>
 
-        <!-- Expand Icon -->
-        <div class="absolute top-4 right-4 p-2 rounded-lg bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-            </svg>
-        </div>
+        <!-- Expand Icon (only show when gallery has items) -->
+        <template x-if="items.length > 0">
+            <div class="absolute top-4 right-4 p-2 rounded-lg bg-black/50 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+            </div>
+        </template>
 
         <!-- Navigation Arrows (if multiple items) -->
         <template x-if="items.length > 1">
@@ -154,10 +157,12 @@
                 </div>
             </template>
 
-            <!-- Counter -->
-            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-black/50 text-white text-sm">
-                <span x-text="activeIndex + 1"></span> / <span x-text="items.length"></span>
-            </div>
+            <!-- Counter (only show when gallery has items) -->
+            <template x-if="items.length > 0">
+                <div class="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-black/50 text-white text-sm">
+                    <span x-text="activeIndex + 1"></span> / <span x-text="items.length"></span>
+                </div>
+            </template>
         </div>
 
         <!-- Thumbnail Strip -->
