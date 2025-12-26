@@ -37,6 +37,11 @@
             <x-footer />
         </div>
 
+        <!-- AI Chatbot Widget -->
+        @if(\App\Models\Setting::get('chatbot_enabled', false))
+            <x-chatbot-widget />
+        @endif
+
         @stack('scripts')
     </body>
 </html>

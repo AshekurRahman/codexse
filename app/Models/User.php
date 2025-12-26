@@ -144,6 +144,14 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
     }
 
     /**
+     * Get the user's AI chat sessions.
+     */
+    public function aiChatSessions(): HasMany
+    {
+        return $this->hasMany(AiChatSession::class);
+    }
+
+    /**
      * Check if user is a seller.
      */
     public function isSeller(): bool

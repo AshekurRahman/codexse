@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\Api\LicenseController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,4 +21,12 @@ Route::prefix('license')->group(function () {
     Route::post('/activate', [LicenseController::class, 'activate']);
     Route::post('/deactivate', [LicenseController::class, 'deactivate']);
     Route::get('/{license_key}', [LicenseController::class, 'show']);
+});
+
+// AI Chatbot endpoints (public with rate limiting)
+Route::prefix('chatbot')->group(function () {
+    Route::get('/session', [ChatbotController::class, 'session']);
+    Route::post('/send', [ChatbotController::class, 'send']);
+    Route::post('/close', [ChatbotController::class, 'close']);
+    Route::post('/new', [ChatbotController::class, 'newSession']);
 });
