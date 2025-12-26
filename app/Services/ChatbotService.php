@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\AiChatSession;
 use App\Models\AiChatMessage;
+use App\Models\ChatbotFaq;
 use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\RateLimiter;
@@ -18,6 +19,8 @@ class ChatbotService
     protected int $rateLimitPerMinute = 10;
     protected int $rateLimitPerDay = 100;
     protected bool $enabled = false;
+    protected string $mode = 'faq'; // 'faq' or 'ai'
+    protected string $fallbackMessage = '';
 
     protected const API_URL = 'https://api.anthropic.com/v1/messages';
     protected const API_VERSION = '2023-06-01';
@@ -36,6 +39,10 @@ class ChatbotService
         $this->rateLimitPerMinute = (int) $this->getSetting('chatbot_rate_limit_per_minute', 10);
         $this->rateLimitPerDay = (int) $this->getSetting('chatbot_rate_limit_per_day', 100);
         $this->enabled = (bool) $this->getSetting('chatbot_enabled', false);
+        $this->mode = $this->getSetting('chatbot_mode', 'faq');
+        $this->fallbackMessage = $this->getSetting('chatbot_fallback_message',
+            "I'm sorry, I don't have an answer for that question. Please try rephrasing or contact our support team for help."
+        );
     }
 
     protected function getSetting(string $key, $fallback = null): mixed
@@ -73,12 +80,26 @@ PROMPT;
 
     public function isConfigured(): bool
     {
+        // FAQ mode doesn't need API key
+        if ($this->mode === 'faq') {
+            return true;
+        }
         return !empty($this->apiKey);
     }
 
     public function isEnabled(): bool
     {
         return $this->enabled && $this->isConfigured();
+    }
+
+    public function getMode(): string
+    {
+        return $this->mode;
+    }
+
+    public function isFaqMode(): bool
+    {
+        return $this->mode === 'faq';
     }
 
     public function checkRateLimit(string $identifier): array
@@ -123,6 +144,60 @@ PROMPT;
             ];
         }
 
+        // Route to appropriate handler based on mode
+        if ($this->isFaqMode()) {
+            return $this->handleFaqMessage($session, $userMessage);
+        }
+
+        return $this->handleAiMessage($session, $userMessage, $context);
+    }
+
+    /**
+     * Handle FAQ-based response (free, no API required)
+     */
+    protected function handleFaqMessage(AiChatSession $session, string $userMessage): array
+    {
+        // Save user message
+        AiChatMessage::create([
+            'ai_chat_session_id' => $session->id,
+            'role' => 'user',
+            'content' => $userMessage,
+        ]);
+
+        // Find matching FAQ
+        $faq = ChatbotFaq::findBestMatch($userMessage);
+
+        if ($faq) {
+            $responseContent = $faq->answer;
+        } else {
+            $responseContent = $this->fallbackMessage;
+        }
+
+        // Save assistant message
+        $assistantMsg = AiChatMessage::create([
+            'ai_chat_session_id' => $session->id,
+            'role' => 'assistant',
+            'content' => $responseContent,
+            'metadata' => [
+                'mode' => 'faq',
+                'matched_faq_id' => $faq?->id,
+            ],
+        ]);
+
+        $session->incrementMessageCount(0);
+
+        return [
+            'success' => true,
+            'message' => $responseContent,
+            'message_id' => $assistantMsg->id,
+        ];
+    }
+
+    /**
+     * Handle AI-based response (requires API key)
+     */
+    protected function handleAiMessage(AiChatSession $session, string $userMessage, array $context = []): array
+    {
         // Build conversation history
         $messages = $this->buildConversationHistory($session);
         $messages[] = ['role' => 'user', 'content' => $userMessage];
@@ -172,6 +247,7 @@ PROMPT;
                 'content' => $assistantContent,
                 'tokens_used' => $tokensUsed,
                 'metadata' => [
+                    'mode' => 'ai',
                     'model' => $this->model,
                     'usage' => $data['usage'] ?? null,
                 ],
