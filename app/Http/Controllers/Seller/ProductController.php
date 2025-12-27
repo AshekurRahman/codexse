@@ -35,7 +35,7 @@ class ProductController extends Controller
             'sale_price' => 'nullable|numeric|min:0',
             'category_id' => 'required|exists:categories,id',
             'thumbnail' => 'required|image|max:2048',
-            'file' => 'required|file|max:102400', // 100MB
+            'file' => 'required|file|max:102400|mimes:zip,rar,7z,tar,gz,pdf,doc,docx,xls,xlsx,psd,ai,sketch,fig', // 100MB, allowed file types
             'demo_url' => 'nullable|url|max:255',
             'preview_url' => 'nullable|url|max:255',
         ]);
@@ -90,7 +90,7 @@ class ProductController extends Controller
             'sale_price' => 'nullable|numeric|min:0',
             'category_id' => 'required|exists:categories,id',
             'thumbnail' => 'nullable|image|max:2048',
-            'file' => 'nullable|file|max:102400',
+            'file' => 'nullable|file|max:102400|mimes:zip,rar,7z,tar,gz,pdf,doc,docx,xls,xlsx,psd,ai,sketch,fig',
             'demo_url' => 'nullable|url|max:255',
             'preview_url' => 'nullable|url|max:255',
         ]);

@@ -95,7 +95,7 @@
                                         </button>
                                         <div x-show="open === {{ $faq->id }}" x-collapse x-cloak>
                                             <div class="px-6 pb-4 text-surface-600 dark:text-surface-400 prose dark:prose-invert max-w-none">
-                                                {!! $faq->answer !!}
+                                                {!! clean($faq->answer) !!}
                                             </div>
                                             @if($faq->keywords)
                                                 <div class="px-6 pb-4 flex flex-wrap gap-2">

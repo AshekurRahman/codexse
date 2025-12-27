@@ -35,9 +35,11 @@
                     <ul class="space-y-3">
                         <li><a href="{{ route('products.index') }}" class="text-surface-400 hover:text-white transition-colors">All Products</a></li>
                         <li><a href="{{ route('categories.index') }}" class="text-surface-400 hover:text-white transition-colors">Categories</a></li>
+                        <li><a href="{{ route('bundles.index') }}" class="text-surface-400 hover:text-white transition-colors">Bundles</a></li>
                         <li><a href="{{ route('products.index', ['sort' => 'popular']) }}" class="text-surface-400 hover:text-white transition-colors">Popular</a></li>
                         <li><a href="{{ route('products.index', ['sort' => 'newest']) }}" class="text-surface-400 hover:text-white transition-colors">New Arrivals</a></li>
                         <li><a href="{{ route('sellers.index') }}" class="text-surface-400 hover:text-white transition-colors">Top Sellers</a></li>
+                        <li><a href="{{ route('product-request.create') }}" class="text-surface-400 hover:text-white transition-colors">Request a Product</a></li>
                     </ul>
                 </div>
 
@@ -47,6 +49,7 @@
                     <ul class="space-y-3">
                         <li><a href="{{ route('about') }}" class="text-surface-400 hover:text-white transition-colors">About Us</a></li>
                         <li><a href="{{ route('become-seller') }}" class="text-surface-400 hover:text-white transition-colors">Become a Seller</a></li>
+                        <li><a href="{{ route('affiliate.apply') }}" class="text-surface-400 hover:text-white transition-colors">Affiliate Program</a></li>
                         <li><a href="{{ route('contact') }}" class="text-surface-400 hover:text-white transition-colors">Contact Us</a></li>
                         <li><a href="{{ route('privacy') }}" class="text-surface-400 hover:text-white transition-colors">Privacy Policy</a></li>
                         <li><a href="{{ route('terms') }}" class="text-surface-400 hover:text-white transition-colors">Terms of Service</a></li>
@@ -58,7 +61,8 @@
                     <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Support</h3>
                     <ul class="space-y-3">
                         <li><a href="{{ route('help') }}" class="text-surface-400 hover:text-white transition-colors">Help Center</a></li>
-                        <li><a href="{{ route('contact') }}" class="text-surface-400 hover:text-white transition-colors">Contact Support</a></li>
+                        <li><a href="{{ route('faq.index') }}" class="text-surface-400 hover:text-white transition-colors">FAQ</a></li>
+                        <li><a href="{{ route('support.index') }}" class="text-surface-400 hover:text-white transition-colors">Support Tickets</a></li>
                         <li><a href="{{ route('license') }}" class="text-surface-400 hover:text-white transition-colors">License Info</a></li>
                         <li><a href="{{ route('refund') }}" class="text-surface-400 hover:text-white transition-colors">Refund Policy</a></li>
                         <li><a href="{{ route('cookies') }}" class="text-surface-400 hover:text-white transition-colors">Cookie Policy</a></li>

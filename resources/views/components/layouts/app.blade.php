@@ -37,6 +37,9 @@
             <x-footer />
         </div>
 
+        <!-- Quick View Modal -->
+        <x-quick-view-modal />
+
         <!-- AI Chatbot Widget -->
         @if(\App\Models\Setting::get('chatbot_enabled', false))
             <x-chatbot-widget />

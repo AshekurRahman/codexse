@@ -68,7 +68,7 @@
                                     <span class="text-xs text-gray-500">{{ $reply->created_at->diffForHumans() }}</span>
                                 </div>
                                 <div class="prose dark:prose-invert prose-sm max-w-none">
-                                    {!! $reply->message !!}
+                                    {!! clean($reply->message) !!}
                                 </div>
                                 @if($reply->attachment)
                                     <div class="mt-2">

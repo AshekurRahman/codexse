@@ -227,7 +227,7 @@ function chatbotWidget() {
 
         async initSession() {
             try {
-                const response = await fetch('/api/chatbot/session', {
+                const response = await fetch('{{ url('/api/chatbot/session') }}', {
                     headers: {
                         'Accept': 'application/json',
                     },
@@ -273,7 +273,7 @@ function chatbotWidget() {
 
             try {
                 this.loading = true;
-                const response = await fetch('/api/chatbot/new', {
+                const response = await fetch('{{ url('/api/chatbot/new') }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -321,7 +321,7 @@ function chatbotWidget() {
             this.loading = true;
 
             try {
-                const response = await fetch('/api/chatbot/send', {
+                const response = await fetch('{{ url('/api/chatbot/send') }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

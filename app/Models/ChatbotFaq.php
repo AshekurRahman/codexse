@@ -98,6 +98,23 @@ class ChatbotFaq extends Model
     {
         $query = strtolower(trim($query));
 
+        // Handle common greetings
+        $greetings = ['hi', 'hey', 'hello', 'hola', 'howdy', 'good morning', 'good afternoon', 'good evening', 'greetings', 'yo', 'sup', 'whats up', "what's up"];
+        if (in_array($query, $greetings) || preg_match('/^(hi|hey|hello|hola)\b/i', $query)) {
+            // Look for a greeting FAQ
+            $greetingFaq = static::active()
+                ->where(function ($q) {
+                    $q->where('keywords', 'LIKE', '%greeting%')
+                      ->orWhere('keywords', 'LIKE', '%hello%')
+                      ->orWhere('category', 'Greeting');
+                })
+                ->first();
+
+            if ($greetingFaq) {
+                return $greetingFaq;
+            }
+        }
+
         // First, try exact match on question
         $exactMatch = static::active()
             ->whereRaw('LOWER(question) = ?', [$query])

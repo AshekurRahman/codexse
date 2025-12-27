@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\ChatbotController;
 use App\Http\Controllers\Api\LicenseController;
+use App\Http\Controllers\Api\ProductController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,18 +16,23 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// License validation and activation endpoints (public)
-Route::prefix('license')->group(function () {
+// License validation and activation endpoints (rate limited)
+Route::prefix('license')->middleware('throttle:30,1')->group(function () {
     Route::post('/validate', [LicenseController::class, 'validate']);
     Route::post('/activate', [LicenseController::class, 'activate']);
     Route::post('/deactivate', [LicenseController::class, 'deactivate']);
     Route::get('/{license_key}', [LicenseController::class, 'show']);
 });
 
-// AI Chatbot endpoints (public with rate limiting)
-Route::prefix('chatbot')->group(function () {
+// AI Chatbot endpoints (rate limited)
+Route::prefix('chatbot')->middleware('throttle:20,1')->group(function () {
     Route::get('/session', [ChatbotController::class, 'session']);
     Route::post('/send', [ChatbotController::class, 'send']);
     Route::post('/close', [ChatbotController::class, 'close']);
     Route::post('/new', [ChatbotController::class, 'newSession']);
+});
+
+// Product API endpoints (rate limited)
+Route::prefix('products')->middleware('throttle:60,1')->group(function () {
+    Route::get('/{id}', [ProductController::class, 'show'])->where('id', '[0-9]+');
 });

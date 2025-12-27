@@ -113,13 +113,15 @@
             </div>
         @endif
 
-        <!-- Wishlist Button -->
-        <div class="absolute top-4 right-[1rem] opacity-0 group-hover:opacity-100 transition-opacity">
+        <!-- Action Buttons (Wishlist & Quick View) -->
+        <div class="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <!-- Wishlist Button -->
             <button
                 @click.prevent="toggleWishlist()"
                 :disabled="wishlistLoading"
                 class="w-8 h-8 bg-white dark:bg-surface-800 rounded-full flex items-center justify-center shadow hover:bg-danger-50 dark:hover:bg-danger-900/30 transition-colors"
                 :class="inWishlist ? 'text-danger-500' : 'text-surface-600 dark:text-surface-400 hover:text-danger-500'"
+                title="Add to Wishlist"
             >
                 <svg x-show="!wishlistLoading" class="w-4 h-4" :fill="inWishlist ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -127,6 +129,29 @@
                 <svg x-show="wishlistLoading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" x-cloak>
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </button>
+
+            <!-- Quick View Button -->
+            <button
+                @click.prevent="$dispatch('open-quick-view', {
+                    id: {{ $product?->id ?? 0 }},
+                    name: '{{ addslashes($product?->name ?? '') }}',
+                    thumbnail: '{{ $product?->thumbnail_url ?? '' }}',
+                    price: {{ $product?->price ?? 0 }},
+                    sale_price: {{ $product?->sale_price ?? 'null' }},
+                    category: '{{ addslashes($product?->category?->name ?? '') }}',
+                    rating: {{ $product?->average_rating ?? 0 }},
+                    sales: {{ $product?->downloads_count ?? 0 }},
+                    url: '{{ $product ? route('products.show', $product) : '#' }}',
+                    inWishlist: inWishlist
+                })"
+                class="w-8 h-8 bg-white dark:bg-surface-800 rounded-full flex items-center justify-center shadow text-surface-600 dark:text-surface-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                title="Quick View"
+            >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                 </svg>
             </button>
         </div>

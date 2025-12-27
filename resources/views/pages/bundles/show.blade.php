@@ -19,7 +19,7 @@
                     <div class="rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-6">
                         <h1 class="text-2xl font-bold text-surface-900 dark:text-white">{{ $bundle->name }}</h1>
                         <div class="mt-4 prose dark:prose-invert max-w-none">
-                            {!! $bundle->description !!}
+                            {!! clean($bundle->description) !!}
                         </div>
                     </div>
 

@@ -21,6 +21,7 @@ use App\Http\Controllers\AffiliateController;
 use App\Http\Controllers\ProductBundleController;
 use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\FaqController;
+use App\Http\Controllers\ProductRequestController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -75,6 +76,11 @@ Route::get('/become-a-seller', [SellerApplicationController::class, 'index'])->n
 // Product Bundles
 Route::get('/bundles', [ProductBundleController::class, 'index'])->name('bundles.index');
 Route::get('/bundles/{bundle:slug}', [ProductBundleController::class, 'show'])->name('bundles.show');
+
+// Product Requests (public form)
+Route::get('/request-product', [ProductRequestController::class, 'create'])->name('product-request.create');
+Route::post('/request-product', [ProductRequestController::class, 'store'])->name('product-request.store');
+Route::get('/request-product/success', [ProductRequestController::class, 'success'])->name('product-request.success');
 
 // Newsletter
 Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
@@ -154,6 +160,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/affiliate/apply', [AffiliateController::class, 'store'])->name('affiliate.apply.store');
     Route::get('/affiliate/settings', [AffiliateController::class, 'settings'])->name('affiliate.settings');
     Route::put('/affiliate/settings', [AffiliateController::class, 'updateSettings'])->name('affiliate.settings.update');
+
+    // Product Requests (user's requests)
+    Route::get('/my-requests', [ProductRequestController::class, 'index'])->name('product-request.index');
+    Route::get('/my-requests/{productRequest}', [ProductRequestController::class, 'show'])->name('product-request.show');
 });
 
 /*

@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 class ChatbotService
 {
     protected ?string $apiKey = null;
-    protected string $model = 'claude-sonnet-4-20250514';
+    protected string $model = 'gemini-2.0-flash';
     protected int $maxTokens = 1024;
     protected ?string $systemPrompt = null;
     protected int $rateLimitPerMinute = 10;
@@ -22,8 +22,7 @@ class ChatbotService
     protected string $mode = 'faq'; // 'faq' or 'ai'
     protected string $fallbackMessage = '';
 
-    protected const API_URL = 'https://api.anthropic.com/v1/messages';
-    protected const API_VERSION = '2023-06-01';
+    protected const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
     public function __construct()
     {
@@ -32,8 +31,8 @@ class ChatbotService
 
     protected function loadSettings(): void
     {
-        $this->apiKey = $this->getSetting('chatbot_api_key', config('services.anthropic.api_key'));
-        $this->model = $this->getSetting('chatbot_model', 'claude-sonnet-4-20250514');
+        $this->apiKey = $this->getSetting('chatbot_api_key', config('services.gemini.api_key'));
+        $this->model = $this->getSetting('chatbot_model', 'gemini-2.0-flash');
         $this->maxTokens = (int) $this->getSetting('chatbot_max_tokens', 1024);
         $this->systemPrompt = $this->getSetting('chatbot_system_prompt', $this->getDefaultSystemPrompt());
         $this->rateLimitPerMinute = (int) $this->getSetting('chatbot_rate_limit_per_minute', 10);
@@ -195,13 +194,12 @@ PROMPT;
     }
 
     /**
-     * Handle AI-based response (requires API key)
+     * Handle AI-based response using Google Gemini
      */
     protected function handleAiMessage(AiChatSession $session, string $userMessage, array $context = []): array
     {
-        // Build conversation history
-        $messages = $this->buildConversationHistory($session);
-        $messages[] = ['role' => 'user', 'content' => $userMessage];
+        // Build conversation history for Gemini format
+        $contents = $this->buildGeminiContents($session, $userMessage);
 
         // Save user message
         AiChatMessage::create([
@@ -211,22 +209,35 @@ PROMPT;
         ]);
 
         try {
-            // Call Claude API
+            // Build Gemini API URL
+            $apiUrl = self::GEMINI_API_URL . "/{$this->model}:generateContent?key={$this->apiKey}";
+
+            // Call Gemini API
             $response = Http::withHeaders([
-                'x-api-key' => $this->apiKey,
-                'anthropic-version' => self::API_VERSION,
                 'Content-Type' => 'application/json',
             ])
             ->timeout(30)
-            ->post(self::API_URL, [
-                'model' => $this->model,
-                'max_tokens' => $this->maxTokens,
-                'system' => $this->buildSystemPrompt($session, $context),
-                'messages' => $messages,
+            ->post($apiUrl, [
+                'contents' => $contents,
+                'systemInstruction' => [
+                    'parts' => [
+                        ['text' => $this->buildSystemPrompt($session, $context)]
+                    ]
+                ],
+                'generationConfig' => [
+                    'maxOutputTokens' => $this->maxTokens,
+                    'temperature' => 0.7,
+                ],
+                'safetySettings' => [
+                    ['category' => 'HARM_CATEGORY_HARASSMENT', 'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'],
+                    ['category' => 'HARM_CATEGORY_HATE_SPEECH', 'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'],
+                    ['category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'],
+                    ['category' => 'HARM_CATEGORY_DANGEROUS_CONTENT', 'threshold' => 'BLOCK_MEDIUM_AND_ABOVE'],
+                ],
             ]);
 
             if (!$response->successful()) {
-                Log::channel('error')->error('Chatbot API error', [
+                Log::channel('error')->error('Gemini API error', [
                     'status' => $response->status(),
                     'body' => $response->body(),
                 ]);
@@ -238,8 +249,13 @@ PROMPT;
             }
 
             $data = $response->json();
-            $assistantContent = $data['content'][0]['text'] ?? '';
-            $tokensUsed = ($data['usage']['input_tokens'] ?? 0) + ($data['usage']['output_tokens'] ?? 0);
+
+            // Extract response text from Gemini format
+            $assistantContent = $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
+
+            // Calculate tokens used (Gemini provides this in usageMetadata)
+            $tokensUsed = ($data['usageMetadata']['promptTokenCount'] ?? 0) +
+                          ($data['usageMetadata']['candidatesTokenCount'] ?? 0);
 
             // Save assistant message
             $assistantMsg = AiChatMessage::create([
@@ -249,8 +265,9 @@ PROMPT;
                 'tokens_used' => $tokensUsed,
                 'metadata' => [
                     'mode' => 'ai',
+                    'provider' => 'gemini',
                     'model' => $this->model,
-                    'usage' => $data['usage'] ?? null,
+                    'usage' => $data['usageMetadata'] ?? null,
                 ],
             ]);
 
@@ -263,7 +280,7 @@ PROMPT;
             ];
 
         } catch (\Exception $e) {
-            Log::channel('error')->error('Chatbot exception', [
+            Log::channel('error')->error('Gemini chatbot exception', [
                 'message' => $e->getMessage(),
                 'session_id' => $session->id,
             ]);
@@ -275,18 +292,38 @@ PROMPT;
         }
     }
 
-    protected function buildConversationHistory(AiChatSession $session): array
+    /**
+     * Build conversation contents in Gemini format
+     */
+    protected function buildGeminiContents(AiChatSession $session, string $currentMessage): array
     {
-        return $session->messages()
+        $contents = [];
+
+        // Get previous messages
+        $messages = $session->messages()
             ->whereIn('role', ['user', 'assistant'])
             ->orderBy('created_at')
             ->take(20) // Limit context window
-            ->get()
-            ->map(fn ($msg) => [
-                'role' => $msg->role,
-                'content' => $msg->content,
-            ])
-            ->toArray();
+            ->get();
+
+        foreach ($messages as $msg) {
+            $contents[] = [
+                'role' => $msg->role === 'assistant' ? 'model' : 'user',
+                'parts' => [
+                    ['text' => $msg->content]
+                ]
+            ];
+        }
+
+        // Add current user message
+        $contents[] = [
+            'role' => 'user',
+            'parts' => [
+                ['text' => $currentMessage]
+            ]
+        ];
+
+        return $contents;
     }
 
     protected function buildSystemPrompt(AiChatSession $session, array $context = []): string
@@ -340,6 +377,18 @@ PROMPT;
         return [
             'per_minute' => $this->rateLimitPerMinute,
             'per_day' => $this->rateLimitPerDay,
+        ];
+    }
+
+    /**
+     * Get available Gemini models
+     */
+    public static function getAvailableModels(): array
+    {
+        return [
+            'gemini-2.0-flash' => 'Gemini 2.0 Flash (Fast & Free)',
+            'gemini-1.5-flash' => 'Gemini 1.5 Flash (Fast)',
+            'gemini-1.5-pro' => 'Gemini 1.5 Pro (Advanced)',
         ];
     }
 }

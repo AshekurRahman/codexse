@@ -27,7 +27,7 @@ class ChatbotSettings extends Page
             'chatbot_enabled' => Setting::get('chatbot_enabled', false),
             'chatbot_mode' => Setting::get('chatbot_mode', 'faq'),
             'chatbot_api_key' => Setting::get('chatbot_api_key') ? '••••••••' : '',
-            'chatbot_model' => Setting::get('chatbot_model', 'claude-sonnet-4-20250514'),
+            'chatbot_model' => Setting::get('chatbot_model', 'gemini-2.0-flash'),
             'chatbot_max_tokens' => Setting::get('chatbot_max_tokens', 1024),
             'chatbot_system_prompt' => Setting::get('chatbot_system_prompt', ''),
             'chatbot_welcome_message' => Setting::get('chatbot_welcome_message', ''),
@@ -57,7 +57,7 @@ class ChatbotSettings extends Page
                             ])
                             ->descriptions([
                                 'faq' => 'Uses predefined Q&A pairs - no API costs, works offline',
-                                'ai' => 'Uses Claude AI for intelligent responses - requires Anthropic API key',
+                                'ai' => 'Uses Google Gemini AI for intelligent responses - requires Google AI API key',
                             ])
                             ->default('faq')
                             ->live()
@@ -82,24 +82,24 @@ class ChatbotSettings extends Page
                     ->visible(fn (Get $get) => $get('chatbot_mode') === 'faq'),
 
                 Forms\Components\Section::make('AI Configuration')
-                    ->description('Configure your Anthropic Claude API settings. Get your API key from console.anthropic.com')
+                    ->description('Configure your Google Gemini API settings. Get your API key from aistudio.google.com')
                     ->schema([
                         Forms\Components\TextInput::make('chatbot_api_key')
-                            ->label('Anthropic API Key')
+                            ->label('Google AI API Key')
                             ->password()
-                            ->placeholder('sk-ant-api...')
-                            ->helperText('Your Anthropic API key. Leave empty to keep existing key.')
+                            ->placeholder('AIza...')
+                            ->helperText('Your Google AI API key. Leave empty to keep existing key.')
                             ->maxLength(255),
 
                         Forms\Components\Select::make('chatbot_model')
-                            ->label('Claude Model')
+                            ->label('Gemini Model')
                             ->options([
-                                'claude-sonnet-4-20250514' => 'Claude Sonnet 4 (Recommended - Best balance)',
-                                'claude-3-5-haiku-20241022' => 'Claude 3.5 Haiku (Faster, cheaper)',
-                                'claude-opus-4-20250514' => 'Claude Opus 4 (Most capable, expensive)',
+                                'gemini-2.0-flash' => 'Gemini 2.0 Flash (Recommended - Fast & Free tier)',
+                                'gemini-1.5-flash' => 'Gemini 1.5 Flash (Fast)',
+                                'gemini-1.5-pro' => 'Gemini 1.5 Pro (Advanced)',
                             ])
-                            ->default('claude-sonnet-4-20250514')
-                            ->helperText('Select the Claude model for AI responses'),
+                            ->default('gemini-2.0-flash')
+                            ->helperText('Select the Gemini model for AI responses'),
 
                         Forms\Components\TextInput::make('chatbot_max_tokens')
                             ->label('Max Response Tokens')
@@ -176,7 +176,7 @@ class ChatbotSettings extends Page
 
         // AI mode settings - only update if they exist in form data (visible when mode is 'ai')
         if (array_key_exists('chatbot_model', $data)) {
-            Setting::set('chatbot_model', $data['chatbot_model'] ?? 'claude-sonnet-4-20250514', 'chatbot', 'string');
+            Setting::set('chatbot_model', $data['chatbot_model'] ?? 'gemini-2.0-flash', 'chatbot', 'string');
         }
         if (array_key_exists('chatbot_max_tokens', $data)) {
             Setting::set('chatbot_max_tokens', (int) ($data['chatbot_max_tokens'] ?? 1024), 'chatbot', 'integer');
