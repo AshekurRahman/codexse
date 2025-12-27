@@ -20,6 +20,7 @@ use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\AffiliateController;
 use App\Http\Controllers\ProductBundleController;
 use App\Http\Controllers\Auth\SocialLoginController;
+use App\Http\Controllers\FaqController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -57,6 +58,9 @@ Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
 Route::post('/contact', [PageController::class, 'contactSubmit'])->name('contact.submit');
 Route::get('/help', [PageController::class, 'help'])->name('help');
+
+// FAQ
+Route::get('/faq', [FaqController::class, 'index'])->name('faq.index');
 
 // Legal Pages
 Route::get('/privacy', [PageController::class, 'privacy'])->name('privacy');

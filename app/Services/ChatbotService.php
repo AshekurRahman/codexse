@@ -169,6 +169,7 @@ PROMPT;
 
         if ($faq) {
             $responseContent = $faq->answer;
+            $faq->recordHit(); // Track analytics
         } else {
             $responseContent = $this->fallbackMessage;
         }

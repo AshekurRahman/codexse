@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\AiChatSession;
+use App\Models\ChatbotFaq;
 use App\Services\ChatbotService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -46,10 +47,21 @@ class ChatbotController extends Controller
             ]);
         }
 
+        // Get suggested questions for FAQ mode
+        $suggestions = [];
+        if ($this->chatbotService->isFaqMode()) {
+            $suggestions = ChatbotFaq::getSuggested(4)->map(fn ($faq) => [
+                'id' => $faq->id,
+                'question' => $faq->question,
+            ])->toArray();
+        }
+
         return response()->json([
             'enabled' => true,
             'session_id' => $session->session_id,
+            'mode' => $this->chatbotService->getMode(),
             'welcome_message' => $this->chatbotService->getWelcomeMessage(),
+            'suggestions' => $suggestions,
             'messages' => $session->messages()
                 ->whereIn('role', ['user', 'assistant'])
                 ->orderBy('created_at')

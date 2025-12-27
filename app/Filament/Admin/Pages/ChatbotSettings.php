@@ -163,20 +163,32 @@ class ChatbotSettings extends Page
     {
         $data = $this->form->getState();
 
-        Setting::set('chatbot_enabled', $data['chatbot_enabled'] ?? false, 'chatbot', 'boolean');
-        Setting::set('chatbot_mode', $data['chatbot_mode'] ?? 'faq', 'chatbot', 'string');
-        Setting::set('chatbot_model', $data['chatbot_model'] ?? 'claude-sonnet-4-20250514', 'chatbot', 'string');
-        Setting::set('chatbot_max_tokens', (int) ($data['chatbot_max_tokens'] ?? 1024), 'chatbot', 'integer');
-        Setting::set('chatbot_system_prompt', $data['chatbot_system_prompt'] ?? '', 'chatbot', 'string');
-        Setting::set('chatbot_welcome_message', $data['chatbot_welcome_message'] ?? '', 'chatbot', 'string');
-        Setting::set('chatbot_offline_message', $data['chatbot_offline_message'] ?? '', 'chatbot', 'string');
-        Setting::set('chatbot_fallback_message', $data['chatbot_fallback_message'] ?? '', 'chatbot', 'string');
-        Setting::set('chatbot_rate_limit_per_minute', (int) ($data['chatbot_rate_limit_per_minute'] ?? 10), 'chatbot', 'integer');
-        Setting::set('chatbot_rate_limit_per_day', (int) ($data['chatbot_rate_limit_per_day'] ?? 100), 'chatbot', 'integer');
+        // Always save general settings
+        Setting::set('chatbot_enabled', data_get($data, 'chatbot_enabled', false), 'chatbot', 'boolean');
+        Setting::set('chatbot_mode', data_get($data, 'chatbot_mode', 'faq'), 'chatbot', 'string');
+        Setting::set('chatbot_welcome_message', data_get($data, 'chatbot_welcome_message', ''), 'chatbot', 'string');
+        Setting::set('chatbot_offline_message', data_get($data, 'chatbot_offline_message', ''), 'chatbot', 'string');
+        Setting::set('chatbot_rate_limit_per_minute', (int) data_get($data, 'chatbot_rate_limit_per_minute', 10), 'chatbot', 'integer');
+        Setting::set('chatbot_rate_limit_per_day', (int) data_get($data, 'chatbot_rate_limit_per_day', 100), 'chatbot', 'integer');
+
+        // FAQ mode settings
+        Setting::set('chatbot_fallback_message', data_get($data, 'chatbot_fallback_message', ''), 'chatbot', 'string');
+
+        // AI mode settings - only update if they exist in form data (visible when mode is 'ai')
+        if (array_key_exists('chatbot_model', $data)) {
+            Setting::set('chatbot_model', $data['chatbot_model'] ?? 'claude-sonnet-4-20250514', 'chatbot', 'string');
+        }
+        if (array_key_exists('chatbot_max_tokens', $data)) {
+            Setting::set('chatbot_max_tokens', (int) ($data['chatbot_max_tokens'] ?? 1024), 'chatbot', 'integer');
+        }
+        if (array_key_exists('chatbot_system_prompt', $data)) {
+            Setting::set('chatbot_system_prompt', $data['chatbot_system_prompt'] ?? '', 'chatbot', 'string');
+        }
 
         // Only update API key if a new one is provided (not the masked placeholder)
-        if (!empty($data['chatbot_api_key']) && $data['chatbot_api_key'] !== '••••••••') {
-            Setting::set('chatbot_api_key', $data['chatbot_api_key'], 'chatbot', 'string', true);
+        $apiKey = data_get($data, 'chatbot_api_key');
+        if (!empty($apiKey) && $apiKey !== '••••••••') {
+            Setting::set('chatbot_api_key', $apiKey, 'chatbot', 'string', true);
         }
 
         Notification::make()

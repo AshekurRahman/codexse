@@ -28,7 +28,7 @@
         x-transition:leave="transition ease-in duration-150"
         x-transition:leave-start="opacity-100 scale-100 translate-y-0"
         x-transition:leave-end="opacity-0 scale-95 translate-y-4"
-        class="w-[360px] sm:w-96 h-[500px] bg-white dark:bg-surface-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-surface-200 dark:border-surface-700"
+        class="w-[360px] sm:w-96 h-[520px] bg-white dark:bg-surface-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-surface-200 dark:border-surface-700"
     >
         <!-- Header -->
         <div class="flex items-center justify-between px-4 py-3 bg-primary-600 text-white shrink-0">
@@ -47,7 +47,7 @@
                         </span>
                         <span x-show="loading" class="flex items-center gap-1">
                             <span class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></span>
-                            Typing...
+                            <span x-text="mode === 'faq' ? 'Searching...' : 'Typing...'"></span>
                         </span>
                     </p>
                 </div>
@@ -76,17 +76,36 @@
             x-ref="messagesContainer"
             class="flex-1 overflow-y-auto p-4 space-y-4 bg-surface-50 dark:bg-surface-900"
         >
-            <!-- Welcome Message -->
+            <!-- Welcome Message & Suggestions -->
             <template x-if="messages.length === 0 && welcomeMessage">
-                <div class="flex gap-3">
-                    <div class="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center shrink-0">
-                        <svg class="w-4 h-4 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
+                <div class="space-y-4">
+                    <!-- Welcome -->
+                    <div class="flex gap-3">
+                        <div class="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center shrink-0">
+                            <svg class="w-4 h-4 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <div class="flex-1 bg-white dark:bg-surface-800 rounded-2xl rounded-tl-none p-3 shadow-sm max-w-[85%]">
+                            <p class="text-sm text-surface-700 dark:text-surface-300" x-text="welcomeMessage"></p>
+                        </div>
                     </div>
-                    <div class="flex-1 bg-white dark:bg-surface-800 rounded-2xl rounded-tl-none p-3 shadow-sm max-w-[85%]">
-                        <p class="text-sm text-surface-700 dark:text-surface-300" x-text="welcomeMessage"></p>
-                    </div>
+
+                    <!-- Suggested Questions -->
+                    <template x-if="suggestions.length > 0">
+                        <div class="space-y-2">
+                            <p class="text-xs text-surface-500 dark:text-surface-400 px-2">Popular questions:</p>
+                            <div class="flex flex-wrap gap-2">
+                                <template x-for="suggestion in suggestions" :key="suggestion.id">
+                                    <button
+                                        @click="askSuggestion(suggestion.question)"
+                                        class="text-left text-xs px-3 py-2 bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-lg hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400 transition shadow-sm"
+                                        x-text="suggestion.question.length > 40 ? suggestion.question.substring(0, 40) + '...' : suggestion.question"
+                                    ></button>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
                 </div>
             </template>
 
@@ -110,7 +129,7 @@
                         class="p-3"
                     >
                         <div
-                            class="text-sm whitespace-pre-wrap break-words prose prose-sm dark:prose-invert max-w-none"
+                            class="text-sm break-words prose prose-sm dark:prose-invert max-w-none [&>ul]:list-disc [&>ul]:ml-4 [&>ol]:list-decimal [&>ol]:ml-4 [&>p]:my-1"
                             :class="message.role === 'user' ? 'text-white prose-invert' : 'text-surface-700 dark:text-surface-300'"
                             x-html="formatMessage(message.content)"
                         ></div>
@@ -174,7 +193,7 @@
                     </svg>
                 </button>
             </form>
-            <p class="text-xs text-surface-400 mt-2 text-center">Powered by AI. May make mistakes.</p>
+            <p class="text-xs text-surface-400 mt-2 text-center" x-text="mode === 'faq' ? 'FAQ-powered support' : 'Powered by AI'"></p>
         </div>
     </div>
 </div>
@@ -187,7 +206,9 @@ function chatbotWidget() {
         isOpen: false,
         loading: false,
         sessionId: null,
+        mode: 'faq',
         messages: [],
+        suggestions: [],
         inputMessage: '',
         welcomeMessage: '',
         error: null,
@@ -195,6 +216,13 @@ function chatbotWidget() {
 
         async init() {
             await this.initSession();
+
+            // Listen for open-chatbot event from FAQ page
+            window.addEventListener('open-chatbot', () => {
+                if (this.enabled) {
+                    this.open();
+                }
+            });
         },
 
         async initSession() {
@@ -211,7 +239,9 @@ function chatbotWidget() {
                 this.enabled = data.enabled;
                 if (data.enabled) {
                     this.sessionId = data.session_id;
+                    this.mode = data.mode || 'faq';
                     this.welcomeMessage = data.welcome_message;
+                    this.suggestions = data.suggestions || [];
                     this.messages = data.messages || [];
                 }
             } catch (e) {
@@ -231,6 +261,11 @@ function chatbotWidget() {
 
         close() {
             this.isOpen = false;
+        },
+
+        askSuggestion(question) {
+            this.inputMessage = question;
+            this.send();
         },
 
         async startNewChat() {
@@ -255,6 +290,8 @@ function chatbotWidget() {
                     this.welcomeMessage = data.welcome_message;
                     this.messages = [];
                     this.error = null;
+                    // Re-fetch to get suggestions
+                    await this.initSession();
                 }
             } catch (e) {
                 console.error('Failed to start new chat:', e);
@@ -339,7 +376,15 @@ function chatbotWidget() {
         formatMessage(content) {
             if (!content) return '';
 
-            // Escape HTML first
+            // Check if content already contains HTML tags (from RichEditor)
+            if (/<[a-z][\s\S]*>/i.test(content)) {
+                // Already HTML, just return it (sanitize dangerous tags)
+                return content
+                    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+            }
+
+            // Plain text - escape and format
             let text = content
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
@@ -347,17 +392,11 @@ function chatbotWidget() {
 
             // Basic markdown-like formatting
             text = text
-                // Bold
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                // Italic
                 .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                // Code blocks
                 .replace(/```([\s\S]*?)```/g, '<pre class="bg-surface-100 dark:bg-surface-900 p-2 rounded text-xs overflow-x-auto my-1">$1</pre>')
-                // Inline code
                 .replace(/`(.*?)`/g, '<code class="bg-surface-100 dark:bg-surface-900 px-1 rounded text-xs">$1</code>')
-                // Links
                 .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" class="text-primary-600 dark:text-primary-400 underline hover:no-underline">$1</a>')
-                // Line breaks
                 .replace(/\n/g, '<br>');
 
             return text;

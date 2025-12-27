@@ -87,6 +87,11 @@ class ChatbotFaqResource extends Resource
                             ->label('Active')
                             ->default(true)
                             ->helperText('Inactive FAQs will not be shown to users'),
+
+                        Forms\Components\Toggle::make('is_suggested')
+                            ->label('Show as Suggested')
+                            ->default(false)
+                            ->helperText('Display this FAQ as a suggested question in the chat widget'),
                     ])
                     ->columns(2),
             ]);
@@ -118,6 +123,18 @@ class ChatbotFaqResource extends Resource
                     ->label('Active')
                     ->boolean()
                     ->sortable(),
+
+                Tables\Columns\IconColumn::make('is_suggested')
+                    ->label('Suggested')
+                    ->boolean()
+                    ->sortable()
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('hit_count')
+                    ->label('Views')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(),
 
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Updated')
@@ -155,6 +172,14 @@ class ChatbotFaqResource extends Resource
                         ->label('Deactivate')
                         ->icon('heroicon-o-x-circle')
                         ->action(fn ($records) => $records->each->update(['is_active' => false])),
+                    Tables\Actions\BulkAction::make('mark_suggested')
+                        ->label('Mark as Suggested')
+                        ->icon('heroicon-o-star')
+                        ->action(fn ($records) => $records->each->update(['is_suggested' => true])),
+                    Tables\Actions\BulkAction::make('unmark_suggested')
+                        ->label('Remove from Suggested')
+                        ->icon('heroicon-o-star')
+                        ->action(fn ($records) => $records->each->update(['is_suggested' => false])),
                 ]),
             ])
             ->defaultSort('sort_order')

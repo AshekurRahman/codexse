@@ -17,12 +17,15 @@ class ChatbotFaq extends Model
         'category',
         'sort_order',
         'is_active',
+        'hit_count',
+        'is_suggested',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'is_suggested' => 'boolean',
         ];
     }
 
@@ -34,6 +37,58 @@ class ChatbotFaq extends Model
     public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function scopeSuggested(Builder $query): Builder
+    {
+        return $query->where('is_suggested', true);
+    }
+
+    public function scopePopular(Builder $query): Builder
+    {
+        return $query->orderByDesc('hit_count');
+    }
+
+    /**
+     * Increment hit count when FAQ is matched
+     */
+    public function recordHit(): void
+    {
+        $this->increment('hit_count');
+    }
+
+    /**
+     * Get suggested FAQs for the chat widget
+     */
+    public static function getSuggested(int $limit = 4): \Illuminate\Database\Eloquent\Collection
+    {
+        // First try to get manually marked suggested FAQs
+        $suggested = static::active()->suggested()->ordered()->limit($limit)->get();
+
+        // If not enough, fill with popular ones
+        if ($suggested->count() < $limit) {
+            $remaining = $limit - $suggested->count();
+            $popular = static::active()
+                ->where('is_suggested', false)
+                ->popular()
+                ->limit($remaining)
+                ->get();
+            $suggested = $suggested->merge($popular);
+        }
+
+        // If still not enough, fill with any active FAQs
+        if ($suggested->count() < $limit) {
+            $remaining = $limit - $suggested->count();
+            $ids = $suggested->pluck('id')->toArray();
+            $more = static::active()
+                ->whereNotIn('id', $ids)
+                ->ordered()
+                ->limit($remaining)
+                ->get();
+            $suggested = $suggested->merge($more);
+        }
+
+        return $suggested;
     }
 
     /**
