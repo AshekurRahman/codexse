@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ServiceOrder;
 use App\Models\JobContract;
 use App\Models\JobPosting;
+use App\Models\Order;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -66,6 +67,56 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+        // ===== Chart Data =====
+
+        // Order Status Distribution (Pie Chart)
+        $orderStatusData = $user->orders()
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        // Service Order Status Distribution (Pie Chart)
+        $serviceStatusData = ServiceOrder::where('buyer_id', $user->id)
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        // Contract Status Distribution (Pie Chart)
+        $contractStatusData = JobContract::where(function ($query) use ($user) {
+            $query->where('client_id', $user->id)
+                  ->orWhere('seller_id', $user->id);
+        })
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        // Spending Overview (Monthly - last 6 months)
+        $monthlySpending = $user->orders()
+            ->where('status', 'completed')
+            ->where('created_at', '>=', now()->subMonths(6))
+            ->selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, SUM(total) as total')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->pluck('total', 'month')
+            ->toArray();
+
+        // Total spending
+        $totalSpent = $user->orders()->where('status', 'completed')->sum('total');
+        $totalServiceSpent = ServiceOrder::where('buyer_id', $user->id)
+            ->whereIn('status', ['completed', 'delivered'])
+            ->sum('price');
+
+        // Activity breakdown for donut chart
+        $activityBreakdown = [
+            'products' => $totalOrders,
+            'services' => $serviceOrders,
+            'contracts' => $activeContracts,
+            'jobs' => $jobPosts,
+        ];
+
         return view('pages.dashboard', compact(
             'totalOrders',
             'totalDownloads',
@@ -77,7 +128,14 @@ class DashboardController extends Controller
             'recentOrders',
             'recentServiceOrders',
             'recentContracts',
-            'recentJobPosts'
+            'recentJobPosts',
+            'orderStatusData',
+            'serviceStatusData',
+            'contractStatusData',
+            'monthlySpending',
+            'totalSpent',
+            'totalServiceSpent',
+            'activityBreakdown'
         ));
     }
 
