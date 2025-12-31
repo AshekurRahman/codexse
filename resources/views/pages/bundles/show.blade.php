@@ -63,7 +63,7 @@
                         </button>
 
                         <div class="flex items-center gap-4 pt-4 border-t border-surface-200 dark:border-surface-700">
-                            <img src="{{ $bundle->seller->user->avatar_url }}" alt="{{ $bundle->seller->store_name }}" class="h-12 w-12 rounded-full object-cover">
+                            <img src="{{ $bundle->seller->logo_url }}" alt="{{ $bundle->seller->store_name }}" class="h-12 w-12 rounded-full object-cover">
                             <div>
                                 <a href="{{ route('sellers.show', $bundle->seller) }}" class="font-medium text-surface-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400">{{ $bundle->seller->store_name }}</a>
                                 <p class="text-sm text-surface-500 dark:text-surface-400">Seller</p>

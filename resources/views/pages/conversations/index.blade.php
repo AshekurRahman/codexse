@@ -95,11 +95,11 @@
                                 @foreach($conversations as $conversation)
                                     <a href="{{ route('conversations.show', $conversation) }}" class="block px-6 py-4 hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors">
                                         <div class="flex items-start gap-4">
-                                            <div class="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0">
-                                                @if($conversation->seller?->user?->avatar)
-                                                    <img src="{{ Storage::url($conversation->seller->user->avatar) }}" alt="" class="w-12 h-12 rounded-full object-cover">
+                                            <div class="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center shrink-0 overflow-hidden">
+                                                @if($conversation->seller)
+                                                    <img src="{{ $conversation->seller->logo_url }}" alt="{{ $conversation->seller->store_name }}" class="w-12 h-12 rounded-full object-cover">
                                                 @else
-                                                    <span class="text-lg font-medium text-primary-700 dark:text-primary-300">{{ strtoupper(substr($conversation->seller?->store_name ?? $conversation->subject ?? 'C', 0, 1)) }}</span>
+                                                    <span class="text-lg font-medium text-primary-700 dark:text-primary-300">{{ strtoupper(substr($conversation->subject ?? 'C', 0, 1)) }}</span>
                                                 @endif
                                             </div>
                                             <div class="flex-1 min-w-0">

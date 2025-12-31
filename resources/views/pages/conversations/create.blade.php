@@ -19,7 +19,7 @@
                     @if($seller)
                         <input type="hidden" name="seller_id" value="{{ $seller->id }}">
                         <div class="flex items-center gap-4 p-4 rounded-lg bg-surface-50 dark:bg-surface-700">
-                            <img src="{{ $seller->user->avatar_url }}" alt="{{ $seller->store_name }}" class="h-12 w-12 rounded-full object-cover">
+                            <img src="{{ $seller->logo_url }}" alt="{{ $seller->store_name }}" class="h-12 w-12 rounded-full object-cover">
                             <div>
                                 <p class="font-medium text-surface-900 dark:text-white">{{ $seller->store_name }}</p>
                                 <p class="text-sm text-surface-500 dark:text-surface-400">Seller</p>

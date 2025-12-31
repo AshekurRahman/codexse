@@ -28,6 +28,9 @@ class Seller extends Model
         'status',
         'level',
         'is_verified',
+        'verification_status',
+        'verified_at',
+        'verification_badges',
         'is_featured',
         'is_on_vacation',
         'vacation_message',
@@ -46,6 +49,8 @@ class Seller extends Model
         return [
             'stripe_onboarding_complete' => 'boolean',
             'is_verified' => 'boolean',
+            'verification_badges' => 'array',
+            'verified_at' => 'datetime',
             'is_featured' => 'boolean',
             'is_on_vacation' => 'boolean',
             'vacation_auto_reply' => 'boolean',
@@ -145,6 +150,56 @@ class Seller extends Model
     public function escrowTransactions(): HasMany
     {
         return $this->hasMany(EscrowTransaction::class);
+    }
+
+    public function verifications(): HasMany
+    {
+        return $this->hasMany(SellerVerification::class);
+    }
+
+    public function latestVerification()
+    {
+        return $this->hasOne(SellerVerification::class)->latestOfMany();
+    }
+
+    public function pendingVerification()
+    {
+        return $this->hasOne(SellerVerification::class)->where('status', 'pending')->latestOfMany();
+    }
+
+    /**
+     * Check if seller has a specific verification badge.
+     */
+    public function hasVerificationBadge(string $type): bool
+    {
+        $badges = $this->verification_badges ?? [];
+        return isset($badges[$type]);
+    }
+
+    /**
+     * Get all verification badge types the seller has earned.
+     */
+    public function getEarnedBadgesAttribute(): array
+    {
+        return array_keys($this->verification_badges ?? []);
+    }
+
+    /**
+     * Check if seller can request verification.
+     */
+    public function canRequestVerification(): bool
+    {
+        // Must be approved seller
+        if ($this->status !== 'approved') {
+            return false;
+        }
+
+        // Check if there's a pending verification
+        $pendingCount = $this->verifications()
+            ->whereIn('status', ['pending', 'under_review'])
+            ->count();
+
+        return $pendingCount === 0;
     }
 
     public function getLogoUrlAttribute(): string

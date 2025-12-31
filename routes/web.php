@@ -382,6 +382,12 @@ Route::middleware(['auth', 'verified', 'seller'])->prefix('seller')->name('selle
     Route::get('/analytics/sales-data', [App\Http\Controllers\Seller\AnalyticsController::class, 'salesData'])->name('analytics.sales-data');
     Route::get('/analytics/products-data', [App\Http\Controllers\Seller\AnalyticsController::class, 'productsData'])->name('analytics.products-data');
     Route::get('/analytics/export', [App\Http\Controllers\Seller\AnalyticsController::class, 'export'])->name('analytics.export');
+
+    // Verification
+    Route::get('/verification', [App\Http\Controllers\Seller\VerificationController::class, 'index'])->name('verification.index');
+    Route::get('/verification/request', [App\Http\Controllers\Seller\VerificationController::class, 'create'])->name('verification.create');
+    Route::post('/verification/request', [App\Http\Controllers\Seller\VerificationController::class, 'store'])->name('verification.store');
+    Route::get('/verification/{verification}', [App\Http\Controllers\Seller\VerificationController::class, 'show'])->name('verification.show');
 });
 
 /*

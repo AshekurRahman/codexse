@@ -70,9 +70,18 @@ class Category extends Model
         return $this->hasMany(JobPosting::class);
     }
 
-    public function getImageUrlAttribute(): ?string
+    public function getImageUrlAttribute(): string
     {
-        return $this->image ? asset('storage/' . $this->image) : null;
+        if ($this->image) {
+            return asset('storage/' . $this->image);
+        }
+
+        return asset('images/placeholder-category.svg');
+    }
+
+    public function getIconUrlAttribute(): ?string
+    {
+        return $this->icon ? asset('storage/' . $this->icon) : null;
     }
 
     public function scopeActive($query)

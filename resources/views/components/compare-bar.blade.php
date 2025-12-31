@@ -74,10 +74,10 @@
     class="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-surface-800 border-t border-surface-200 dark:border-surface-700 shadow-2xl"
     x-cloak
 >
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <div class="flex items-center justify-between gap-4">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 overflow-visible">
+        <div class="flex items-center justify-between gap-4 overflow-visible">
             <!-- Products Preview -->
-            <div class="flex items-center gap-4 overflow-x-auto flex-1 pb-2 sm:pb-0">
+            <div class="flex items-center gap-4 overflow-x-auto overflow-y-visible flex-1 pb-2 sm:pb-0 pt-2">
                 <div class="flex items-center gap-2 flex-shrink-0">
                     <div class="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center">
                         <svg class="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,29 +91,20 @@
                 </div>
 
                 <!-- Product Thumbnails -->
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-4">
                     <template x-for="product in products" :key="product.id">
                         <div class="relative group flex-shrink-0">
-                            <div class="w-16 h-16 rounded-xl overflow-hidden border-2 border-surface-200 dark:border-surface-600 bg-surface-100 dark:bg-surface-700 flex items-center justify-center">
-                                <template x-if="product.thumbnail">
-                                    <img
-                                        :src="product.thumbnail"
-                                        :alt="product.name"
-                                        class="w-full h-full object-cover"
-                                        onerror="this.style.display='none'"
-                                    >
-                                </template>
-                                <template x-if="!product.thumbnail">
-                                    <div class="w-full h-full flex items-center justify-center bg-surface-100 dark:bg-surface-700">
-                                        <svg class="w-6 h-6 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
-                                </template>
+                            <div class="w-16 h-16 rounded-xl overflow-hidden border-2 border-surface-200 dark:border-surface-600 bg-surface-100 dark:bg-surface-700">
+                                <img
+                                    :src="product.thumbnail"
+                                    :alt="product.name"
+                                    class="w-full h-full object-cover"
+                                    onerror="this.onerror=null; this.src='{{ asset('images/placeholder-product.svg') }}';"
+                                >
                             </div>
                             <button
                                 @click="removeProduct(product.id)"
-                                class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                class="absolute -top-2 -right-2 z-10 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 shadow-md"
                             >
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>

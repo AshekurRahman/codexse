@@ -35,7 +35,7 @@
                                     <span class="text-sm text-surface-500 dark:text-surface-400 line-through">${{ number_format($bundle->original_price, 2) }}</span>
                                 </div>
                                 <div class="mt-4 flex items-center gap-2">
-                                    <img src="{{ $bundle->seller->user->avatar_url }}" alt="{{ $bundle->seller->store_name }}" class="h-6 w-6 rounded-full object-cover">
+                                    <img src="{{ $bundle->seller->logo_url }}" alt="{{ $bundle->seller->store_name }}" class="h-6 w-6 rounded-full object-cover">
                                     <span class="text-sm text-surface-600 dark:text-surface-400">{{ $bundle->seller->store_name }}</span>
                                 </div>
                             </div>

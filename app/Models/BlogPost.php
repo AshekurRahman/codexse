@@ -140,7 +140,16 @@ class BlogPost extends Model
         if ($this->featured_image) {
             return asset('storage/' . $this->featured_image);
         }
-        return asset('images/og-default.jpg');
+        return asset('images/og-default.svg');
+    }
+
+    public function getFeaturedImageUrlAttribute(): string
+    {
+        if ($this->featured_image) {
+            return asset('storage/' . $this->featured_image);
+        }
+
+        return asset('images/placeholder-blog.svg');
     }
 
     public function getRelatedPosts(int $limit = 3)

@@ -9,7 +9,7 @@
                     Back to Messages
                 </a>
                 <div class="flex items-center gap-4">
-                    <img src="{{ $conversation->seller->user->avatar_url }}" alt="{{ $conversation->seller->store_name }}" class="h-12 w-12 rounded-full object-cover">
+                    <img src="{{ $conversation->seller->logo_url }}" alt="{{ $conversation->seller->store_name }}" class="h-12 w-12 rounded-full object-cover">
                     <div>
                         <h1 class="text-xl font-bold text-surface-900 dark:text-white">{{ $conversation->subject }}</h1>
                         <p class="text-surface-600 dark:text-surface-400">with {{ $conversation->seller->store_name }}</p>

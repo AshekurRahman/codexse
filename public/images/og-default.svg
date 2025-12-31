@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect fill="#0f172a" width="1200" height="630"/>
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+  </defs>
+  <rect x="100" y="100" width="1000" height="430" rx="20" fill="url(#grad)" opacity="0.1"/>
+  <text x="600" y="280" font-family="system-ui, sans-serif" font-size="72" font-weight="bold" fill="#e2e8f0" text-anchor="middle">Codexse</text>
+  <text x="600" y="360" font-family="system-ui, sans-serif" font-size="28" fill="#94a3b8" text-anchor="middle">Digital Marketplace</text>
+</svg>

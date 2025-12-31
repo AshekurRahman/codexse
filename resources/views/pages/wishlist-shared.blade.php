@@ -88,9 +88,9 @@
 
                             <!-- Seller -->
                             @if($item->product->seller)
-                                <a href="{{ route('seller.show', $item->product->seller) }}" class="flex items-center gap-2 mb-3 text-sm text-surface-500 dark:text-surface-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
-                                    <img src="{{ $item->product->seller->user->avatar_url }}" alt="{{ $item->product->seller->business_name }}" class="w-5 h-5 rounded-full">
-                                    <span>{{ $item->product->seller->business_name }}</span>
+                                <a href="{{ route('sellers.show', $item->product->seller) }}" class="flex items-center gap-2 mb-3 text-sm text-surface-500 dark:text-surface-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                                    <img src="{{ $item->product->seller->logo_url }}" alt="{{ $item->product->seller->store_name }}" class="w-5 h-5 rounded-full object-cover">
+                                    <span>{{ $item->product->seller->store_name }}</span>
                                 </a>
                             @endif
 
