@@ -6,7 +6,9 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Seller;
 use App\Models\Product;
+use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ConversationController extends Controller
 {
@@ -49,11 +51,14 @@ class ConversationController extends Controller
             'last_message_at' => now(),
         ]);
 
-        Message::create([
+        $message = Message::create([
             'conversation_id' => $conversation->id,
             'sender_id' => auth()->id(),
             'body' => $validated['message'],
         ]);
+
+        // Send push notification to seller
+        $this->sendMessageNotification($conversation, $message);
 
         return redirect()->route('conversations.show', $conversation)
             ->with('success', 'Message sent successfully!');
@@ -69,7 +74,7 @@ class ConversationController extends Controller
             'message' => 'required|string|max:5000',
         ]);
 
-        Message::create([
+        $message = Message::create([
             'conversation_id' => $conversation->id,
             'sender_id' => auth()->id(),
             'body' => $validated['message'],
@@ -77,7 +82,43 @@ class ConversationController extends Controller
 
         $conversation->update(['last_message_at' => now()]);
 
+        // Send push notification
+        $this->sendMessageNotification($conversation, $message);
+
         return back()->with('success', 'Reply sent!');
+    }
+
+    protected function sendMessageNotification(Conversation $conversation, Message $message): void
+    {
+        try {
+            $pushService = app(PushNotificationService::class);
+            $sender = auth()->user();
+
+            // Determine the recipient (the other party in the conversation)
+            $conversation->load('seller.user', 'buyer');
+
+            // If sender is buyer, notify seller
+            if ($sender->id === $conversation->buyer_id && $conversation->seller && $conversation->seller->user) {
+                $recipient = $conversation->seller->user;
+            }
+            // If sender is seller, notify buyer
+            elseif ($conversation->buyer && $sender->id !== $conversation->buyer_id) {
+                $recipient = $conversation->buyer;
+            } else {
+                return;
+            }
+
+            $pushService->notifyNewMessage($recipient, [
+                'conversation_id' => $conversation->id,
+                'sender_name' => $sender->name,
+                'sender_avatar' => $sender->avatar_url ?? null,
+                'content' => $message->body,
+                'url' => route('conversations.show', $conversation),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to send message notification: ' . $e->getMessage());
+        }
     }
 
     public function create(Request $request)

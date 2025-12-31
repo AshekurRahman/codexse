@@ -136,7 +136,7 @@
                             </svg>
                         </div>
                         <h3 class="text-xl font-semibold text-surface-900 dark:text-white mb-3">Competitive Revenue Share</h3>
-                        <p class="text-surface-600 dark:text-surface-400">Keep up to 80% of every sale. The more you sell, the higher your revenue share with our tiered commission structure.</p>
+                        <p class="text-surface-600 dark:text-surface-400">Keep up to {{ $commissionRates['top_seller_revenue'] }}% of every sale. The more you sell, the higher your revenue share with our tiered commission structure.</p>
                     </div>
                 </div>
 
@@ -306,7 +306,7 @@
                         <h3 class="text-xl font-bold text-surface-900 dark:text-white">Bronze</h3>
                         <p class="text-sm text-surface-500 dark:text-surface-400 mt-1">$0 - $1,000</p>
                         <div class="mt-4">
-                            <span class="text-4xl font-extrabold text-surface-900 dark:text-white">80%</span>
+                            <span class="text-4xl font-extrabold text-surface-900 dark:text-white">{{ $commissionRates['new_seller_revenue'] }}%</span>
                             <span class="text-surface-500 dark:text-surface-400"> revenue</span>
                         </div>
                     </div>
@@ -343,7 +343,7 @@
                         <h3 class="text-xl font-bold text-surface-900 dark:text-white">Silver</h3>
                         <p class="text-sm text-surface-500 dark:text-surface-400 mt-1">$1,000 - $10,000</p>
                         <div class="mt-4">
-                            <span class="text-4xl font-extrabold text-surface-900 dark:text-white">82%</span>
+                            <span class="text-4xl font-extrabold text-surface-900 dark:text-white">{{ $commissionRates['default_revenue'] }}%</span>
                             <span class="text-surface-500 dark:text-surface-400"> revenue</span>
                         </div>
                     </div>
@@ -383,7 +383,7 @@
                         <h3 class="text-xl font-bold text-surface-900 dark:text-white">Gold</h3>
                         <p class="text-sm text-surface-500 dark:text-surface-400 mt-1">$10,000 - $50,000</p>
                         <div class="mt-4">
-                            <span class="text-4xl font-extrabold text-surface-900 dark:text-white">85%</span>
+                            <span class="text-4xl font-extrabold text-surface-900 dark:text-white">{{ $commissionRates['established_seller_revenue'] }}%</span>
                             <span class="text-surface-500 dark:text-surface-400"> revenue</span>
                         </div>
                     </div>
@@ -426,7 +426,7 @@
                         <h3 class="text-xl font-bold text-surface-900 dark:text-white">Platinum</h3>
                         <p class="text-sm text-surface-500 dark:text-surface-400 mt-1">$50,000+</p>
                         <div class="mt-4">
-                            <span class="text-4xl font-extrabold text-surface-900 dark:text-white">88%</span>
+                            <span class="text-4xl font-extrabold text-surface-900 dark:text-white">{{ $commissionRates['top_seller_revenue'] }}%</span>
                             <span class="text-surface-500 dark:text-surface-400"> revenue</span>
                         </div>
                     </div>

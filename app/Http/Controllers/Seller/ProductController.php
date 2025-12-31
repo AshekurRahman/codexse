@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Seller;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductVariation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
@@ -93,7 +95,23 @@ class ProductController extends Controller
             'file' => 'nullable|file|max:102400|mimes:zip,rar,7z,tar,gz,pdf,doc,docx,xls,xlsx,psd,ai,sketch,fig',
             'demo_url' => 'nullable|url|max:255',
             'preview_url' => 'nullable|url|max:255',
+            'has_variations' => 'nullable|boolean',
+            'variations' => 'nullable|array',
+            'variations.*.id' => 'nullable|integer',
+            'variations.*.name' => 'required_with:variations|string|max:100',
+            'variations.*.description' => 'nullable|string',
+            'variations.*.price' => 'required_with:variations|numeric|min:0',
+            'variations.*.regular_price' => 'nullable|numeric|min:0',
+            'variations.*.features' => 'nullable|array',
+            'variations.*.license_type' => 'nullable|string|in:regular,extended',
+            'variations.*.support_months' => 'nullable|integer|min:0',
+            'variations.*.updates_months' => 'nullable|integer|min:0',
+            'variations.*.is_default' => 'nullable|boolean',
+            'variations.*.is_active' => 'nullable|boolean',
+            'variations.*.sort_order' => 'nullable|integer',
         ]);
+
+        $hasVariations = $request->boolean('has_variations');
 
         $product->update([
             'name' => $validated['name'],
@@ -104,7 +122,49 @@ class ProductController extends Controller
             'category_id' => $validated['category_id'],
             'demo_url' => $validated['demo_url'] ?? null,
             'preview_url' => $validated['preview_url'] ?? null,
+            'has_variations' => $hasVariations,
         ]);
+
+        // Handle variations
+        if ($hasVariations && !empty($request->variations)) {
+            $existingIds = [];
+
+            foreach ($request->variations as $index => $variationData) {
+                $variationId = $variationData['id'] ?? null;
+
+                $data = [
+                    'name' => $variationData['name'],
+                    'slug' => Str::slug($variationData['name']),
+                    'description' => $variationData['description'] ?? null,
+                    'price' => $variationData['price'],
+                    'regular_price' => $variationData['regular_price'] ?: null,
+                    'features' => $variationData['features'] ?? [],
+                    'license_type' => $variationData['license_type'] ?? 'regular',
+                    'support_months' => $variationData['support_months'] ?? 6,
+                    'updates_months' => $variationData['updates_months'] ?? 12,
+                    'is_default' => (bool) ($variationData['is_default'] ?? false),
+                    'is_active' => (bool) ($variationData['is_active'] ?? true),
+                    'sort_order' => $variationData['sort_order'] ?? $index,
+                ];
+
+                if ($variationId) {
+                    $variation = $product->variations()->find($variationId);
+                    if ($variation) {
+                        $variation->update($data);
+                        $existingIds[] = $variation->id;
+                    }
+                } else {
+                    $variation = $product->variations()->create($data);
+                    $existingIds[] = $variation->id;
+                }
+            }
+
+            // Delete removed variations
+            $product->variations()->whereNotIn('id', $existingIds)->delete();
+        } elseif (!$hasVariations) {
+            // Remove all variations if disabled
+            $product->variations()->delete();
+        }
 
         if ($request->hasFile('thumbnail')) {
             $product->clearMediaCollection('thumbnail');

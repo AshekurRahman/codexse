@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Conversation extends Model
 {
@@ -15,6 +16,9 @@ class Conversation extends Model
         'buyer_id',
         'seller_id',
         'product_id',
+        'conversationable_type',
+        'conversationable_id',
+        'type',
         'subject',
         'last_message_at',
     ];
@@ -39,6 +43,38 @@ class Conversation extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function conversationable(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    public function isServiceOrder(): bool
+    {
+        return $this->type === 'service_order';
+    }
+
+    public function isJobPosting(): bool
+    {
+        return $this->type === 'job_posting';
+    }
+
+    public function isJobContract(): bool
+    {
+        return $this->type === 'job_contract';
+    }
+
+    public const TYPES = [
+        'general' => 'General',
+        'service_order' => 'Service Order',
+        'job_posting' => 'Job Posting',
+        'job_contract' => 'Job Contract',
+    ];
+
+    public static function getTypes(): array
+    {
+        return self::TYPES;
     }
 
     public function messages(): HasMany

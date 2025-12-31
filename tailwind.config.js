@@ -12,6 +12,41 @@ export default {
 
     darkMode: 'class',
 
+    // Safelist for dynamic classes
+    safelist: [
+        // Dynamic status colors - all shades
+        { pattern: /^(bg|text|border|ring)-(primary|success|warning|danger|info|accent|surface)-(50|100|200|300|400|500|600|700|800|900|950)$/ },
+        { pattern: /^(bg|text|border|ring)-(primary|success|warning|danger|info|accent|surface)-(50|100|200|300|400|500|600|700|800|900|950)$/, variants: ['dark', 'hover', 'focus', 'group-hover'] },
+        // Opacity variants
+        { pattern: /^(bg|text|border)-(primary|success|warning|danger|info|accent|surface)-(50|100|200|300|400|500|600|700|800|900)\/(10|20|30|40|50|60|70|80|90)$/ },
+        { pattern: /^(bg|text|border)-(primary|success|warning|danger|info|accent|surface)-(50|100|200|300|400|500|600|700|800|900)\/(10|20|30|40|50|60|70|80|90)$/, variants: ['dark'] },
+        // Gradient colors
+        { pattern: /^(from|to|via)-(primary|success|warning|danger|info|accent|surface)-(50|100|200|300|400|500|600|700|800|900)$/ },
+        { pattern: /^(from|to|via)-(primary|success|warning|danger|info|accent|surface)-(50|100|200|300|400|500|600|700|800|900)$/, variants: ['dark'] },
+        // Shadow variations
+        { pattern: /^shadow-(primary|success|warning|danger|info|accent|surface)-(400|500|600)\/[0-9]+$/ },
+        // Ring offset
+        { pattern: /^ring-offset-(primary|success|warning|danger|info|accent|surface)-(50|100|200|300|400|500|600|700|800|900)$/ },
+        // Placeholder colors
+        { pattern: /^placeholder-(primary|success|warning|danger|info|accent|surface)-(400|500|600)$/ },
+        // Divide colors
+        { pattern: /^divide-(primary|success|warning|danger|info|accent|surface)-(100|200|300|700|800)$/ },
+        { pattern: /^divide-(primary|success|warning|danger|info|accent|surface)-(100|200|300|700|800)$/, variants: ['dark'] },
+        // Standard Tailwind colors for compatibility
+        { pattern: /^(bg|text|border|ring)-(red|green|blue|yellow|orange|purple|pink|gray|slate|zinc|neutral|stone)-(50|100|200|300|400|500|600|700|800|900|950)$/ },
+        { pattern: /^(bg|text|border|ring)-(red|green|blue|yellow|orange|purple|pink|gray|slate|zinc|neutral|stone)-(50|100|200|300|400|500|600|700|800|900|950)$/, variants: ['dark', 'hover'] },
+        // Common utility classes used dynamically
+        'translate-y-0',
+        '-translate-y-0.5',
+        '-translate-y-1',
+        'scale-95',
+        'scale-100',
+        'opacity-0',
+        'opacity-100',
+        'invisible',
+        'visible',
+    ],
+
     theme: {
         extend: {
             fontFamily: {
@@ -143,6 +178,44 @@ export default {
                     '50%': { transform: 'translateY(-10px)' },
                 },
             },
+            typography: ({ theme }) => ({
+                surface: {
+                    css: {
+                        '--tw-prose-body': theme('colors.surface.700'),
+                        '--tw-prose-headings': theme('colors.surface.900'),
+                        '--tw-prose-lead': theme('colors.surface.600'),
+                        '--tw-prose-links': theme('colors.primary.600'),
+                        '--tw-prose-bold': theme('colors.surface.900'),
+                        '--tw-prose-counters': theme('colors.surface.500'),
+                        '--tw-prose-bullets': theme('colors.surface.300'),
+                        '--tw-prose-hr': theme('colors.surface.200'),
+                        '--tw-prose-quotes': theme('colors.surface.900'),
+                        '--tw-prose-quote-borders': theme('colors.surface.200'),
+                        '--tw-prose-captions': theme('colors.surface.500'),
+                        '--tw-prose-code': theme('colors.surface.900'),
+                        '--tw-prose-pre-code': theme('colors.surface.200'),
+                        '--tw-prose-pre-bg': theme('colors.surface.800'),
+                        '--tw-prose-th-borders': theme('colors.surface.300'),
+                        '--tw-prose-td-borders': theme('colors.surface.200'),
+                        '--tw-prose-invert-body': theme('colors.surface.300'),
+                        '--tw-prose-invert-headings': theme('colors.white'),
+                        '--tw-prose-invert-lead': theme('colors.surface.400'),
+                        '--tw-prose-invert-links': theme('colors.primary.400'),
+                        '--tw-prose-invert-bold': theme('colors.white'),
+                        '--tw-prose-invert-counters': theme('colors.surface.400'),
+                        '--tw-prose-invert-bullets': theme('colors.surface.600'),
+                        '--tw-prose-invert-hr': theme('colors.surface.700'),
+                        '--tw-prose-invert-quotes': theme('colors.surface.100'),
+                        '--tw-prose-invert-quote-borders': theme('colors.surface.700'),
+                        '--tw-prose-invert-captions': theme('colors.surface.400'),
+                        '--tw-prose-invert-code': theme('colors.white'),
+                        '--tw-prose-invert-pre-code': theme('colors.surface.300'),
+                        '--tw-prose-invert-pre-bg': 'rgb(0 0 0 / 50%)',
+                        '--tw-prose-invert-th-borders': theme('colors.surface.600'),
+                        '--tw-prose-invert-td-borders': theme('colors.surface.700'),
+                    },
+                },
+            }),
         },
     },
 

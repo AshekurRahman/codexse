@@ -50,7 +50,7 @@
                     <div class="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
                         <h2 class="text-lg font-semibold text-surface-900 dark:text-white mb-4">Description</h2>
                         <div class="prose prose-surface dark:prose-invert max-w-none">
-                            {!! nl2br(e($product->description)) !!}
+                            {!! $product->description !!}
                         </div>
                     </div>
                 </div>

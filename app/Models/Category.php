@@ -60,6 +60,16 @@ class Category extends Model
         return $this->hasMany(Product::class);
     }
 
+    public function services(): HasMany
+    {
+        return $this->hasMany(Service::class);
+    }
+
+    public function jobPostings(): HasMany
+    {
+        return $this->hasMany(JobPosting::class);
+    }
+
     public function getImageUrlAttribute(): ?string
     {
         return $this->image ? asset('storage/' . $this->image) : null;

@@ -29,15 +29,15 @@
                     </div>
                 </div>
 
-                <!-- Products -->
+                <!-- Marketplace -->
                 <div>
-                    <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Products</h3>
+                    <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Marketplace</h3>
                     <ul class="space-y-3">
                         <li><a href="{{ route('products.index') }}" class="text-surface-400 hover:text-white transition-colors">All Products</a></li>
+                        <li><a href="{{ route('services.index') }}" class="text-surface-400 hover:text-white transition-colors">Services</a></li>
+                        <li><a href="{{ route('jobs.index') }}" class="text-surface-400 hover:text-white transition-colors">Jobs</a></li>
                         <li><a href="{{ route('categories.index') }}" class="text-surface-400 hover:text-white transition-colors">Categories</a></li>
                         <li><a href="{{ route('bundles.index') }}" class="text-surface-400 hover:text-white transition-colors">Bundles</a></li>
-                        <li><a href="{{ route('products.index', ['sort' => 'popular']) }}" class="text-surface-400 hover:text-white transition-colors">Popular</a></li>
-                        <li><a href="{{ route('products.index', ['sort' => 'newest']) }}" class="text-surface-400 hover:text-white transition-colors">New Arrivals</a></li>
                         <li><a href="{{ route('sellers.index') }}" class="text-surface-400 hover:text-white transition-colors">Top Sellers</a></li>
                         <li><a href="{{ route('product-request.create') }}" class="text-surface-400 hover:text-white transition-colors">Request a Product</a></li>
                     </ul>
@@ -48,6 +48,7 @@
                     <h3 class="text-sm font-semibold text-white uppercase tracking-wider mb-4">Company</h3>
                     <ul class="space-y-3">
                         <li><a href="{{ route('about') }}" class="text-surface-400 hover:text-white transition-colors">About Us</a></li>
+                        <li><a href="{{ route('blog.index') }}" class="text-surface-400 hover:text-white transition-colors">Blog</a></li>
                         <li><a href="{{ route('become-seller') }}" class="text-surface-400 hover:text-white transition-colors">Become a Seller</a></li>
                         <li><a href="{{ route('affiliate.apply') }}" class="text-surface-400 hover:text-white transition-colors">Affiliate Program</a></li>
                         <li><a href="{{ route('contact') }}" class="text-surface-400 hover:text-white transition-colors">Contact Us</a></li>
@@ -68,6 +69,85 @@
                         <li><a href="{{ route('cookies') }}" class="text-surface-400 hover:text-white transition-colors">Cookie Policy</a></li>
                     </ul>
                 </div>
+            </div>
+        </div>
+
+        <!-- Newsletter -->
+        <div class="border-t border-surface-800 py-8" x-data="{
+            email: '',
+            loading: false,
+            subscribed: false,
+            error: '',
+            async subscribe() {
+                if (this.loading || !this.email) return;
+                this.loading = true;
+                this.error = '';
+
+                try {
+                    const response = await fetch('{{ route('newsletter.subscribe') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({ email: this.email }),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        this.subscribed = true;
+                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: data.message, type: 'success' } }));
+                    } else {
+                        this.error = data.message || 'Something went wrong';
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    this.error = 'Something went wrong. Please try again.';
+                } finally {
+                    this.loading = false;
+                }
+            }
+        }">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-white mb-1">Subscribe to our newsletter</h3>
+                    <p class="text-surface-400">Get the latest products, deals, and updates delivered to your inbox.</p>
+                </div>
+                <template x-if="!subscribed">
+                    <div class="flex-shrink-0 w-full lg:w-auto">
+                        <div class="flex gap-2">
+                            <input
+                                type="email"
+                                x-model="email"
+                                @keydown.enter="subscribe()"
+                                placeholder="Enter your email"
+                                class="flex-1 lg:w-72 rounded-xl border border-surface-700 bg-surface-800 px-4 py-3 text-white placeholder-surface-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
+                            >
+                            <button
+                                @click="subscribe()"
+                                :disabled="loading || !email"
+                                class="rounded-xl bg-primary-600 px-6 py-3 font-semibold text-white hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                            >
+                                <svg x-show="loading" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span x-text="loading ? 'Subscribing...' : 'Subscribe'"></span>
+                            </button>
+                        </div>
+                        <p x-show="error" class="mt-2 text-sm text-red-400" x-text="error"></p>
+                    </div>
+                </template>
+                <template x-if="subscribed">
+                    <div class="flex items-center gap-2 text-green-400">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span class="font-medium">Thanks for subscribing!</span>
+                    </div>
+                </template>
             </div>
         </div>
 

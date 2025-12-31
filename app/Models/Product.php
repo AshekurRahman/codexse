@@ -41,6 +41,7 @@ class Product extends Model implements HasMedia
         'status',
         'rejection_reason',
         'is_featured',
+        'has_variations',
         'is_trending',
         'views_count',
         'downloads_count',
@@ -59,6 +60,7 @@ class Product extends Model implements HasMedia
             'software_compatibility' => 'array',
             'license_types' => 'array',
             'is_featured' => 'boolean',
+            'has_variations' => 'boolean',
             'is_trending' => 'boolean',
             'average_rating' => 'decimal:2',
             'published_at' => 'datetime',
@@ -121,6 +123,49 @@ class Product extends Model implements HasMedia
     public function bundles(): BelongsToMany
     {
         return $this->belongsToMany(ProductBundle::class, 'product_bundle_product', 'product_id', 'product_bundle_id');
+    }
+
+    public function variations(): HasMany
+    {
+        return $this->hasMany(ProductVariation::class)->orderBy('sort_order');
+    }
+
+    public function activeVariations(): HasMany
+    {
+        return $this->hasMany(ProductVariation::class)->where('is_active', true)->orderBy('sort_order');
+    }
+
+    public function defaultVariation()
+    {
+        return $this->hasOne(ProductVariation::class)->where('is_default', true);
+    }
+
+    public function getLowestPriceAttribute(): float
+    {
+        if ($this->has_variations && $this->variations->isNotEmpty()) {
+            return $this->variations->where('is_active', true)->min('price') ?? $this->current_price;
+        }
+        return $this->current_price;
+    }
+
+    public function getHighestPriceAttribute(): float
+    {
+        if ($this->has_variations && $this->variations->isNotEmpty()) {
+            return $this->variations->where('is_active', true)->max('price') ?? $this->current_price;
+        }
+        return $this->current_price;
+    }
+
+    public function getPriceRangeAttribute(): ?string
+    {
+        if ($this->has_variations && $this->variations->count() > 1) {
+            $lowest = $this->lowest_price;
+            $highest = $this->highest_price;
+            if ($lowest !== $highest) {
+                return '$' . number_format($lowest, 2) . ' - $' . number_format($highest, 2);
+            }
+        }
+        return null;
     }
 
     public function getThumbnailUrlAttribute(): string

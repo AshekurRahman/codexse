@@ -30,11 +30,13 @@
                         </div>
 
                         <!-- Payment Method -->
-                        <div class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-6">
+                        <div class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-6" x-data="{ selectedMethod: 'stripe' }">
                             <h2 class="text-lg font-semibold text-surface-900 dark:text-white mb-6">Payment Method</h2>
                             <div class="space-y-3">
-                                <label class="flex items-center gap-4 p-4 rounded-xl border-2 border-primary-500 bg-primary-50 dark:bg-primary-900/20 cursor-pointer">
-                                    <input type="radio" name="payment_method" value="stripe" checked class="h-5 w-5 text-primary-600 focus:ring-primary-500">
+                                @if(\App\Models\Setting::get('stripe_enabled', true))
+                                <label class="flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors"
+                                    :class="selectedMethod === 'stripe' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-surface-200 dark:border-surface-700 hover:border-primary-300 dark:hover:border-primary-700'">
+                                    <input type="radio" name="payment_method" value="stripe" x-model="selectedMethod" class="h-5 w-5 text-primary-600 focus:ring-primary-500">
                                     <div class="flex-1">
                                         <span class="font-medium text-surface-900 dark:text-white">Credit Card</span>
                                         <p class="text-sm text-surface-500 dark:text-surface-400">Pay securely with Stripe</p>
@@ -48,8 +50,12 @@
                                         </div>
                                     </div>
                                 </label>
-                                <label class="flex items-center gap-4 p-4 rounded-xl border-2 border-surface-200 dark:border-surface-700 hover:border-primary-300 dark:hover:border-primary-700 cursor-pointer transition-colors">
-                                    <input type="radio" name="payment_method" value="paypal" class="h-5 w-5 text-primary-600 focus:ring-primary-500">
+                                @endif
+
+                                @if(\App\Models\Setting::get('paypal_enabled', false))
+                                <label class="flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors"
+                                    :class="selectedMethod === 'paypal' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-surface-200 dark:border-surface-700 hover:border-primary-300 dark:hover:border-primary-700'">
+                                    <input type="radio" name="payment_method" value="paypal" x-model="selectedMethod" class="h-5 w-5 text-primary-600 focus:ring-primary-500">
                                     <div class="flex-1">
                                         <span class="font-medium text-surface-900 dark:text-white">PayPal</span>
                                         <p class="text-sm text-surface-500 dark:text-surface-400">Pay with your PayPal account</p>
@@ -58,6 +64,21 @@
                                         <span class="text-xs font-bold text-blue-700">PayPal</span>
                                     </div>
                                 </label>
+                                @endif
+
+                                @if(\App\Models\Setting::get('payoneer_enabled', false))
+                                <label class="flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors"
+                                    :class="selectedMethod === 'payoneer' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-surface-200 dark:border-surface-700 hover:border-primary-300 dark:hover:border-primary-700'">
+                                    <input type="radio" name="payment_method" value="payoneer" x-model="selectedMethod" class="h-5 w-5 text-primary-600 focus:ring-primary-500">
+                                    <div class="flex-1">
+                                        <span class="font-medium text-surface-900 dark:text-white">Payoneer</span>
+                                        <p class="text-sm text-surface-500 dark:text-surface-400">Pay with local payment methods, cards, or bank transfer</p>
+                                    </div>
+                                    <div class="w-20 h-6 bg-gradient-to-r from-orange-500 to-orange-600 rounded flex items-center justify-center">
+                                        <span class="text-xs font-bold text-white">Payoneer</span>
+                                    </div>
+                                </label>
+                                @endif
                             </div>
                         </div>
 
@@ -76,7 +97,14 @@
 
                             <!-- Cart Items -->
                             <div class="space-y-4 mb-6">
-                                @foreach($products as $product)
+                                @foreach($cart as $cartKey => $cartItem)
+                                    @php
+                                        $productId = is_array($cartItem) ? ($cartItem['product_id'] ?? $cartKey) : $cartKey;
+                                        $product = $products->firstWhere('id', $productId);
+                                        if (!$product) continue;
+                                        $itemPrice = is_array($cartItem) ? ($cartItem['price'] ?? $product->current_price) : $product->current_price;
+                                        $variationName = is_array($cartItem) ? ($cartItem['variation_name'] ?? null) : null;
+                                    @endphp
                                     <div class="flex gap-3">
                                         <div class="w-16 h-16 rounded-lg overflow-hidden bg-surface-100 dark:bg-surface-700 shrink-0">
                                             @if($product->thumbnail)
@@ -91,7 +119,10 @@
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <h3 class="text-sm font-medium text-surface-900 dark:text-white truncate">{{ $product->name }}</h3>
-                                            <p class="text-sm text-surface-500 dark:text-surface-400">${{ number_format($product->current_price, 2) }}</p>
+                                            @if($variationName)
+                                                <p class="text-xs text-surface-400 dark:text-surface-500">{{ $variationName }}</p>
+                                            @endif
+                                            <p class="text-sm text-surface-500 dark:text-surface-400">${{ number_format($itemPrice, 2) }}</p>
                                         </div>
                                     </div>
                                 @endforeach

@@ -11,7 +11,14 @@ class SellerController extends Controller
     public function index()
     {
         $sellers = Seller::where('status', 'approved')
-            ->withCount('products')
+            ->withCount([
+                'products' => function ($query) {
+                    $query->where('status', 'approved');
+                },
+                'services' => function ($query) {
+                    $query->where('status', 'published');
+                }
+            ])
             ->orderByDesc('is_featured')
             ->orderByDesc('is_verified')
             ->orderByDesc('total_sales')
@@ -26,13 +33,27 @@ class SellerController extends Controller
             abort(404);
         }
 
+        // Load followers count
+        $seller->loadCount('followers');
+
         $products = $seller->products()
             ->where('status', 'approved')
             ->with('category')
             ->latest()
-            ->paginate(12);
+            ->take(8)
+            ->get();
 
-        return view('pages.seller', compact('seller', 'products'));
+        $services = $seller->services()
+            ->where('status', 'published')
+            ->with(['category', 'packages'])
+            ->latest()
+            ->take(8)
+            ->get();
+
+        $totalProducts = $seller->products()->where('status', 'approved')->count();
+        $totalServices = $seller->services()->where('status', 'published')->count();
+
+        return view('pages.seller', compact('seller', 'products', 'services', 'totalProducts', 'totalServices'));
     }
 
     public function follow(Seller $seller)
@@ -46,18 +67,28 @@ class SellerController extends Controller
         if ($existing) {
             $existing->delete();
             $following = false;
+            $message = 'You have unfollowed this seller.';
         } else {
             SellerFollow::create([
                 'user_id' => $user->id,
                 'seller_id' => $seller->id,
             ]);
             $following = true;
+            $message = 'You are now following this seller.';
         }
 
-        if (request()->wantsJson()) {
-            return response()->json(['following' => $following]);
+        // Get updated followers count
+        $followersCount = $seller->followers()->count();
+
+        if (request()->wantsJson() || request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'following' => $following,
+                'followers_count' => $followersCount,
+                'message' => $message,
+            ]);
         }
 
-        return back()->with('success', $following ? 'You are now following this seller.' : 'You have unfollowed this seller.');
+        return back()->with('success', $message);
     }
 }

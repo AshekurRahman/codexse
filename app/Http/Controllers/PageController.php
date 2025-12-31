@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ContactMessage;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -35,8 +36,15 @@ class PageController extends Controller
             'message' => 'required|string|min:10|max:5000',
         ]);
 
-        // TODO: Send email or store in database
-        // Mail::to('support@codexse.com')->send(new ContactFormMail($validated));
+        ContactMessage::create([
+            'user_id' => auth()->id(),
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'subject' => $validated['subject'],
+            'message' => $validated['message'],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
 
         return back()->with('success', 'Thank you for your message! We will get back to you within 24-48 hours.');
     }

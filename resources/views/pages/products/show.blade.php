@@ -41,7 +41,7 @@
                         <div class="p-6 bg-surface-50 dark:bg-surface-900">
                             <!-- Description -->
                             <div x-show="tab === 'description'" class="prose dark:prose-invert max-w-none">
-                                {!! nl2br(e($product->description)) !!}
+                                {!! $product->description !!}
                             </div>
 
                             <!-- Reviews -->
@@ -58,36 +58,92 @@
                                 <!-- Write Review Form -->
                                 @auth
                                     @if($canReview)
-                                        <div class="mb-8 p-6 rounded-xl bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700">
-                                            <h3 class="font-semibold text-surface-900 dark:text-white mb-4">Write a Review</h3>
-                                            <form action="{{ route('reviews.store', $product) }}" method="POST" x-data="{ rating: 5 }">
-                                                @csrf
-                                                <div class="mb-4">
-                                                    <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Rating</label>
-                                                    <div class="flex items-center gap-1">
-                                                        @for($i = 1; $i <= 5; $i++)
-                                                            <button type="button" @click="rating = {{ $i }}" class="focus:outline-none">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 transition-colors" :class="rating >= {{ $i }} ? 'text-yellow-500 fill-current' : 'text-surface-300 dark:text-surface-600'" viewBox="0 0 20 20" fill="currentColor">
-                                                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                                                </svg>
-                                                            </button>
-                                                        @endfor
+                                        <div class="mb-8 p-6 rounded-xl bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700" x-data="{
+                                            rating: 5,
+                                            comment: '',
+                                            loading: false,
+                                            submitted: false,
+                                            error: '',
+                                            async submitReview() {
+                                                if (this.loading || this.comment.length < 10) return;
+                                                this.loading = true;
+                                                this.error = '';
+
+                                                try {
+                                                    const response = await fetch('{{ route('reviews.store', $product) }}', {
+                                                        method: 'POST',
+                                                        headers: {
+                                                            'Content-Type': 'application/json',
+                                                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                            'Accept': 'application/json',
+                                                        },
+                                                        body: JSON.stringify({
+                                                            rating: this.rating,
+                                                            comment: this.comment,
+                                                        }),
+                                                    });
+
+                                                    const data = await response.json();
+
+                                                    if (data.success) {
+                                                        this.submitted = true;
+                                                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: data.message, type: 'success' } }));
+                                                    } else {
+                                                        this.error = data.message || 'Something went wrong';
+                                                    }
+                                                } catch (error) {
+                                                    console.error('Error:', error);
+                                                    this.error = 'Something went wrong. Please try again.';
+                                                } finally {
+                                                    this.loading = false;
+                                                }
+                                            }
+                                        }">
+                                            <template x-if="!submitted">
+                                                <div>
+                                                    <h3 class="font-semibold text-surface-900 dark:text-white mb-4">Write a Review</h3>
+                                                    <div class="mb-4">
+                                                        <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Rating</label>
+                                                        <div class="flex items-center gap-1">
+                                                            @for($i = 1; $i <= 5; $i++)
+                                                                <button type="button" @click="rating = {{ $i }}" class="focus:outline-none">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 transition-colors" :class="rating >= {{ $i }} ? 'text-yellow-500 fill-current' : 'text-surface-300 dark:text-surface-600'" viewBox="0 0 20 20" fill="currentColor">
+                                                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                                                    </svg>
+                                                                </button>
+                                                            @endfor
+                                                        </div>
                                                     </div>
-                                                    <input type="hidden" name="rating" :value="rating">
+                                                    <div class="mb-4">
+                                                        <label for="comment" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Your Review</label>
+                                                        <textarea x-model="comment" id="comment" rows="4" minlength="10" maxlength="2000"
+                                                            class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-900 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-primary-500"
+                                                            placeholder="Share your experience with this product..."></textarea>
+                                                        <p x-show="error" class="mt-1 text-sm text-danger-600" x-text="error"></p>
+                                                        <p x-show="comment.length > 0 && comment.length < 10" class="mt-1 text-sm text-surface-500">Minimum 10 characters required</p>
+                                                    </div>
+                                                    <button
+                                                        @click="submitReview()"
+                                                        :disabled="loading || comment.length < 10"
+                                                        class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        <svg x-show="loading" class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
+                                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                        </svg>
+                                                        <span x-text="loading ? 'Submitting...' : 'Submit Review'"></span>
+                                                    </button>
                                                 </div>
-                                                <div class="mb-4">
-                                                    <label for="comment" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Your Review</label>
-                                                    <textarea name="comment" id="comment" rows="4" required minlength="10" maxlength="2000"
-                                                        class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-900 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-primary-500"
-                                                        placeholder="Share your experience with this product..."></textarea>
-                                                    @error('comment')
-                                                        <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
-                                                    @enderror
+                                            </template>
+                                            <template x-if="submitted">
+                                                <div class="text-center py-4">
+                                                    <svg class="w-12 h-12 text-success-500 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <h4 class="font-semibold text-surface-900 dark:text-white mb-1">Thank you for your review!</h4>
+                                                    <p class="text-sm text-surface-500 dark:text-surface-400">Your review will be visible after approval.</p>
                                                 </div>
-                                                <button type="submit" class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors">
-                                                    Submit Review
-                                                </button>
-                                            </form>
+                                            </template>
                                         </div>
                                     @elseif($userReview)
                                         <div class="mb-6 p-4 rounded-lg bg-info-50 dark:bg-info-900/20 border border-info-200 dark:border-info-800">
@@ -250,28 +306,211 @@
                             </div>
                         </a>
 
-                        <!-- Price -->
-                        <div class="mb-6">
-                            @if($product->sale_price)
-                                <div class="flex items-baseline gap-3">
-                                    <span class="text-3xl font-bold text-surface-900 dark:text-white">${{ number_format($product->sale_price, 2) }}</span>
-                                    <span class="text-lg text-surface-400 line-through">${{ number_format($product->price, 2) }}</span>
-                                    <span class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
-                                        {{ round((($product->price - $product->sale_price) / $product->price) * 100) }}% OFF
-                                    </span>
+                        <!-- Seller Vacation Notice -->
+                        @if($product->seller->isOnVacation())
+                            <div class="mb-4 p-3 bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-800 rounded-xl">
+                                <div class="flex items-start gap-2">
+                                    <svg class="h-5 w-5 text-warning-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    <div>
+                                        <p class="text-sm font-medium text-warning-800 dark:text-warning-300">Seller on vacation</p>
+                                        <p class="text-xs text-warning-700 dark:text-warning-400 mt-0.5">
+                                            @if($product->seller->vacation_ends_at)
+                                                Returns {{ $product->seller->vacation_ends_at->diffForHumans() }}
+                                            @else
+                                                Support responses may be delayed
+                                            @endif
+                                        </p>
+                                    </div>
                                 </div>
-                            @else
-                                <span class="text-3xl font-bold text-surface-900 dark:text-white">${{ number_format($product->price, 2) }}</span>
-                            @endif
-                        </div>
+                            </div>
+                        @endif
 
-                        <!-- Add to Cart -->
-                        <form action="{{ route('cart.add', $product) }}" method="POST" class="space-y-3">
-                            @csrf
-                            <button type="submit" class="w-full rounded-xl bg-primary-600 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-primary-500/30 hover:bg-primary-700 hover:shadow-xl transition-all">
-                                Add to Cart
-                            </button>
-                        </form>
+                        <!-- Price & Variations -->
+                        @if($product->has_variations && $product->activeVariations->count() > 0)
+                            <div x-data="{
+                                variations: {{ $product->activeVariations->toJson() }},
+                                selectedIndex: {{ $product->activeVariations->search(fn($v) => $v->is_default) !== false ? $product->activeVariations->search(fn($v) => $v->is_default) : 0 }},
+                                get selected() { return this.variations[this.selectedIndex]; },
+                                loading: false,
+                                added: false,
+                                async addToCart() {
+                                    if (this.loading) return;
+                                    this.loading = true;
+
+                                    try {
+                                        const response = await fetch('{{ route('cart.add', $product) }}', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                'Accept': 'application/json',
+                                            },
+                                            body: JSON.stringify({
+                                                variation_id: this.selected.id
+                                            })
+                                        });
+
+                                        const data = await response.json();
+
+                                        if (data.success) {
+                                            this.added = true;
+                                            window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count: data.cart_count } }));
+                                            window.dispatchEvent(new CustomEvent('toast', { detail: { message: data.message, type: 'success' } }));
+                                        } else {
+                                            window.dispatchEvent(new CustomEvent('toast', { detail: { message: data.message, type: 'info' } }));
+                                        }
+                                    } catch (error) {
+                                        console.error('Error:', error);
+                                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Something went wrong', type: 'error' } }));
+                                    } finally {
+                                        this.loading = false;
+                                    }
+                                }
+                            }" class="mb-6">
+                                <!-- Variation Selector -->
+                                <div class="space-y-3 mb-6">
+                                    <label class="block text-sm font-medium text-surface-700 dark:text-surface-300">Select Version</label>
+                                    <div class="grid gap-3">
+                                        <template x-for="(variation, index) in variations" :key="variation.id">
+                                            <button type="button" @click="selectedIndex = index; added = false"
+                                                class="w-full p-4 rounded-xl border-2 text-left transition-all"
+                                                :class="selectedIndex === index
+                                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                                                    : 'border-surface-200 dark:border-surface-700 hover:border-surface-300 dark:hover:border-surface-600'">
+                                                <div class="flex items-center justify-between">
+                                                    <div>
+                                                        <div class="flex items-center gap-2">
+                                                            <span class="font-semibold text-surface-900 dark:text-white" x-text="variation.name"></span>
+                                                            <span x-show="variation.is_default" class="text-xs px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 rounded">Popular</span>
+                                                        </div>
+                                                        <p x-show="variation.description" class="text-sm text-surface-500 dark:text-surface-400 mt-1" x-text="variation.description"></p>
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <div class="flex items-center gap-2">
+                                                            <span x-show="variation.regular_price && parseFloat(variation.regular_price) > parseFloat(variation.price)" class="text-sm text-surface-400 line-through" x-text="'$' + parseFloat(variation.regular_price).toFixed(2)"></span>
+                                                            <span class="text-xl font-bold text-surface-900 dark:text-white" x-text="'$' + parseFloat(variation.price).toFixed(2)"></span>
+                                                        </div>
+                                                        <span class="text-xs text-surface-500" x-text="variation.license_type === 'extended' ? 'Extended License' : 'Regular License'"></span>
+                                                    </div>
+                                                </div>
+                                                <!-- Features -->
+                                                <div x-show="variation.features && variation.features.length > 0" class="mt-3 pt-3 border-t border-surface-200 dark:border-surface-700">
+                                                    <div class="flex flex-wrap gap-2">
+                                                        <template x-for="feature in variation.features" :key="feature">
+                                                            <span class="inline-flex items-center gap-1 text-xs text-surface-600 dark:text-surface-400">
+                                                                <svg class="w-3 h-3 text-success-500" fill="currentColor" viewBox="0 0 20 20">
+                                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                                </svg>
+                                                                <span x-text="feature"></span>
+                                                            </span>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- Selected Price Display -->
+                                <div class="mb-6 p-4 bg-surface-50 dark:bg-surface-900 rounded-xl">
+                                    <div class="flex items-baseline justify-between">
+                                        <span class="text-surface-600 dark:text-surface-400">Selected:</span>
+                                        <div class="text-right">
+                                            <span class="text-2xl font-bold text-surface-900 dark:text-white" x-text="'$' + parseFloat(selected.price).toFixed(2)"></span>
+                                            <div class="text-sm text-surface-500" x-text="selected.support_months > 0 ? selected.support_months + ' months support' : 'Lifetime support'"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Add to Cart Button -->
+                                <button
+                                    @click="addToCart()"
+                                    :disabled="loading"
+                                    class="w-full rounded-xl px-6 py-4 text-base font-semibold shadow-lg transition-all flex items-center justify-center gap-2"
+                                    :class="added ? 'bg-success-600 text-white shadow-success-500/30' : 'bg-primary-600 text-white shadow-primary-500/30 hover:bg-primary-700 hover:shadow-xl'"
+                                >
+                                    <svg x-show="loading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <svg x-show="!loading && added" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span x-text="added ? 'Added to Cart' : 'Add to Cart'"></span>
+                                </button>
+                            </div>
+                        @else
+                            <!-- Regular Price Display -->
+                            <div class="mb-6">
+                                @if($product->sale_price)
+                                    <div class="flex items-baseline gap-3">
+                                        <span class="text-3xl font-bold text-surface-900 dark:text-white">${{ number_format($product->sale_price, 2) }}</span>
+                                        <span class="text-lg text-surface-400 line-through">${{ number_format($product->price, 2) }}</span>
+                                        <span class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
+                                            {{ round((($product->price - $product->sale_price) / $product->price) * 100) }}% OFF
+                                        </span>
+                                    </div>
+                                @else
+                                    <span class="text-3xl font-bold text-surface-900 dark:text-white">${{ number_format($product->price, 2) }}</span>
+                                @endif
+                            </div>
+
+                            <!-- Add to Cart -->
+                            <div x-data="{
+                                loading: false,
+                                added: false,
+                                async addToCart() {
+                                    if (this.loading) return;
+                                    this.loading = true;
+
+                                    try {
+                                        const response = await fetch('{{ route('cart.add', $product) }}', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                                'Accept': 'application/json',
+                                            },
+                                        });
+
+                                        const data = await response.json();
+
+                                        if (data.success) {
+                                            this.added = true;
+                                            // Update cart count in navbar
+                                            window.dispatchEvent(new CustomEvent('cart-updated', { detail: { count: data.cart_count } }));
+                                            // Show toast notification
+                                            window.dispatchEvent(new CustomEvent('toast', { detail: { message: data.message, type: 'success' } }));
+                                        } else {
+                                            window.dispatchEvent(new CustomEvent('toast', { detail: { message: data.message, type: 'info' } }));
+                                        }
+                                    } catch (error) {
+                                        console.error('Error:', error);
+                                        window.dispatchEvent(new CustomEvent('toast', { detail: { message: 'Something went wrong', type: 'error' } }));
+                                    } finally {
+                                        this.loading = false;
+                                    }
+                                }
+                            }">
+                                <button
+                                    @click="addToCart()"
+                                    :disabled="loading"
+                                    class="w-full rounded-xl px-6 py-4 text-base font-semibold shadow-lg transition-all flex items-center justify-center gap-2"
+                                    :class="added ? 'bg-success-600 text-white shadow-success-500/30' : 'bg-primary-600 text-white shadow-primary-500/30 hover:bg-primary-700 hover:shadow-xl'"
+                                >
+                                    <svg x-show="loading" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    <svg x-show="!loading && added" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span x-text="added ? 'Added to Cart' : 'Add to Cart'"></span>
+                                </button>
+                            </div>
+                        @endif
 
                         <div x-data="{
                             inWishlist: {{ auth()->check() && auth()->user()->wishlists()->where('product_id', $product->id)->exists() ? 'true' : 'false' }},
@@ -393,4 +632,9 @@
             @endif
         </div>
     </div>
+
+    <!-- Recently Viewed Products -->
+    @if(isset($recentlyViewed) && $recentlyViewed->count() > 0)
+        <x-recently-viewed :products="$recentlyViewed" />
+    @endif
 </x-layouts.app>

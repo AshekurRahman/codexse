@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Service;
+use App\Models\JobPosting;
 use Illuminate\View\View;
 
 class HomeController extends Controller
@@ -31,10 +33,31 @@ class HomeController extends Controller
             ->take(4)
             ->get();
 
+        // Featured services
+        $featuredServices = Service::with(['seller.user', 'category', 'packages'])
+            ->where('status', 'published')
+            ->where('is_featured', true)
+            ->latest()
+            ->take(4)
+            ->get();
+
+        // Recent job postings
+        $recentJobs = JobPosting::with(['client', 'category'])
+            ->where('status', 'open')
+            ->latest()
+            ->take(4)
+            ->get();
+
+        // Recently viewed products
+        $recentlyViewed = RecentlyViewedController::getProducts(8);
+
         return view('pages.home', compact(
             'featuredProducts',
             'categories',
-            'trendingProducts'
+            'trendingProducts',
+            'featuredServices',
+            'recentJobs',
+            'recentlyViewed'
         ));
     }
 }

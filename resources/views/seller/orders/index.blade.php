@@ -21,6 +21,7 @@
                                     <th class="text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider px-6 py-3">Date</th>
                                     <th class="text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider px-6 py-3">Price</th>
                                     <th class="text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider px-6 py-3">Your Earnings</th>
+                                    <th class="text-left text-xs font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider px-6 py-3">Actions</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-surface-200 dark:divide-surface-700">
@@ -93,6 +94,14 @@
                                         </td>
                                         <td class="px-6 py-4">
                                             <span class="text-sm font-semibold text-success-600 dark:text-success-400">${{ number_format($orderItem->seller_amount, 2) }}</span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <a href="{{ route('seller.invoice.download', $orderItem->order) }}" class="inline-flex items-center gap-1 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                Statement
+                                            </a>
                                         </td>
                                     </tr>
                                 @endforeach

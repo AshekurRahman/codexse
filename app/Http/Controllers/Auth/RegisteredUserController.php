@@ -17,8 +17,16 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
+        // Store referral code in session if provided
+        if ($request->has('ref')) {
+            $referrer = User::where('referral_code', $request->ref)->first();
+            if ($referrer) {
+                session(['referral_code' => $request->ref]);
+            }
+        }
+
         return view('auth.register');
     }
 
@@ -35,11 +43,29 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // Check for referral code
+        $referredBy = null;
+        $referralCode = $request->input('referral_code') ?? session('referral_code');
+
+        if ($referralCode) {
+            $referrer = User::where('referral_code', $referralCode)->first();
+            if ($referrer) {
+                $referredBy = $referrer->id;
+            }
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'referred_by' => $referredBy,
         ]);
+
+        // Process referral rewards
+        if ($referredBy) {
+            $user->processReferralSignupReward();
+            session()->forget('referral_code');
+        }
 
         event(new Registered($user));
 

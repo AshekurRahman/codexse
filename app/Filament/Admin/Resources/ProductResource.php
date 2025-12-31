@@ -121,10 +121,72 @@ class ProductResource extends Resource
                             ->maxLength(255),
                         Forms\Components\Toggle::make('is_featured')
                             ->label('Featured Product'),
+                        Forms\Components\Toggle::make('has_variations')
+                            ->label('Has Variations')
+                            ->helperText('Enable to add multiple versions/tiers of this product')
+                            ->live(),
                         Forms\Components\Toggle::make('is_trending')
                             ->label('Trending'),
                         Forms\Components\DateTimePicker::make('published_at'),
                     ])->columns(2),
+
+                Forms\Components\Section::make('Product Variations')
+                    ->description('Add different versions/tiers of this product (e.g., Basic, Pro, Enterprise)')
+                    ->schema([
+                        Forms\Components\Repeater::make('variations')
+                            ->relationship()
+                            ->schema([
+                                Forms\Components\TextInput::make('name')
+                                    ->required()
+                                    ->maxLength(100)
+                                    ->placeholder('e.g., Basic, Pro, Enterprise'),
+                                Forms\Components\Textarea::make('description')
+                                    ->rows(2)
+                                    ->placeholder('Brief description of this tier'),
+                                Forms\Components\TextInput::make('price')
+                                    ->required()
+                                    ->numeric()
+                                    ->prefix('$')
+                                    ->minValue(0),
+                                Forms\Components\TextInput::make('regular_price')
+                                    ->numeric()
+                                    ->prefix('$')
+                                    ->helperText('Original price (for showing discounts)'),
+                                Forms\Components\TagsInput::make('features')
+                                    ->placeholder('Add features included in this tier')
+                                    ->helperText('Press Enter to add each feature'),
+                                Forms\Components\Select::make('license_type')
+                                    ->options([
+                                        'regular' => 'Regular License',
+                                        'extended' => 'Extended License',
+                                    ])
+                                    ->default('regular'),
+                                Forms\Components\TextInput::make('support_months')
+                                    ->numeric()
+                                    ->default(6)
+                                    ->suffix('months')
+                                    ->helperText('0 = Lifetime'),
+                                Forms\Components\TextInput::make('updates_months')
+                                    ->numeric()
+                                    ->default(12)
+                                    ->suffix('months')
+                                    ->helperText('0 = Lifetime'),
+                                Forms\Components\Toggle::make('is_default')
+                                    ->label('Default Selection'),
+                                Forms\Components\Toggle::make('is_active')
+                                    ->label('Active')
+                                    ->default(true),
+                                Forms\Components\Hidden::make('sort_order'),
+                            ])
+                            ->columns(2)
+                            ->defaultItems(0)
+                            ->reorderable()
+                            ->reorderableWithButtons()
+                            ->collapsible()
+                            ->itemLabel(fn (array $state): ?string => $state['name'] ?? 'New Variation')
+                            ->addActionLabel('Add Variation'),
+                    ])
+                    ->visible(fn (Forms\Get $get): bool => (bool) $get('has_variations')),
             ]);
     }
 

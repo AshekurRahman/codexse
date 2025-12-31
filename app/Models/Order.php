@@ -24,6 +24,7 @@ class Order extends Model
         'stripe_session_id',
         'stripe_payment_intent_id',
         'stripe_charge_id',
+        'payoneer_transaction_id',
         'billing_address',
         'coupon_code',
         'notes',

@@ -17,7 +17,11 @@ class NewsletterController extends Controller
 
         if ($existing) {
             if ($existing->is_active) {
-                return back()->with('info', 'You are already subscribed to our newsletter.');
+                $message = 'You are already subscribed to our newsletter.';
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json(['success' => true, 'message' => $message]);
+                }
+                return back()->with('info', $message);
             }
 
             $existing->update([
@@ -25,7 +29,11 @@ class NewsletterController extends Controller
                 'unsubscribed_at' => null,
             ]);
 
-            return back()->with('success', 'Welcome back! You have been re-subscribed to our newsletter.');
+            $message = 'Welcome back! You have been re-subscribed to our newsletter.';
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json(['success' => true, 'message' => $message]);
+            }
+            return back()->with('success', $message);
         }
 
         NewsletterSubscriber::create([
@@ -35,7 +43,11 @@ class NewsletterController extends Controller
             'is_active' => true,
         ]);
 
-        return back()->with('success', 'Thank you for subscribing to our newsletter!');
+        $message = 'Thank you for subscribing to our newsletter!';
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => $message]);
+        }
+        return back()->with('success', $message);
     }
 
     public function unsubscribe(Request $request, string $token)

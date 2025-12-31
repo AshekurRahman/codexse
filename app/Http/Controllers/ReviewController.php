@@ -28,6 +28,12 @@ class ReviewController extends Controller
             ->first();
 
         if ($existingReview) {
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You have already reviewed this product.',
+                ], 422);
+            }
             return back()->with('error', 'You have already reviewed this product.');
         }
 
@@ -54,7 +60,23 @@ class ReviewController extends Controller
             'status' => 'pending', // Requires approval
         ]);
 
-        return back()->with('success', 'Thank you for your review! It will be visible after approval.');
+        $message = 'Thank you for your review! It will be visible after approval.';
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'review' => [
+                    'id' => $review->id,
+                    'rating' => $review->rating,
+                    'comment' => $review->comment,
+                    'status' => $review->status,
+                    'is_verified_purchase' => $review->is_verified_purchase,
+                ],
+            ]);
+        }
+
+        return back()->with('success', $message);
     }
 
     /**

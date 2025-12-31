@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Seller;
+use App\Models\Setting;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -15,7 +16,27 @@ class SellerApplicationController extends Controller
      */
     public function index(): View
     {
-        return view('pages.become-seller');
+        // Get commission rates from settings
+        $defaultCommission = (int) Setting::get('default_commission_rate', 20);
+        $newSellerCommission = (int) Setting::get('new_seller_commission_rate', 25);
+        $establishedSellerCommission = (int) Setting::get('established_seller_commission_rate', 20);
+        $topSellerCommission = (int) Setting::get('top_seller_commission_rate', 15);
+        $useLevelRates = Setting::get('use_seller_level_rates', false);
+
+        // Calculate revenue percentages (100 - commission)
+        $commissionRates = [
+            'default' => $defaultCommission,
+            'new_seller' => $newSellerCommission,
+            'established_seller' => $establishedSellerCommission,
+            'top_seller' => $topSellerCommission,
+            'use_level_rates' => $useLevelRates,
+            'default_revenue' => 100 - $defaultCommission,
+            'new_seller_revenue' => 100 - $newSellerCommission,
+            'established_seller_revenue' => 100 - $establishedSellerCommission,
+            'top_seller_revenue' => 100 - $topSellerCommission,
+        ];
+
+        return view('pages.become-seller', compact('commissionRates'));
     }
 
     /**
@@ -90,10 +111,8 @@ class SellerApplicationController extends Controller
             }
             $user->seller->update($sellerData);
         } else {
-            // Create new application
-            $user->seller()->create(array_merge($sellerData, [
-                'commission_rate' => 20.00, // Default 20% commission (80% to seller)
-            ]));
+            // Create new application (commission rate is determined by admin settings)
+            $user->seller()->create($sellerData);
         }
 
         return redirect()->route('seller.pending')->with('success', 'Your seller application has been submitted successfully!');

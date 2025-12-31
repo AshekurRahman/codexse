@@ -88,13 +88,19 @@ class CouponController extends Controller
         $subtotal = 0;
 
         if (!empty($cart)) {
-            $productIds = array_keys($cart);
+            // Extract product IDs from cart items (handles both simple and variation cart keys)
+            $productIds = collect($cart)->map(function ($item, $key) {
+                return is_array($item) ? ($item['product_id'] ?? $key) : $key;
+            })->unique()->values()->toArray();
             $products = \App\Models\Product::whereIn('id', $productIds)->get();
 
-            foreach ($products as $product) {
-                $cartItem = $cart[$product->id] ?? [];
-                $price = is_array($cartItem) ? ($cartItem['price'] ?? $product->current_price) : $product->current_price;
-                $subtotal += $price;
+            foreach ($cart as $cartKey => $cartItem) {
+                $productId = is_array($cartItem) ? ($cartItem['product_id'] ?? $cartKey) : $cartKey;
+                $product = $products->firstWhere('id', $productId);
+                if ($product) {
+                    $price = is_array($cartItem) ? ($cartItem['price'] ?? $product->current_price) : $product->current_price;
+                    $subtotal += $price;
+                }
             }
         }
 

@@ -26,10 +26,52 @@ class ProductController extends Controller
 
         // Price filter
         if ($request->filled('min_price')) {
-            $query->where('price', '>=', $request->min_price);
+            $query->where(function ($q) use ($request) {
+                $q->where('price', '>=', $request->min_price)
+                    ->orWhere('sale_price', '>=', $request->min_price);
+            });
         }
         if ($request->filled('max_price')) {
-            $query->where('price', '<=', $request->max_price);
+            $query->where(function ($q) use ($request) {
+                $q->where(function ($q2) use ($request) {
+                    $q2->whereNull('sale_price')->where('price', '<=', $request->max_price);
+                })->orWhere(function ($q2) use ($request) {
+                    $q2->whereNotNull('sale_price')->where('sale_price', '<=', $request->max_price);
+                });
+            });
+        }
+
+        // Rating filter
+        if ($request->filled('min_rating')) {
+            $query->where('average_rating', '>=', $request->min_rating);
+        }
+
+        // Date filter
+        if ($request->filled('date_range')) {
+            switch ($request->date_range) {
+                case 'week':
+                    $query->where('created_at', '>=', now()->subWeek());
+                    break;
+                case 'month':
+                    $query->where('created_at', '>=', now()->subMonth());
+                    break;
+                case '3months':
+                    $query->where('created_at', '>=', now()->subMonths(3));
+                    break;
+                case 'year':
+                    $query->where('created_at', '>=', now()->subYear());
+                    break;
+            }
+        }
+
+        // On sale filter
+        if ($request->boolean('on_sale')) {
+            $query->whereNotNull('sale_price')->whereColumn('sale_price', '<', 'price');
+        }
+
+        // Featured filter
+        if ($request->boolean('featured')) {
+            $query->where('is_featured', true);
         }
 
         // Search
@@ -37,7 +79,15 @@ class ProductController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('short_description', 'like', "%{$search}%");
+            });
+        }
+
+        // Seller filter
+        if ($request->filled('seller')) {
+            $query->whereHas('seller', function ($q) use ($request) {
+                $q->where('store_slug', $request->seller);
             });
         }
 
@@ -47,23 +97,51 @@ class ProductController extends Controller
             case 'popular':
                 $query->orderByDesc('downloads_count');
                 break;
+            case 'bestselling':
+                $query->orderByDesc('sales_count');
+                break;
             case 'price_low':
-                $query->orderBy('price');
+                $query->orderByRaw('COALESCE(sale_price, price) ASC');
                 break;
             case 'price_high':
-                $query->orderByDesc('price');
+                $query->orderByRaw('COALESCE(sale_price, price) DESC');
                 break;
             case 'rating':
                 $query->orderByDesc('average_rating');
+                break;
+            case 'trending':
+                $query->orderByDesc('views_count');
                 break;
             default:
                 $query->latest();
         }
 
-        $products = $query->paginate(12);
-        $categories = Category::whereNull('parent_id')->get();
+        $products = $query->paginate(12)->withQueryString();
+        $categories = Category::withCount(['products' => function ($q) {
+            $q->where('status', 'published');
+        }])->whereNull('parent_id')->orderBy('name')->get();
 
-        return view('pages.products.index', compact('products', 'categories'));
+        // Get price range for filter
+        $priceStats = Product::where('status', 'published')
+            ->selectRaw('MIN(COALESCE(sale_price, price)) as min_price, MAX(COALESCE(sale_price, price)) as max_price')
+            ->first();
+
+        // Active filters count
+        $activeFiltersCount = collect([
+            $request->filled('category'),
+            $request->filled('min_price') || $request->filled('max_price'),
+            $request->filled('min_rating'),
+            $request->filled('date_range'),
+            $request->boolean('on_sale'),
+            $request->boolean('featured'),
+        ])->filter()->count();
+
+        return view('pages.products.index', compact(
+            'products',
+            'categories',
+            'priceStats',
+            'activeFiltersCount'
+        ));
     }
 
     /**
@@ -94,7 +172,7 @@ class ProductController extends Controller
                     'url' => route('products.show', $product),
                     'price' => $product->sale_price ?? $product->price,
                     'original_price' => $product->sale_price ? $product->price : null,
-                    'thumbnail' => $product->thumbnail ? $product->thumbnail_url : null,
+                    'thumbnail' => $product->thumbnail_url,
                     'category' => $product->category?->name,
                 ];
             });
@@ -126,6 +204,9 @@ class ProductController extends Controller
         // Increment view count
         $product->increment('views_count');
 
+        // Track recently viewed
+        RecentlyViewedController::trackProduct($product);
+
         $product->load(['seller', 'category', 'reviews.user']);
 
         $relatedProducts = Product::with(['seller', 'category'])
@@ -135,6 +216,9 @@ class ProductController extends Controller
             ->take(4)
             ->get();
 
-        return view('pages.products.show', compact('product', 'relatedProducts'));
+        // Get recently viewed products (excluding current)
+        $recentlyViewed = RecentlyViewedController::getProducts(8, $product->id);
+
+        return view('pages.products.show', compact('product', 'relatedProducts', 'recentlyViewed'));
     }
 }

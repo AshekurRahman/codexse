@@ -96,12 +96,17 @@ class SellerResource extends Resource
                         Forms\Components\DateTimePicker::make('approved_at'),
                     ])->columns(2),
 
-                Forms\Components\Section::make('Commission')
+                Forms\Components\Section::make('Commission Override')
+                    ->description('Leave empty to use the default commission rate from Commission Settings. Set a custom rate to override for this seller only.')
                     ->schema([
                         Forms\Components\TextInput::make('commission_rate')
+                            ->label('Custom Commission Rate')
+                            ->helperText('Override the default platform commission for this seller. Leave empty to use global settings.')
                             ->numeric()
                             ->suffix('%')
-                            ->default(20),
+                            ->placeholder('Use default rate')
+                            ->minValue(0)
+                            ->maxValue(100),
                     ]),
             ]);
     }
