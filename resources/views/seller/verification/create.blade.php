@@ -131,20 +131,29 @@
                 <div class="bg-white dark:bg-surface-800 rounded-xl shadow-sm border border-surface-200 dark:border-surface-700 p-6">
                     <h2 class="text-lg font-semibold text-surface-900 dark:text-white mb-4">Upload Documents</h2>
                     <div class="space-y-6">
-                        <div>
+                        <div x-data="fileUpload('document_front')">
                             <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Document Front *</label>
-                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-surface-300 dark:border-surface-600 border-dashed rounded-lg hover:border-primary-400 transition-colors">
+                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-lg transition-colors cursor-pointer"
+                                 :class="fileName ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-surface-300 dark:border-surface-600 hover:border-primary-400'"
+                                 @click="$refs.input.click()"
+                                 @dragover.prevent="dragover = true"
+                                 @dragleave.prevent="dragover = false"
+                                 @drop.prevent="handleDrop($event)">
                                 <div class="space-y-1 text-center">
-                                    <svg class="mx-auto h-12 w-12 text-surface-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    <div class="flex text-sm text-surface-600">
-                                        <label class="relative cursor-pointer rounded-md font-medium text-primary-600 hover:text-primary-500">
-                                            <span>Upload front of document</span>
-                                            <input type="file" name="document_front" accept="image/*" required class="sr-only">
-                                        </label>
+                                    <template x-if="preview">
+                                        <img :src="preview" class="mx-auto h-32 w-auto object-contain rounded-lg mb-2">
+                                    </template>
+                                    <template x-if="!preview">
+                                        <svg class="mx-auto h-12 w-12 text-surface-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </template>
+                                    <div class="flex justify-center text-sm text-surface-600">
+                                        <span class="font-medium text-primary-600" x-text="fileName || 'Upload front of document'"></span>
+                                        <input type="file" name="document_front" accept="image/*" required class="sr-only" x-ref="input" @change="handleChange($event)">
                                     </div>
-                                    <p class="text-xs text-surface-500">PNG, JPG up to 5MB</p>
+                                    <p class="text-xs text-surface-500" x-show="!fileName">PNG, JPG up to 5MB</p>
+                                    <button type="button" x-show="fileName" @click.stop="clearFile()" class="text-xs text-danger-600 hover:text-danger-700">Remove</button>
                                 </div>
                             </div>
                             @error('document_front')
@@ -152,20 +161,29 @@
                             @enderror
                         </div>
 
-                        <div>
+                        <div x-data="fileUpload('document_back')">
                             <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Document Back (if applicable)</label>
-                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-surface-300 dark:border-surface-600 border-dashed rounded-lg hover:border-primary-400 transition-colors">
+                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-lg transition-colors cursor-pointer"
+                                 :class="fileName ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-surface-300 dark:border-surface-600 hover:border-primary-400'"
+                                 @click="$refs.input.click()"
+                                 @dragover.prevent="dragover = true"
+                                 @dragleave.prevent="dragover = false"
+                                 @drop.prevent="handleDrop($event)">
                                 <div class="space-y-1 text-center">
-                                    <svg class="mx-auto h-12 w-12 text-surface-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    </svg>
-                                    <div class="flex text-sm text-surface-600">
-                                        <label class="relative cursor-pointer rounded-md font-medium text-primary-600 hover:text-primary-500">
-                                            <span>Upload back of document</span>
-                                            <input type="file" name="document_back" accept="image/*" class="sr-only">
-                                        </label>
+                                    <template x-if="preview">
+                                        <img :src="preview" class="mx-auto h-32 w-auto object-contain rounded-lg mb-2">
+                                    </template>
+                                    <template x-if="!preview">
+                                        <svg class="mx-auto h-12 w-12 text-surface-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </template>
+                                    <div class="flex justify-center text-sm text-surface-600">
+                                        <span class="font-medium text-primary-600" x-text="fileName || 'Upload back of document'"></span>
+                                        <input type="file" name="document_back" accept="image/*" class="sr-only" x-ref="input" @change="handleChange($event)">
                                     </div>
-                                    <p class="text-xs text-surface-500">PNG, JPG up to 5MB</p>
+                                    <p class="text-xs text-surface-500" x-show="!fileName">PNG, JPG up to 5MB</p>
+                                    <button type="button" x-show="fileName" @click.stop="clearFile()" class="text-xs text-danger-600 hover:text-danger-700">Remove</button>
                                 </div>
                             </div>
                             @error('document_back')
@@ -173,22 +191,31 @@
                             @enderror
                         </div>
 
-                        <div>
+                        <div x-data="fileUpload('selfie_with_document')">
                             <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Selfie with Document *</label>
                             <p class="text-sm text-surface-500 dark:text-surface-400 mb-2">Take a photo of yourself holding your ID document next to your face.</p>
-                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-surface-300 dark:border-surface-600 border-dashed rounded-lg hover:border-primary-400 transition-colors">
+                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-lg transition-colors cursor-pointer"
+                                 :class="fileName ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-surface-300 dark:border-surface-600 hover:border-primary-400'"
+                                 @click="$refs.input.click()"
+                                 @dragover.prevent="dragover = true"
+                                 @dragleave.prevent="dragover = false"
+                                 @drop.prevent="handleDrop($event)">
                                 <div class="space-y-1 text-center">
-                                    <svg class="mx-auto h-12 w-12 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    </svg>
-                                    <div class="flex text-sm text-surface-600">
-                                        <label class="relative cursor-pointer rounded-md font-medium text-primary-600 hover:text-primary-500">
-                                            <span>Upload selfie with document</span>
-                                            <input type="file" name="selfie_with_document" accept="image/*" class="sr-only">
-                                        </label>
+                                    <template x-if="preview">
+                                        <img :src="preview" class="mx-auto h-32 w-auto object-contain rounded-lg mb-2">
+                                    </template>
+                                    <template x-if="!preview">
+                                        <svg class="mx-auto h-12 w-12 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        </svg>
+                                    </template>
+                                    <div class="flex justify-center text-sm text-surface-600">
+                                        <span class="font-medium text-primary-600" x-text="fileName || 'Upload selfie with document'"></span>
+                                        <input type="file" name="selfie_with_document" accept="image/*" class="sr-only" x-ref="input" @change="handleChange($event)">
                                     </div>
-                                    <p class="text-xs text-surface-500">PNG, JPG up to 5MB</p>
+                                    <p class="text-xs text-surface-500" x-show="!fileName">PNG, JPG up to 5MB</p>
+                                    <button type="button" x-show="fileName" @click.stop="clearFile()" class="text-xs text-danger-600 hover:text-danger-700">Remove</button>
                                 </div>
                             </div>
                             @error('selfie_with_document')
@@ -210,4 +237,55 @@
             </form>
         </div>
     </div>
+    @push('scripts')
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('fileUpload', (inputName) => ({
+                fileName: null,
+                preview: null,
+                dragover: false,
+
+                handleChange(event) {
+                    const file = event.target.files[0];
+                    this.processFile(file);
+                },
+
+                handleDrop(event) {
+                    this.dragover = false;
+                    const file = event.dataTransfer.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        this.$refs.input.files = event.dataTransfer.files;
+                        this.processFile(file);
+                    }
+                },
+
+                processFile(file) {
+                    if (file) {
+                        // Check file size (5MB)
+                        if (file.size > 5 * 1024 * 1024) {
+                            alert('File size must be less than 5MB');
+                            this.clearFile();
+                            return;
+                        }
+
+                        this.fileName = file.name;
+
+                        // Create preview
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.preview = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                },
+
+                clearFile() {
+                    this.fileName = null;
+                    this.preview = null;
+                    this.$refs.input.value = '';
+                }
+            }));
+        });
+    </script>
+    @endpush
 </x-layouts.app>

@@ -15,20 +15,20 @@
 
         <div class="space-y-4">
             <div>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Google Callback URL:</p>
-                <code class="block mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded text-sm break-all">{{ route('social.callback', 'google') }}</code>
+                <p class="text-sm font-medium text-surface-700 dark:text-surface-300">Google Callback URL:</p>
+                <code class="block mt-1 p-2 bg-surface-100 dark:bg-surface-800 rounded text-sm break-all">{{ route('social.callback', 'google') }}</code>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Facebook Callback URL:</p>
-                <code class="block mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded text-sm break-all">{{ route('social.callback', 'facebook') }}</code>
+                <p class="text-sm font-medium text-surface-700 dark:text-surface-300">Facebook Callback URL:</p>
+                <code class="block mt-1 p-2 bg-surface-100 dark:bg-surface-800 rounded text-sm break-all">{{ route('social.callback', 'facebook') }}</code>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">GitHub Callback URL:</p>
-                <code class="block mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded text-sm break-all">{{ route('social.callback', 'github') }}</code>
+                <p class="text-sm font-medium text-surface-700 dark:text-surface-300">GitHub Callback URL:</p>
+                <code class="block mt-1 p-2 bg-surface-100 dark:bg-surface-800 rounded text-sm break-all">{{ route('social.callback', 'github') }}</code>
             </div>
             <div>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Twitter/X Callback URL:</p>
-                <code class="block mt-1 p-2 bg-gray-100 dark:bg-gray-800 rounded text-sm break-all">{{ route('social.callback', 'twitter') }}</code>
+                <p class="text-sm font-medium text-surface-700 dark:text-surface-300">Twitter/X Callback URL:</p>
+                <code class="block mt-1 p-2 bg-surface-100 dark:bg-surface-800 rounded text-sm break-all">{{ route('social.callback', 'twitter') }}</code>
             </div>
         </div>
     </x-filament::section>

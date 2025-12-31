@@ -2,9 +2,9 @@
     <div x-data="liveChatDashboard()" class="space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Waiting Chats -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
-                <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800">
-                    <h2 class="font-semibold text-gray-900 dark:text-white flex items-center text-sm">
+            <div class="bg-white dark:bg-surface-800 rounded-xl shadow-sm overflow-hidden border border-surface-200 dark:border-surface-700">
+                <div class="px-4 py-3 border-b border-surface-200 dark:border-surface-700 flex items-center justify-between bg-surface-50 dark:bg-surface-800">
+                    <h2 class="font-semibold text-surface-900 dark:text-white flex items-center text-sm">
                         <span class="w-2 h-2 bg-yellow-400 rounded-full mr-2 animate-pulse"></span>
                         Waiting Queue
                     </h2>
@@ -12,40 +12,40 @@
                 </div>
                 <div class="divide-y divide-gray-200 dark:divide-gray-700 max-h-[400px] overflow-y-auto">
                     <template x-for="chat in waitingChats" :key="chat.id">
-                        <div class="p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors" @click="acceptChat(chat)">
+                        <div class="p-3 hover:bg-surface-50 dark:hover:bg-surface-700/50 cursor-pointer transition-colors" @click="acceptChat(chat)">
                             <div class="flex items-start justify-between mb-2">
                                 <div class="flex items-center space-x-2">
                                     <div class="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
                                         <span class="text-xs font-medium text-primary-600 dark:text-primary-400" x-text="(chat.visitor_name || 'V').charAt(0).toUpperCase()"></span>
                                     </div>
                                     <div>
-                                        <p class="font-medium text-gray-900 dark:text-white text-sm" x-text="chat.visitor_name || 'Visitor'"></p>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400 capitalize" x-text="chat.department"></p>
+                                        <p class="font-medium text-surface-900 dark:text-white text-sm" x-text="chat.visitor_name || 'Visitor'"></p>
+                                        <p class="text-xs text-surface-500 dark:text-surface-400 capitalize" x-text="chat.department"></p>
                                     </div>
                                 </div>
-                                <span class="text-xs text-gray-500" x-text="formatTime(chat.created_at)"></span>
+                                <span class="text-xs text-surface-500" x-text="formatTime(chat.created_at)"></span>
                             </div>
-                            <p x-show="chat.subject" class="text-xs text-gray-600 dark:text-gray-400 truncate mb-2" x-text="chat.subject"></p>
+                            <p x-show="chat.subject" class="text-xs text-surface-600 dark:text-surface-400 truncate mb-2" x-text="chat.subject"></p>
                             <button @click.stop="acceptChat(chat)" class="w-full py-1.5 text-xs bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors font-medium">
                                 Accept Chat
                             </button>
                         </div>
                     </template>
                     <div x-show="waitingChats.length === 0" class="p-6 text-center">
-                        <x-heroicon-o-chat-bubble-left-ellipsis class="h-10 w-10 mx-auto text-gray-300 dark:text-gray-600 mb-2" />
-                        <p class="text-gray-500 dark:text-gray-400 text-sm">No waiting chats</p>
+                        <x-heroicon-o-chat-bubble-left-ellipsis class="h-10 w-10 mx-auto text-surface-300 dark:text-surface-600 mb-2" />
+                        <p class="text-surface-500 dark:text-surface-400 text-sm">No waiting chats</p>
                     </div>
                 </div>
             </div>
 
             <!-- Active Chat Window -->
-            <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden flex flex-col border border-gray-200 dark:border-gray-700" style="min-height: 500px;">
+            <div class="lg:col-span-2 bg-white dark:bg-surface-800 rounded-xl shadow-sm overflow-hidden flex flex-col border border-surface-200 dark:border-surface-700" style="min-height: 500px;">
                 <!-- No Active Chat -->
                 <div x-show="!activeChat" class="flex-1 flex items-center justify-center">
                     <div class="text-center">
-                        <x-heroicon-o-chat-bubble-bottom-center-text class="h-14 w-14 mx-auto text-gray-300 dark:text-gray-600 mb-3" />
-                        <h3 class="text-base font-medium text-gray-900 dark:text-white mb-1">No Active Chat</h3>
-                        <p class="text-gray-500 dark:text-gray-400 text-sm">Select a waiting chat to start helping</p>
+                        <x-heroicon-o-chat-bubble-bottom-center-text class="h-14 w-14 mx-auto text-surface-300 dark:text-surface-600 mb-3" />
+                        <h3 class="text-base font-medium text-surface-900 dark:text-white mb-1">No Active Chat</h3>
+                        <p class="text-surface-500 dark:text-surface-400 text-sm">Select a waiting chat to start helping</p>
                     </div>
                 </div>
 
@@ -53,25 +53,25 @@
                 <template x-if="activeChat">
                     <div class="flex flex-col h-full">
                         <!-- Chat Header -->
-                        <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50 dark:bg-gray-800">
+                        <div class="px-4 py-3 border-b border-surface-200 dark:border-surface-700 flex items-center justify-between bg-surface-50 dark:bg-surface-800">
                             <div class="flex items-center space-x-3">
                                 <div class="w-9 h-9 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
                                     <span class="text-sm font-medium text-primary-600 dark:text-primary-400" x-text="(activeChat.visitor_name || 'V').charAt(0).toUpperCase()"></span>
                                 </div>
                                 <div>
-                                    <p class="font-medium text-gray-900 dark:text-white text-sm" x-text="activeChat.visitor_name || 'Visitor'"></p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400" x-text="activeChat.visitor_email"></p>
+                                    <p class="font-medium text-surface-900 dark:text-white text-sm" x-text="activeChat.visitor_name || 'Visitor'"></p>
+                                    <p class="text-xs text-surface-500 dark:text-surface-400" x-text="activeChat.visitor_email"></p>
                                 </div>
                             </div>
                             <div class="flex items-center space-x-2">
-                                <select x-model="transferDepartment" class="text-xs border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                <select x-model="transferDepartment" class="text-xs border border-surface-300 dark:border-surface-600 rounded-lg px-2 py-1.5 bg-white dark:bg-surface-700 text-surface-900 dark:text-white">
                                     <option value="">Transfer...</option>
                                     <option value="general">General</option>
                                     <option value="sales">Sales</option>
                                     <option value="technical">Technical</option>
                                     <option value="billing">Billing</option>
                                 </select>
-                                <button @click="transferChat" :disabled="!transferDepartment" class="px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 text-gray-700 dark:text-gray-300">
+                                <button @click="transferChat" :disabled="!transferDepartment" class="px-2 py-1.5 text-xs border border-surface-300 dark:border-surface-600 rounded-lg hover:bg-surface-50 dark:hover:bg-surface-600 disabled:opacity-50 text-surface-700 dark:text-surface-300">
                                     Transfer
                                 </button>
                                 <button @click="closeActiveChat" class="px-2 py-1.5 text-xs bg-danger-600 hover:bg-danger-700 text-white rounded-lg">
@@ -86,15 +86,15 @@
                                 <div :class="message.sender_type === 'agent' ? 'flex justify-end' : 'flex justify-start'">
                                     <!-- System Message -->
                                     <div x-show="message.sender_type === 'system'" class="w-full text-center">
-                                        <span class="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full" x-text="message.message"></span>
+                                        <span class="text-xs text-surface-500 bg-surface-100 dark:bg-surface-700 px-3 py-1 rounded-full" x-text="message.message"></span>
                                     </div>
 
                                     <!-- Visitor Message -->
                                     <div x-show="message.sender_type === 'visitor'" class="max-w-[75%]">
-                                        <div class="bg-gray-100 dark:bg-gray-700 rounded-xl rounded-tl-sm px-3 py-2">
-                                            <p class="text-gray-900 dark:text-white text-sm whitespace-pre-wrap" x-text="message.message"></p>
+                                        <div class="bg-surface-100 dark:bg-surface-700 rounded-xl rounded-tl-sm px-3 py-2">
+                                            <p class="text-surface-900 dark:text-white text-sm whitespace-pre-wrap" x-text="message.message"></p>
                                         </div>
-                                        <span class="text-xs text-gray-400 mt-1 ml-1" x-text="formatTime(message.created_at)"></span>
+                                        <span class="text-xs text-surface-400 mt-1 ml-1" x-text="formatTime(message.created_at)"></span>
                                     </div>
 
                                     <!-- Agent Message -->
@@ -102,19 +102,19 @@
                                         <div class="bg-primary-600 rounded-xl rounded-tr-sm px-3 py-2">
                                             <p class="text-white text-sm whitespace-pre-wrap" x-text="message.message"></p>
                                         </div>
-                                        <span class="text-xs text-gray-400 mt-1 mr-1 text-right block" x-text="formatTime(message.created_at)"></span>
+                                        <span class="text-xs text-surface-400 mt-1 mr-1 text-right block" x-text="formatTime(message.created_at)"></span>
                                     </div>
                                 </div>
                             </template>
                         </div>
 
                         <!-- Quick Responses -->
-                        <div class="px-3 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                        <div class="px-3 py-2 border-t border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/50">
                             <div class="flex flex-wrap gap-1.5">
                                 <template x-for="response in quickResponses" :key="response.id">
                                     <button
                                         @click="useQuickResponse(response)"
-                                        class="text-xs px-2 py-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 transition-colors"
+                                        class="text-xs px-2 py-1 bg-white dark:bg-surface-700 border border-surface-200 dark:border-surface-600 rounded-full hover:bg-surface-100 dark:hover:bg-surface-600 text-surface-600 dark:text-surface-300 transition-colors"
                                         x-text="response.title"
                                     ></button>
                                 </template>
@@ -122,14 +122,14 @@
                         </div>
 
                         <!-- Input -->
-                        <div class="p-3 border-t border-gray-200 dark:border-gray-700">
+                        <div class="p-3 border-t border-surface-200 dark:border-surface-700">
                             <form @submit.prevent="sendMessage" class="flex items-center space-x-2">
                                 <input
                                     type="text"
                                     x-model="newMessage"
                                     @keydown.enter.prevent="sendMessage"
                                     :disabled="sending"
-                                    class="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                    class="flex-1 px-3 py-2 text-sm border border-surface-300 dark:border-surface-600 rounded-lg bg-white dark:bg-surface-700 text-surface-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                     placeholder="Type your response..."
                                 >
                                 <button
@@ -147,31 +147,31 @@
         </div>
 
         <!-- My Active Chats List -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
-            <div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-                <h2 class="font-semibold text-gray-900 dark:text-white text-sm">My Active Chats</h2>
+        <div class="bg-white dark:bg-surface-800 rounded-xl shadow-sm overflow-hidden border border-surface-200 dark:border-surface-700">
+            <div class="px-4 py-3 border-b border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800">
+                <h2 class="font-semibold text-surface-900 dark:text-white text-sm">My Active Chats</h2>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                 <template x-for="chat in myActiveChats" :key="chat.id">
                     <div
                         @click="loadChat(chat)"
                         :class="{ 'ring-2 ring-primary-500': activeChat && activeChat.id === chat.id }"
-                        class="p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-all"
+                        class="p-3 border border-surface-200 dark:border-surface-600 rounded-lg hover:bg-surface-50 dark:hover:bg-surface-700/50 cursor-pointer transition-all"
                     >
                         <div class="flex items-center space-x-3">
                             <div class="w-9 h-9 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
                                 <span class="text-sm font-medium text-green-600 dark:text-green-400" x-text="(chat.visitor_name || 'V').charAt(0).toUpperCase()"></span>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <p class="font-medium text-gray-900 dark:text-white text-sm truncate" x-text="chat.visitor_name || 'Visitor'"></p>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 capitalize" x-text="chat.department"></p>
+                                <p class="font-medium text-surface-900 dark:text-white text-sm truncate" x-text="chat.visitor_name || 'Visitor'"></p>
+                                <p class="text-xs text-surface-500 dark:text-surface-400 capitalize" x-text="chat.department"></p>
                             </div>
                             <span x-show="chat.unread_count > 0" class="bg-danger-500 text-white text-xs font-medium px-1.5 py-0.5 rounded-full" x-text="chat.unread_count"></span>
                         </div>
                     </div>
                 </template>
                 <div x-show="myActiveChats.length === 0" class="col-span-full text-center py-6">
-                    <p class="text-gray-500 dark:text-gray-400 text-sm">No active chats assigned to you</p>
+                    <p class="text-surface-500 dark:text-surface-400 text-sm">No active chats assigned to you</p>
                 </div>
             </div>
         </div>

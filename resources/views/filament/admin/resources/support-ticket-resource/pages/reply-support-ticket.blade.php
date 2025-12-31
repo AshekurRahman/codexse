@@ -5,15 +5,15 @@
             <x-slot name="heading">Ticket Information</x-slot>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <span class="text-sm text-gray-500 dark:text-gray-400">Customer:</span>
+                    <span class="text-sm text-surface-500 dark:text-surface-400">Customer:</span>
                     <p class="font-medium">{{ $record->user->name }}</p>
                 </div>
                 <div>
-                    <span class="text-sm text-gray-500 dark:text-gray-400">Category:</span>
+                    <span class="text-sm text-surface-500 dark:text-surface-400">Category:</span>
                     <p class="font-medium capitalize">{{ $record->category }}</p>
                 </div>
                 <div>
-                    <span class="text-sm text-gray-500 dark:text-gray-400">Priority:</span>
+                    <span class="text-sm text-surface-500 dark:text-surface-400">Priority:</span>
                     <x-filament::badge :color="match($record->priority) {
                         'low' => 'gray',
                         'medium' => 'info',
@@ -24,7 +24,7 @@
                     </x-filament::badge>
                 </div>
                 <div>
-                    <span class="text-sm text-gray-500 dark:text-gray-400">Status:</span>
+                    <span class="text-sm text-surface-500 dark:text-surface-400">Status:</span>
                     <x-filament::badge :color="match($record->status) {
                         'open' => 'warning',
                         'in_progress' => 'info',
@@ -37,12 +37,12 @@
                 </div>
             </div>
             <div class="mt-4">
-                <span class="text-sm text-gray-500 dark:text-gray-400">Subject:</span>
+                <span class="text-sm text-surface-500 dark:text-surface-400">Subject:</span>
                 <p class="font-medium">{{ $record->subject }}</p>
             </div>
             <div class="mt-4">
-                <span class="text-sm text-gray-500 dark:text-gray-400">Description:</span>
-                <div class="mt-1 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <span class="text-sm text-surface-500 dark:text-surface-400">Description:</span>
+                <div class="mt-1 p-3 bg-surface-50 dark:bg-surface-800 rounded-lg">
                     {!! nl2br(e($record->description)) !!}
                 </div>
             </div>
@@ -62,10 +62,10 @@
                             </div>
                         </div>
                         <div class="flex-1 max-w-[80%]">
-                            <div class="p-4 rounded-lg {{ $reply->is_staff_reply ? 'bg-primary-50 dark:bg-primary-900/20' : 'bg-gray-50 dark:bg-gray-800' }}">
+                            <div class="p-4 rounded-lg {{ $reply->is_staff_reply ? 'bg-primary-50 dark:bg-primary-900/20' : 'bg-surface-50 dark:bg-surface-800' }}">
                                 <div class="flex justify-between items-start mb-2">
                                     <span class="font-medium text-sm">{{ $reply->user->name }}</span>
-                                    <span class="text-xs text-gray-500">{{ $reply->created_at->diffForHumans() }}</span>
+                                    <span class="text-xs text-surface-500">{{ $reply->created_at->diffForHumans() }}</span>
                                 </div>
                                 <div class="prose dark:prose-invert prose-sm max-w-none">
                                     {!! clean($reply->message) !!}
@@ -82,7 +82,7 @@
                         </div>
                     </div>
                 @empty
-                    <p class="text-center text-gray-500 py-4">No replies yet.</p>
+                    <p class="text-center text-surface-500 py-4">No replies yet.</p>
                 @endforelse
             </div>
         </x-filament::section>

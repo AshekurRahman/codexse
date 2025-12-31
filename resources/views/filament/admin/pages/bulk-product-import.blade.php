@@ -14,8 +14,8 @@
                     Download Template
                 </x-filament::button>
 
-                <div class="text-sm text-gray-500 dark:text-gray-400">
-                    Required columns: <code class="bg-gray-100 dark:bg-gray-800 px-1 rounded">name</code>, <code class="bg-gray-100 dark:bg-gray-800 px-1 rounded">price</code>
+                <div class="text-sm text-surface-500 dark:text-surface-400">
+                    Required columns: <code class="bg-surface-100 dark:bg-surface-800 px-1 rounded">name</code>, <code class="bg-surface-100 dark:bg-surface-800 px-1 rounded">price</code>
                 </div>
             </div>
         </x-filament::section>
@@ -42,10 +42,10 @@
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
-                            <tr class="border-b dark:border-gray-700">
-                                <th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">#</th>
+                            <tr class="border-b dark:border-surface-700">
+                                <th class="px-3 py-2 text-left font-medium text-surface-500 dark:text-surface-400">#</th>
                                 @foreach($previewData['headers'] as $header)
-                                    <th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">
+                                    <th class="px-3 py-2 text-left font-medium text-surface-500 dark:text-surface-400">
                                         {{ $header }}
                                     </th>
                                 @endforeach
@@ -54,10 +54,10 @@
                         <tbody>
                             @foreach($previewData['rows'] as $index => $row)
                                 @php $rowNum = $index + 2; @endphp
-                                <tr class="border-b dark:border-gray-700 {{ isset($validationErrors[$rowNum]) ? 'bg-danger-50 dark:bg-danger-900/20' : '' }}">
-                                    <td class="px-3 py-2 text-gray-600 dark:text-gray-300">{{ $rowNum }}</td>
+                                <tr class="border-b dark:border-surface-700 {{ isset($validationErrors[$rowNum]) ? 'bg-danger-50 dark:bg-danger-900/20' : '' }}">
+                                    <td class="px-3 py-2 text-surface-600 dark:text-surface-300">{{ $rowNum }}</td>
                                     @foreach($previewData['headers'] as $header)
-                                        <td class="px-3 py-2 text-gray-900 dark:text-gray-100 max-w-xs truncate">
+                                        <td class="px-3 py-2 text-surface-900 dark:text-surface-100 max-w-xs truncate">
                                             {{ $row[$header] ?? '' }}
                                         </td>
                                     @endforeach
@@ -101,7 +101,7 @@
                     @foreach($validationErrors as $row => $errors)
                         <div class="text-sm">
                             <span class="font-medium text-danger-600 dark:text-danger-400">Row {{ str_replace('row_', '', $row) }}:</span>
-                            <span class="text-gray-600 dark:text-gray-400">{{ implode(', ', $errors) }}</span>
+                            <span class="text-surface-600 dark:text-surface-400">{{ implode(', ', $errors) }}</span>
                         </div>
                     @endforeach
                 </div>
@@ -115,29 +115,29 @@
             @php $recentImports = $this->getRecentImports(); @endphp
 
             @if($recentImports->isEmpty())
-                <div class="text-center py-6 text-gray-500 dark:text-gray-400">
+                <div class="text-center py-6 text-surface-500 dark:text-surface-400">
                     No imports yet.
                 </div>
             @else
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
                         <thead>
-                            <tr class="border-b dark:border-gray-700">
-                                <th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Date</th>
-                                <th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">User</th>
-                                <th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Status</th>
-                                <th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Progress</th>
-                                <th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Success</th>
-                                <th class="px-3 py-2 text-left font-medium text-gray-500 dark:text-gray-400">Failed</th>
+                            <tr class="border-b dark:border-surface-700">
+                                <th class="px-3 py-2 text-left font-medium text-surface-500 dark:text-surface-400">Date</th>
+                                <th class="px-3 py-2 text-left font-medium text-surface-500 dark:text-surface-400">User</th>
+                                <th class="px-3 py-2 text-left font-medium text-surface-500 dark:text-surface-400">Status</th>
+                                <th class="px-3 py-2 text-left font-medium text-surface-500 dark:text-surface-400">Progress</th>
+                                <th class="px-3 py-2 text-left font-medium text-surface-500 dark:text-surface-400">Success</th>
+                                <th class="px-3 py-2 text-left font-medium text-surface-500 dark:text-surface-400">Failed</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($recentImports as $import)
-                                <tr class="border-b dark:border-gray-700">
-                                    <td class="px-3 py-2 text-gray-600 dark:text-gray-300">
+                                <tr class="border-b dark:border-surface-700">
+                                    <td class="px-3 py-2 text-surface-600 dark:text-surface-300">
                                         {{ $import->created_at->format('M d, Y H:i') }}
                                     </td>
-                                    <td class="px-3 py-2 text-gray-900 dark:text-gray-100">
+                                    <td class="px-3 py-2 text-surface-900 dark:text-surface-100">
                                         {{ $import->user->name ?? 'Unknown' }}
                                     </td>
                                     <td class="px-3 py-2">
@@ -153,7 +153,7 @@
                                             {{ ucfirst($import->status) }}
                                         </x-filament::badge>
                                     </td>
-                                    <td class="px-3 py-2 text-gray-600 dark:text-gray-300">
+                                    <td class="px-3 py-2 text-surface-600 dark:text-surface-300">
                                         {{ $import->processed_rows }} / {{ $import->total_rows }}
                                     </td>
                                     <td class="px-3 py-2 text-success-600 dark:text-success-400">

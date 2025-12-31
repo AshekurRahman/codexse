@@ -1,10 +1,10 @@
 <section>
     <header>
-        <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+        <h2 class="text-lg font-medium text-surface-900 dark:text-surface-100">
             {{ __('Push Notifications') }}
         </h2>
 
-        <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+        <p class="mt-1 text-sm text-surface-600 dark:text-surface-400">
             {{ __('Manage your browser push notification preferences.') }}
         </p>
     </header>
@@ -24,18 +24,18 @@
 
         <!-- Permission Status -->
         <div x-show="isSupported">
-            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+            <div class="flex items-center justify-between p-4 bg-surface-50 dark:bg-surface-800 rounded-lg">
                 <div class="flex items-center gap-3">
-                    <div class="p-2 rounded-full" :class="isEnabled ? 'bg-green-100 dark:bg-green-900' : 'bg-gray-200 dark:bg-gray-700'">
-                        <svg class="w-5 h-5" :class="isEnabled ? 'text-green-600 dark:text-green-400' : 'text-gray-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-2 rounded-full" :class="isEnabled ? 'bg-green-100 dark:bg-green-900' : 'bg-surface-200 dark:bg-surface-700'">
+                        <svg class="w-5 h-5" :class="isEnabled ? 'text-green-600 dark:text-green-400' : 'text-surface-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                         </svg>
                     </div>
                     <div>
-                        <p class="font-medium text-gray-900 dark:text-gray-100">
+                        <p class="font-medium text-surface-900 dark:text-surface-100">
                             {{ __('Browser Notifications') }}
                         </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400" x-text="statusText"></p>
+                        <p class="text-sm text-surface-500 dark:text-surface-400" x-text="statusText"></p>
                     </div>
                 </div>
                 <div>
@@ -52,7 +52,7 @@
                         x-show="isEnabled"
                         @click="disableNotifications()"
                         :disabled="loading"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 disabled:opacity-50"
+                        class="px-4 py-2 text-sm font-medium text-surface-700 bg-surface-200 rounded-lg hover:bg-surface-300 dark:bg-surface-700 dark:text-surface-300 dark:hover:bg-surface-600 disabled:opacity-50"
                     >
                         <span x-show="!loading">{{ __('Disable') }}</span>
                         <span x-show="loading">{{ __('Disabling...') }}</span>
@@ -73,85 +73,85 @@
 
         <!-- Notification Types -->
         <div x-show="isEnabled" class="space-y-4">
-            <h3 class="font-medium text-gray-900 dark:text-gray-100">{{ __('Notification Types') }}</h3>
+            <h3 class="font-medium text-surface-900 dark:text-surface-100">{{ __('Notification Types') }}</h3>
 
             <div class="space-y-3">
                 <!-- Orders -->
-                <label class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
+                <label class="flex items-center justify-between p-3 bg-surface-50 dark:bg-surface-800 rounded-lg cursor-pointer hover:bg-surface-100 dark:hover:bg-surface-700">
                     <div class="flex items-center gap-3">
-                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                         </svg>
                         <div>
-                            <span class="text-gray-900 dark:text-gray-100">{{ __('Order Updates') }}</span>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Get notified when your orders are confirmed or updated') }}</p>
+                            <span class="text-surface-900 dark:text-surface-100">{{ __('Order Updates') }}</span>
+                            <p class="text-xs text-surface-500 dark:text-surface-400">{{ __('Get notified when your orders are confirmed or updated') }}</p>
                         </div>
                     </div>
-                    <input type="checkbox" x-model="preferences.notify_orders" @change="savePreferences()" class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                    <input type="checkbox" x-model="preferences.notify_orders" @change="savePreferences()" class="w-5 h-5 text-indigo-600 border-surface-300 rounded focus:ring-indigo-500">
                 </label>
 
                 <!-- Messages -->
-                <label class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
+                <label class="flex items-center justify-between p-3 bg-surface-50 dark:bg-surface-800 rounded-lg cursor-pointer hover:bg-surface-100 dark:hover:bg-surface-700">
                     <div class="flex items-center gap-3">
-                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
                         </svg>
                         <div>
-                            <span class="text-gray-900 dark:text-gray-100">{{ __('New Messages') }}</span>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Get notified when you receive new messages') }}</p>
+                            <span class="text-surface-900 dark:text-surface-100">{{ __('New Messages') }}</span>
+                            <p class="text-xs text-surface-500 dark:text-surface-400">{{ __('Get notified when you receive new messages') }}</p>
                         </div>
                     </div>
-                    <input type="checkbox" x-model="preferences.notify_messages" @change="savePreferences()" class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                    <input type="checkbox" x-model="preferences.notify_messages" @change="savePreferences()" class="w-5 h-5 text-indigo-600 border-surface-300 rounded focus:ring-indigo-500">
                 </label>
 
                 <!-- Sales (for sellers) -->
                 @if(auth()->user()->seller)
-                <label class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
+                <label class="flex items-center justify-between p-3 bg-surface-50 dark:bg-surface-800 rounded-lg cursor-pointer hover:bg-surface-100 dark:hover:bg-surface-700">
                     <div class="flex items-center gap-3">
-                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         <div>
-                            <span class="text-gray-900 dark:text-gray-100">{{ __('New Sales') }}</span>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Get notified when you make a sale') }}</p>
+                            <span class="text-surface-900 dark:text-surface-100">{{ __('New Sales') }}</span>
+                            <p class="text-xs text-surface-500 dark:text-surface-400">{{ __('Get notified when you make a sale') }}</p>
                         </div>
                     </div>
-                    <input type="checkbox" x-model="preferences.notify_sales" @change="savePreferences()" class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                    <input type="checkbox" x-model="preferences.notify_sales" @change="savePreferences()" class="w-5 h-5 text-indigo-600 border-surface-300 rounded focus:ring-indigo-500">
                 </label>
 
                 <!-- Reviews -->
-                <label class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
+                <label class="flex items-center justify-between p-3 bg-surface-50 dark:bg-surface-800 rounded-lg cursor-pointer hover:bg-surface-100 dark:hover:bg-surface-700">
                     <div class="flex items-center gap-3">
-                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
                         </svg>
                         <div>
-                            <span class="text-gray-900 dark:text-gray-100">{{ __('New Reviews') }}</span>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Get notified when customers leave reviews') }}</p>
+                            <span class="text-surface-900 dark:text-surface-100">{{ __('New Reviews') }}</span>
+                            <p class="text-xs text-surface-500 dark:text-surface-400">{{ __('Get notified when customers leave reviews') }}</p>
                         </div>
                     </div>
-                    <input type="checkbox" x-model="preferences.notify_reviews" @change="savePreferences()" class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                    <input type="checkbox" x-model="preferences.notify_reviews" @change="savePreferences()" class="w-5 h-5 text-indigo-600 border-surface-300 rounded focus:ring-indigo-500">
                 </label>
                 @endif
 
                 <!-- Promotions -->
-                <label class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700">
+                <label class="flex items-center justify-between p-3 bg-surface-50 dark:bg-surface-800 rounded-lg cursor-pointer hover:bg-surface-100 dark:hover:bg-surface-700">
                     <div class="flex items-center gap-3">
-                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
                         </svg>
                         <div>
-                            <span class="text-gray-900 dark:text-gray-100">{{ __('Promotions & Offers') }}</span>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ __('Get notified about special deals and offers') }}</p>
+                            <span class="text-surface-900 dark:text-surface-100">{{ __('Promotions & Offers') }}</span>
+                            <p class="text-xs text-surface-500 dark:text-surface-400">{{ __('Get notified about special deals and offers') }}</p>
                         </div>
                     </div>
-                    <input type="checkbox" x-model="preferences.notify_promotions" @change="savePreferences()" class="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500">
+                    <input type="checkbox" x-model="preferences.notify_promotions" @change="savePreferences()" class="w-5 h-5 text-indigo-600 border-surface-300 rounded focus:ring-indigo-500">
                 </label>
             </div>
         </div>
 
         <!-- Test Notification Button -->
-        <div x-show="isEnabled" class="pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div x-show="isEnabled" class="pt-4 border-t border-surface-200 dark:border-surface-700">
             <button
                 @click="sendTestNotification()"
                 :disabled="testLoading"
