@@ -24,13 +24,12 @@ class EscrowReleased extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Payment Released - $' . number_format($this->transaction->payee_amount, 2))
-            ->greeting('Hello ' . $notifiable->name . '!')
-            ->line('Great news! Payment has been released to your account.')
-            ->line('Transaction: ' . $this->transaction->transaction_number)
-            ->line('Amount: $' . number_format($this->transaction->payee_amount, 2))
-            ->action('View Wallet', route('wallet.index'))
-            ->line('The funds are now available in your wallet.');
+            ->subject('Payment Released - ' . format_price($this->transaction->payee_amount))
+            ->view('emails.escrow.payment-released', [
+                'escrow' => $this->transaction,
+                'newBalance' => $notifiable->wallet?->balance ?? $this->transaction->payee_amount,
+                'recipientEmail' => $notifiable->email,
+            ]);
     }
 
     public function toArray(object $notifiable): array

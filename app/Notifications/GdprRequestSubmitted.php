@@ -23,20 +23,13 @@ class GdprRequestSubmitted extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $typeName = $this->request->type_name;
-
         return (new MailMessage)
-            ->subject("Your {$typeName} Request Has Been Received")
-            ->greeting("Hello {$notifiable->name},")
-            ->line("We have received your {$typeName} request (Reference: {$this->request->request_number}).")
-            ->line("Under GDPR regulations, we are required to process your request within 30 days.")
-            ->line("What happens next:")
-            ->line("1. Our team will verify your identity")
-            ->line("2. We will process your request")
-            ->line("3. You will receive a notification when it's complete")
-            ->action('View Request Status', route('gdpr.requests'))
-            ->line("If you did not make this request, please contact our support team immediately.")
-            ->salutation("Best regards,\n" . config('app.name') . " Team");
+            ->subject("Your {$this->request->type_name} Request Has Been Received")
+            ->view('emails.gdpr.request-submitted', [
+                'request' => $this->request,
+                'user' => $notifiable,
+                'recipientEmail' => $notifiable->email,
+            ]);
     }
 
     public function toArray(object $notifiable): array

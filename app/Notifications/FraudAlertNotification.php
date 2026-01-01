@@ -23,29 +23,12 @@ class FraudAlertNotification extends Notification implements ShouldQueue
 
     public function toMail(object $notifiable): MailMessage
     {
-        $severityColors = [
-            'low' => '#3B82F6',
-            'medium' => '#F59E0B',
-            'high' => '#EF4444',
-            'critical' => '#DC2626',
-        ];
-
         return (new MailMessage)
             ->subject("[{$this->alert->severity_name}] Fraud Alert: {$this->alert->type_name}")
-            ->greeting("Fraud Alert Detected")
-            ->line("A suspicious transaction has been flagged by our fraud detection system.")
-            ->line("**Alert Number:** {$this->alert->alert_number}")
-            ->line("**Type:** {$this->alert->type_name}")
-            ->line("**Severity:** {$this->alert->severity_name}")
-            ->line("**Risk Score:** {$this->alert->risk_score}/100")
-            ->line("**Amount:** {$this->alert->formatted_amount}")
-            ->line("**User:** " . ($this->alert->user?->name ?? 'Guest'))
-            ->line("**IP Address:** {$this->alert->ip_address}")
-            ->when($this->alert->auto_blocked, function ($message) {
-                return $message->line("**Status:** Transaction was automatically blocked.");
-            })
-            ->action('Review Alert', url("/admin/fraud-alerts/{$this->alert->id}"))
-            ->line("Please review this alert and take appropriate action.");
+            ->view('emails.admin.fraud-alert', [
+                'alert' => $this->alert,
+                'recipientEmail' => $notifiable->email,
+            ]);
     }
 
     public function toArray(object $notifiable): array

@@ -2,53 +2,48 @@
 
 namespace App\Notifications;
 
+use App\Models\JobContract;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class JobContractCreated extends Notification
+class JobContractCreated extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    /**
-     * Create a new notification instance.
-     */
-    public function __construct()
-    {
-        //
-    }
+    public function __construct(
+        public JobContract $contract
+    ) {}
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
-     */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
+            ->subject('Contract Started - ' . $this->contract->title)
+            ->view('emails.job.contract-started', [
+                'contract' => $this->contract,
+                'job' => $this->contract->jobPosting,
+                'client' => $this->contract->client,
+                'freelancer' => $this->contract->seller->user,
+                'recipientEmail' => $notifiable->email,
+            ]);
     }
 
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(object $notifiable): array
     {
         return [
-            //
+            'type' => 'job_contract_created',
+            'contract_id' => $this->contract->id,
+            'job_id' => $this->contract->job_posting_id,
+            'title' => $this->contract->title,
+            'amount' => $this->contract->total_amount,
+            'message' => 'Contract started: ' . $this->contract->title,
+            'url' => '/contracts/' . $this->contract->id,
         ];
     }
 }

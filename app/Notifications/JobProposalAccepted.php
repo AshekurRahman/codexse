@@ -25,13 +25,12 @@ class JobProposalAccepted extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject('Your Proposal Has Been Accepted!')
-            ->greeting('Congratulations ' . $notifiable->name . '!')
-            ->line('Your proposal has been accepted.')
-            ->line('Job: ' . $this->proposal->jobPosting->title)
-            ->line('Client: ' . $this->proposal->jobPosting->client->name)
-            ->line('Amount: $' . number_format($this->proposal->proposed_price, 2))
-            ->action('View Contract', url('/seller/contracts'))
-            ->line('A contract has been created. You can start working on the project now.');
+            ->view('emails.job.proposal-accepted', [
+                'job' => $this->proposal->jobPosting,
+                'proposal' => $this->proposal,
+                'freelancer' => $notifiable,
+                'recipientEmail' => $notifiable->email,
+            ]);
     }
 
     public function toArray(object $notifiable): array

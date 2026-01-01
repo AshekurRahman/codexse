@@ -4,8 +4,21 @@
 
     $siteName = SeoSetting::get('site_name', config('app.name', 'Codexse'));
     $organizationLogo = SeoSetting::get('organization_logo');
-    $logoUrl = $organizationLogo ? asset('storage/' . $organizationLogo) : asset('images/logo.png');
+
+    // Determine logo URL based on path format
+    if ($organizationLogo) {
+        // If path starts with / or images/, it's in public folder
+        if (str_starts_with($organizationLogo, '/') || str_starts_with($organizationLogo, 'images/')) {
+            $logoUrl = asset(ltrim($organizationLogo, '/'));
+        } else {
+            $logoUrl = asset('storage/' . $organizationLogo);
+        }
+    } else {
+        $logoUrl = asset('images/logo.svg');
+    }
+
     $siteUrl = config('app.url');
+    $supportEmail = Setting::get('support_email', 'support@codexse.com');
     $companyAddress = Setting::get('company_address', '');
 @endphp
 <!DOCTYPE html>
@@ -18,7 +31,7 @@
     <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
     <meta name="color-scheme" content="light">
     <meta name="supported-color-schemes" content="light">
-    <title>{{ $campaign->subject }}</title>
+    <title>@yield('title', $siteName)</title>
     <!--[if mso]>
     <noscript>
         <xml>
@@ -74,36 +87,248 @@
         h1, h2, h3, h4, h5, h6 {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             color: #0f172a;
-            margin: 0 0 16px;
+            margin: 0;
             padding: 0;
             font-weight: 600;
         }
-        h1 { font-size: 28px; }
-        h2 { font-size: 24px; }
-        h3 { font-size: 20px; }
         a { color: #6366f1; text-decoration: none; }
         a:hover { text-decoration: underline; }
-        p { margin: 0 0 16px; }
 
-        /* Content Styling */
-        .email-content img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
+        /* Container */
+        .email-wrapper {
+            width: 100%;
+            background-color: #f1f5f9;
+            padding: 40px 20px;
         }
-        .email-content ul, .email-content ol {
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Header */
+        .email-header {
+            background-color: #ffffff;
+            padding: 32px 40px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .email-header img {
+            max-height: 48px;
+            width: auto;
+        }
+
+        /* Hero Section */
+        .email-hero {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            padding: 48px 40px;
+            text-align: center;
+        }
+        .email-hero-light {
+            background-color: #ffffff;
+            padding: 40px;
+            text-align: center;
+        }
+        .hero-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            margin: 0 auto 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .hero-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0 0 12px;
+            line-height: 1.3;
+        }
+        .hero-subtitle {
+            font-size: 16px;
+            color: #64748b;
+            margin: 0;
+        }
+
+        /* Content */
+        .email-content {
+            padding: 40px;
+        }
+        .email-content p {
             margin: 0 0 16px;
-            padding-left: 24px;
         }
-        .email-content li {
-            margin-bottom: 8px;
+        .email-content p:last-child {
+            margin-bottom: 0;
         }
-        .email-content blockquote {
-            margin: 16px 0;
-            padding: 16px 20px;
+
+        /* Info Card */
+        .info-card {
             background: #f8fafc;
-            border-left: 4px solid #6366f1;
-            border-radius: 0 8px 8px 0;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .info-row:first-child {
+            padding-top: 0;
+        }
+        .info-label {
+            color: #64748b;
+            font-size: 14px;
+        }
+        .info-value {
+            color: #0f172a;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        /* Buttons */
+        .btn-wrapper {
+            text-align: center;
+            margin: 32px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 16px 32px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none !important;
+            text-align: center;
+            transition: all 0.2s;
+            mso-padding-alt: 0;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: #ffffff !important;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: #ffffff !important;
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #ffffff !important;
+        }
+        .btn-secondary {
+            background: #ffffff;
+            color: #334155 !important;
+            border: 2px solid #e2e8f0;
+        }
+
+        /* Alert Boxes */
+        .alert {
+            border-radius: 12px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+        .alert-info {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            border: 1px solid #93c5fd;
+        }
+        .alert-success {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 1px solid #86efac;
+        }
+        .alert-warning {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border: 1px solid #fcd34d;
+        }
+        .alert-danger {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border: 1px solid #fca5a5;
+        }
+
+        /* Divider */
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, #e2e8f0 50%, transparent 100%);
+            margin: 32px 0;
+        }
+
+        /* Footer */
+        .email-footer {
+            background: #f8fafc;
+            padding: 40px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .footer-logo {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .footer-logo img {
+            max-height: 36px;
+            width: auto;
+            opacity: 0.8;
+        }
+        .footer-links {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .footer-links a {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 14px;
+            margin: 0 12px;
+        }
+        .footer-links a:hover {
+            color: #6366f1;
+        }
+        .footer-social {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .footer-social a {
+            display: inline-block;
+            width: 36px;
+            height: 36px;
+            background: #e2e8f0;
+            border-radius: 50%;
+            margin: 0 6px;
+            line-height: 36px;
+            text-align: center;
+        }
+        .footer-divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 24px 0;
+        }
+        .footer-legal {
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            line-height: 1.8;
+        }
+        .footer-legal a {
+            color: #64748b;
+        }
+        .footer-legal p {
+            margin: 0 0 8px;
+        }
+
+        /* Post Footer */
+        .post-footer {
+            text-align: center;
+            padding: 24px 0;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+        .post-footer a {
+            color: #6366f1;
         }
 
         /* Responsive */
@@ -115,20 +340,33 @@
                 border-radius: 12px !important;
             }
             .email-header,
-            .email-body,
+            .email-hero,
+            .email-hero-light,
+            .email-content,
             .email-footer {
                 padding-left: 24px !important;
                 padding-right: 24px !important;
             }
-            h1 { font-size: 24px !important; }
+            .hero-title {
+                font-size: 24px !important;
+            }
+            .btn {
+                display: block !important;
+                width: 100% !important;
+            }
+            .footer-links a {
+                display: block;
+                margin: 8px 0;
+            }
         }
     </style>
+    @yield('additional_styles')
 </head>
 <body>
     <!-- Preview Text -->
-    @if($previewText)
+    @hasSection('preview')
     <div style="display:none;font-size:1px;color:#f1f5f9;line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">
-        {{ $previewText }}
+        @yield('preview')
         &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847; &#847;
     </div>
     @endif
@@ -147,17 +385,17 @@
 
                         <!-- Header -->
                         <div class="email-header" style="background-color: #ffffff; padding: 32px 40px; text-align: center; border-bottom: 1px solid #e2e8f0;">
-                            <a href="{{ $siteUrl }}" style="display: inline-block;">
-                                <img src="{{ $logoUrl }}" alt="{{ $siteName }}" style="max-height: 48px; width: auto; display: block;">
+                            <a href="{{ $siteUrl }}" style="display: inline-flex; align-items: center; text-decoration: none;">
+                                <img src="{{ $logoUrl }}" alt="{{ $siteName }}" width="48" height="48" style="max-height: 48px;">
+                                <span style="margin-left: 12px; font-size: 24px; font-weight: 700; color: #0f172a;">{{ $siteName }}</span>
                             </a>
                         </div>
 
-                        <!-- Content -->
-                        <div class="email-body" style="padding: 40px;">
-                            <div class="email-content">
-                                {!! $content !!}
-                            </div>
-                        </div>
+                        <!-- Hero Section -->
+                        @yield('hero')
+
+                        <!-- Content Section -->
+                        @yield('content')
 
                         <!-- Footer -->
                         <div class="email-footer" style="background: #f8fafc; padding: 40px; border-top: 1px solid #e2e8f0;">
@@ -236,7 +474,7 @@
                                             &copy; {{ date('Y') }} {{ $siteName }}. All rights reserved.
                                         </p>
                                         @if($companyAddress)
-                                        <p style="color: #94a3b8; font-size: 12px; margin: 0 0 8px; line-height: 1.6;">
+                                        <p style="color: #94a3b8; font-size: 12px; margin: 0; line-height: 1.6;">
                                             {{ $companyAddress }}
                                         </p>
                                         @endif
@@ -247,16 +485,18 @@
 
                     </div>
 
-                    <!-- Post Footer with Unsubscribe -->
+                    <!-- Post Footer -->
                     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                         <tr>
                             <td align="center" style="padding: 24px 0;">
                                 <p style="color: #94a3b8; font-size: 12px; margin: 0 0 8px;">
-                                    You received this email because you subscribed to our newsletter.
+                                    This email was sent to {{ $recipientEmail ?? 'you' }}
                                 </p>
+                                @hasSection('unsubscribe')
                                 <p style="color: #94a3b8; font-size: 12px; margin: 0;">
-                                    <a href="{{ $unsubscribeUrl }}" style="color: #6366f1; text-decoration: none;">Unsubscribe</a> from future emails
+                                    @yield('unsubscribe')
                                 </p>
+                                @endif
                             </td>
                         </tr>
                     </table>
@@ -271,10 +511,5 @@
         </table>
         <![endif]-->
     </div>
-
-    <!-- Open tracking pixel -->
-    @if(isset($trackingPixelUrl))
-    <img src="{{ $trackingPixelUrl }}" width="1" height="1" alt="" style="display:none;width:1px;height:1px;border:0;">
-    @endif
 </body>
 </html>

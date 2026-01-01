@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <title>Sales Statement {{ $invoiceNumber }}</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
         @page {
             margin: 0;
         }
@@ -11,9 +13,10 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         body {
-            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             font-size: 12px;
             line-height: 1.6;
             color: #1f2937;
@@ -47,42 +50,37 @@
         .logo {
             width: 48px;
             height: 48px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 12px;
             display: inline-block;
             vertical-align: middle;
-            text-align: center;
-            line-height: 48px;
-            margin-right: 12px;
+            margin-right: 14px;
         }
         .logo svg {
-            width: 28px;
-            height: 28px;
-            vertical-align: middle;
-            margin-top: 10px;
+            width: 48px;
+            height: 48px;
         }
         .brand-name {
             display: inline-block;
             vertical-align: middle;
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 700;
             letter-spacing: -0.5px;
         }
         .invoice-badge {
             background: rgba(255,255,255,0.2);
-            border-radius: 8px;
+            border-radius: 10px;
             padding: 20px 30px;
             display: inline-block;
         }
         .invoice-title {
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 2px;
             opacity: 0.9;
             margin-bottom: 5px;
+            font-weight: 600;
         }
         .invoice-number {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
         }
 
@@ -118,7 +116,7 @@
             color: #1f2937;
         }
         .info-value .name {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             color: #111827;
             margin-bottom: 5px;
@@ -134,7 +132,7 @@
             margin-bottom: 30px;
         }
         .section-title {
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 1.5px;
             color: #9ca3af;
@@ -182,7 +180,7 @@
             color: #7c3aed;
             padding: 3px 10px;
             border-radius: 4px;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 600;
             text-transform: uppercase;
         }
@@ -217,7 +215,7 @@
             text-align: center;
         }
         .totals-label {
-            font-size: 11px;
+            font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 1.5px;
             color: #059669;
@@ -288,10 +286,11 @@
             right: 50px;
             opacity: 0.03;
             font-size: 100px;
-            font-weight: 900;
+            font-weight: 800;
             color: #059669;
             transform: rotate(-30deg);
             z-index: -1;
+            font-family: 'Inter', sans-serif;
         }
     </style>
 </head>
@@ -305,11 +304,12 @@
             <div class="header-content">
                 <div class="header-left">
                     <span class="logo">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M9 7L4 12L9 17"/>
-                            <path d="M15 7L20 12L15 17"/>
-                            <path d="M10.5 9.5L13.5 14.5"/>
-                            <path d="M13.5 9.5L10.5 14.5"/>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+                            <rect width="48" height="48" rx="12" fill="rgba(255,255,255,0.2)"/>
+                            <path d="M18 14L10 24L18 34" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M30 14L38 24L30 34" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M21 19L27 29" stroke="white" stroke-width="3" stroke-linecap="round"/>
+                            <path d="M27 19L21 29" stroke="white" stroke-width="3" stroke-linecap="round"/>
                         </svg>
                     </span>
                     <span class="brand-name">{{ $company['name'] }}</span>

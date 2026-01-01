@@ -25,25 +25,14 @@ class DisputeOpened extends Notification implements ShouldQueue
     {
         $isInitiator = $notifiable->id === $this->dispute->initiated_by;
 
-        if ($isInitiator) {
-            return (new MailMessage)
-                ->subject('Dispute Opened Successfully')
-                ->greeting('Hello ' . $notifiable->name . '!')
-                ->line('Your dispute has been submitted successfully.')
-                ->line('Reason: ' . ucfirst(str_replace('_', ' ', $this->dispute->reason)))
-                ->line('Our team will review your case and get back to you soon.')
-                ->action('View Dispute', url('/disputes/' . $this->dispute->id))
-                ->line('You may be asked to provide additional information during the review process.');
-        }
-
         return (new MailMessage)
-            ->subject('Dispute Filed Against Your Transaction')
-            ->greeting('Hello ' . $notifiable->name . '!')
-            ->line('A dispute has been filed regarding a transaction.')
-            ->line('Reason: ' . ucfirst(str_replace('_', ' ', $this->dispute->reason)))
-            ->line('Please review the details and provide your response.')
-            ->action('View Dispute', url('/disputes/' . $this->dispute->id))
-            ->line('Our team will review both sides and make a fair decision.');
+            ->subject($isInitiator ? 'Dispute Opened Successfully' : 'Dispute Filed Against Your Transaction')
+            ->view('emails.dispute.opened', [
+                'dispute' => $this->dispute,
+                'recipient' => $notifiable,
+                'isInitiator' => $isInitiator,
+                'recipientEmail' => $notifiable->email,
+            ]);
     }
 
     public function toArray(object $notifiable): array

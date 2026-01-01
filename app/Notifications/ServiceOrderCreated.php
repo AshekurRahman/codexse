@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\View;
 
 class ServiceOrderCreated extends Notification implements ShouldQueue
 {
@@ -26,26 +27,22 @@ class ServiceOrderCreated extends Notification implements ShouldQueue
         $isSeller = $notifiable->id === $this->order->seller->user_id;
 
         if ($isSeller) {
+            // Use purpose-based template for seller
             return (new MailMessage)
                 ->subject('New Service Order Received - ' . $this->order->order_number)
-                ->greeting('Hello ' . $notifiable->name . '!')
-                ->line('You have received a new order for your service.')
-                ->line('Order: ' . $this->order->title)
-                ->line('Amount: $' . number_format($this->order->seller_amount, 2))
-                ->line('Buyer: ' . $this->order->buyer->name)
-                ->action('View Order', url('/seller/service-orders/' . $this->order->id))
-                ->line('Please review the order requirements and start working on it.');
+                ->view('emails.service.order-received-seller', [
+                    'order' => $this->order,
+                    'recipientEmail' => $notifiable->email,
+                ]);
         }
 
+        // Use purpose-based template for buyer
         return (new MailMessage)
             ->subject('Order Confirmation - ' . $this->order->order_number)
-            ->greeting('Hello ' . $notifiable->name . '!')
-            ->line('Your order has been placed successfully.')
-            ->line('Order: ' . $this->order->title)
-            ->line('Amount: $' . number_format($this->order->price, 2))
-            ->line('Seller: ' . $this->order->seller->user->name)
-            ->action('View Order', url('/service-orders/' . $this->order->id))
-            ->line('The seller will start working on your order soon.');
+            ->view('emails.service.order-confirmation-buyer', [
+                'order' => $this->order,
+                'recipientEmail' => $notifiable->email,
+            ]);
     }
 
     public function toArray(object $notifiable): array

@@ -2,19 +2,18 @@
 
 namespace App\Notifications;
 
-use App\Models\ServiceOrder;
+use App\Models\Order;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class ServiceOrderCompleted extends Notification implements ShouldQueue
+class ProductPurchaseConfirmation extends Notification implements ShouldQueue
 {
     use Queueable;
 
     public function __construct(
-        public ServiceOrder $order,
-        public $rating = null
+        public Order $order
     ) {}
 
     public function via(object $notifiable): array
@@ -25,11 +24,10 @@ class ServiceOrderCompleted extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('Order Completed - ' . $this->order->order_number)
-            ->view('emails.service.order-completed', [
+            ->subject('Order Confirmation - ' . $this->order->order_number)
+            ->view('emails.product.purchase-confirmation', [
                 'order' => $this->order,
-                'rating' => $this->rating,
-                'newBalance' => $notifiable->wallet?->balance ?? 0,
+                'customer' => $notifiable,
                 'recipientEmail' => $notifiable->email,
             ]);
     }
@@ -37,13 +35,13 @@ class ServiceOrderCompleted extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
-            'type' => 'service_order_completed',
+            'type' => 'product_purchase',
             'order_id' => $this->order->id,
             'order_number' => $this->order->order_number,
-            'title' => $this->order->title,
-            'earnings' => $this->order->seller_earnings ?? ($this->order->price * 0.85),
-            'message' => 'Order completed: ' . $this->order->title,
-            'url' => '/seller/service-orders/' . $this->order->id,
+            'total' => $this->order->total,
+            'items_count' => $this->order->items->count(),
+            'message' => 'Order confirmed: #' . $this->order->order_number,
+            'url' => '/purchases',
         ];
     }
 }

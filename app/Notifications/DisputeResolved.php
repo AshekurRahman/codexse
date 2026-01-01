@@ -2,53 +2,44 @@
 
 namespace App\Notifications;
 
+use App\Models\Dispute;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class DisputeResolved extends Notification
+class DisputeResolved extends Notification implements ShouldQueue
 {
     use Queueable;
 
-    /**
-     * Create a new notification instance.
-     */
-    public function __construct()
-    {
-        //
-    }
+    public function __construct(
+        public Dispute $dispute
+    ) {}
 
-    /**
-     * Get the notification's delivery channels.
-     *
-     * @return array<int, string>
-     */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database'];
     }
 
-    /**
-     * Get the mail representation of the notification.
-     */
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-                    ->line('The introduction to the notification.')
-                    ->action('Notification Action', url('/'))
-                    ->line('Thank you for using our application!');
+            ->subject('Dispute Resolved - #' . $this->dispute->id)
+            ->view('emails.dispute.resolved', [
+                'dispute' => $this->dispute,
+                'recipient' => $notifiable,
+                'recipientEmail' => $notifiable->email,
+            ]);
     }
 
-    /**
-     * Get the array representation of the notification.
-     *
-     * @return array<string, mixed>
-     */
     public function toArray(object $notifiable): array
     {
         return [
-            //
+            'type' => 'dispute_resolved',
+            'dispute_id' => $this->dispute->id,
+            'resolution' => $this->dispute->resolution,
+            'message' => 'Dispute resolved: ' . ucfirst($this->dispute->resolution ?? 'Completed'),
+            'url' => '/disputes/' . $this->dispute->id,
         ];
     }
 }

@@ -25,12 +25,11 @@ class ServiceOrderDelivered extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject('Order Delivered - ' . $this->order->order_number)
-            ->greeting('Hello ' . $notifiable->name . '!')
-            ->line('Great news! Your order has been delivered.')
-            ->line('Order: ' . $this->order->title)
-            ->line('Seller: ' . $this->order->seller->user->name)
-            ->action('Review Delivery', url('/service-orders/' . $this->order->id))
-            ->line('Please review the delivery and approve it if you are satisfied, or request a revision if needed.');
+            ->view('emails.service.order-delivered', [
+                'order' => $this->order,
+                'delivery' => $this->order->latestDelivery ?? null,
+                'recipientEmail' => $notifiable->email,
+            ]);
     }
 
     public function toArray(object $notifiable): array

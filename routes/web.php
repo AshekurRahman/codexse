@@ -39,6 +39,314 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
+| Email Preview Routes (Development Only)
+|--------------------------------------------------------------------------
+*/
+if (app()->environment('local')) {
+    Route::prefix('email-preview')->group(function () {
+        // Product emails
+        Route::get('/product/purchase-confirmation', function () {
+            $order = \App\Models\Order::with(['items.product', 'items.seller.user', 'user'])->latest()->first();
+            if (!$order) {
+                return 'No orders found. Create an order first.';
+            }
+            return view('emails.product.purchase-confirmation', [
+                'order' => $order,
+                'customer' => $order->user,
+                'recipientEmail' => $order->user->email,
+            ]);
+        });
+
+        // Service emails
+        Route::get('/service/order-confirmation-buyer', function () {
+            $order = \App\Models\ServiceOrder::with(['service', 'buyer', 'seller.user'])->latest()->first();
+            if (!$order) {
+                return 'No service orders found.';
+            }
+            return view('emails.service.order-confirmation-buyer', [
+                'order' => $order,
+                'recipientEmail' => $order->buyer->email,
+            ]);
+        });
+
+        Route::get('/service/order-received-seller', function () {
+            $order = \App\Models\ServiceOrder::with(['service', 'buyer', 'seller.user'])->latest()->first();
+            if (!$order) {
+                return 'No service orders found.';
+            }
+            return view('emails.service.order-received-seller', [
+                'order' => $order,
+                'recipientEmail' => $order->seller->user->email,
+            ]);
+        });
+
+        Route::get('/service/order-delivered', function () {
+            $order = \App\Models\ServiceOrder::with(['service', 'buyer', 'seller.user', 'deliveries'])->latest()->first();
+            if (!$order) {
+                return 'No service orders found.';
+            }
+            return view('emails.service.order-delivered', [
+                'order' => $order,
+                'delivery' => $order->deliveries->last(),
+                'recipientEmail' => $order->buyer->email,
+            ]);
+        });
+
+        Route::get('/service/order-completed', function () {
+            $order = \App\Models\ServiceOrder::with(['service', 'buyer', 'seller.user'])->latest()->first();
+            if (!$order) {
+                return 'No service orders found.';
+            }
+            return view('emails.service.order-completed', [
+                'order' => $order,
+                'rating' => null,
+                'newBalance' => 1250.00,
+                'recipientEmail' => $order->seller->user->email,
+            ]);
+        });
+
+        // Job emails
+        Route::get('/job/proposal-received', function () {
+            $proposal = \App\Models\JobProposal::with(['jobPosting.client', 'seller.user'])->latest()->first();
+            if (!$proposal) {
+                return 'No job proposals found.';
+            }
+            return view('emails.job.proposal-received', [
+                'job' => $proposal->jobPosting,
+                'proposal' => $proposal,
+                'recipientEmail' => $proposal->jobPosting->client->email,
+            ]);
+        });
+
+        Route::get('/job/proposal-accepted', function () {
+            $proposal = \App\Models\JobProposal::with(['jobPosting.client', 'seller.user'])->latest()->first();
+            if (!$proposal) {
+                return 'No job proposals found.';
+            }
+            return view('emails.job.proposal-accepted', [
+                'job' => $proposal->jobPosting,
+                'proposal' => $proposal,
+                'freelancer' => $proposal->seller->user,
+                'recipientEmail' => $proposal->seller->user->email,
+            ]);
+        });
+
+        Route::get('/job/contract-started', function () {
+            $contract = \App\Models\JobContract::with(['jobPosting', 'client', 'seller.user', 'milestones'])->latest()->first();
+            if (!$contract) {
+                return 'No job contracts found.';
+            }
+            return view('emails.job.contract-started', [
+                'contract' => $contract,
+                'job' => $contract->jobPosting,
+                'client' => $contract->client,
+                'freelancer' => $contract->seller->user,
+                'recipientEmail' => $contract->client->email,
+            ]);
+        });
+
+        // Auth emails
+        Route::get('/auth/welcome', function () {
+            $user = \App\Models\User::latest()->first();
+            return view('emails.auth.welcome', [
+                'user' => $user,
+                'recipientEmail' => $user->email,
+            ]);
+        });
+
+        Route::get('/auth/password-reset', function () {
+            $user = \App\Models\User::latest()->first();
+            return view('emails.auth.password-reset', [
+                'user' => $user,
+                'resetUrl' => url('/reset-password/sample-token'),
+                'recipientEmail' => $user->email,
+            ]);
+        });
+
+        // Escrow emails
+        Route::get('/escrow/payment-held', function () {
+            $escrow = \App\Models\EscrowTransaction::with(['payer', 'payee'])->latest()->first();
+            if (!$escrow) {
+                return 'No escrow transactions found.';
+            }
+            return view('emails.escrow.payment-held', [
+                'escrow' => $escrow,
+                'recipient' => $escrow->payer,
+                'isBuyer' => true,
+                'recipientEmail' => $escrow->payer->email,
+            ]);
+        });
+
+        Route::get('/escrow/payment-released', function () {
+            $escrow = \App\Models\EscrowTransaction::with(['payer', 'payee'])->latest()->first();
+            if (!$escrow) {
+                return 'No escrow transactions found.';
+            }
+            return view('emails.escrow.payment-released', [
+                'escrow' => $escrow,
+                'newBalance' => 2500.00,
+                'recipientEmail' => $escrow->payee->email ?? 'seller@example.com',
+            ]);
+        });
+
+        // Dispute emails
+        Route::get('/dispute/opened', function () {
+            $dispute = \App\Models\Dispute::with(['initiator', 'escrowTransaction'])->latest()->first();
+            if (!$dispute) {
+                $user = \App\Models\User::first();
+                return view('emails.dispute.opened', [
+                    'dispute' => (object)[
+                        'id' => 1,
+                        'reason' => 'item_not_as_described',
+                        'status' => 'open',
+                        'description' => 'The delivered work does not match what was promised in the service description.',
+                        'created_at' => now(),
+                        'initiator' => $user,
+                        'escrowTransaction' => (object)['amount' => 299.00],
+                    ],
+                    'recipient' => $user,
+                    'isInitiator' => true,
+                    'recipientEmail' => $user->email,
+                ]);
+            }
+            return view('emails.dispute.opened', [
+                'dispute' => $dispute,
+                'recipient' => $dispute->initiator,
+                'isInitiator' => true,
+                'recipientEmail' => $dispute->initiator->email,
+            ]);
+        });
+
+        Route::get('/dispute/resolved', function () {
+            $user = \App\Models\User::first();
+            return view('emails.dispute.resolved', [
+                'dispute' => (object)[
+                    'id' => 1,
+                    'reason' => 'item_not_as_described',
+                    'resolution' => 'partial_refund',
+                    'resolution_notes' => 'After reviewing the evidence from both parties, we have decided to issue a partial refund. The buyer will receive 50% of the original amount.',
+                    'resolved_at' => now(),
+                    'buyer_refund' => 149.50,
+                    'seller_payout' => 149.50,
+                ],
+                'recipient' => $user,
+                'recipientEmail' => $user->email,
+            ]);
+        });
+
+        // GDPR emails
+        Route::get('/gdpr/request-submitted', function () {
+            $user = \App\Models\User::first();
+            return view('emails.gdpr.request-submitted', [
+                'request' => (object)[
+                    'request_number' => 'GDPR-' . strtoupper(uniqid()),
+                    'type' => 'export',
+                    'type_name' => 'Data Export',
+                    'created_at' => now(),
+                ],
+                'user' => $user,
+                'recipientEmail' => $user->email,
+            ]);
+        });
+
+        Route::get('/gdpr/request-completed', function () {
+            $user = \App\Models\User::first();
+            return view('emails.gdpr.request-completed', [
+                'request' => (object)[
+                    'request_number' => 'GDPR-' . strtoupper(uniqid()),
+                    'type' => 'export',
+                    'type_name' => 'Data Export',
+                    'created_at' => now(),
+                ],
+                'user' => $user,
+                'recipientEmail' => $user->email,
+            ]);
+        });
+
+        // Admin emails
+        Route::get('/admin/fraud-alert', function () {
+            return view('emails.admin.fraud-alert', [
+                'alert' => (object)[
+                    'id' => 1,
+                    'alert_number' => 'FRD-' . strtoupper(uniqid()),
+                    'type' => 'velocity_limit',
+                    'type_name' => 'Velocity Limit Exceeded',
+                    'severity' => 'high',
+                    'severity_name' => 'High',
+                    'risk_score' => 85,
+                    'transaction_amount' => 999.99,
+                    'formatted_amount' => '$999.99',
+                    'ip_address' => '192.168.1.100',
+                    'auto_blocked' => true,
+                    'flags' => ['Multiple failed payments', 'New account', 'High value transaction', 'VPN detected'],
+                    'user' => \App\Models\User::first(),
+                    'created_at' => now(),
+                ],
+                'recipientEmail' => 'admin@codexse.com',
+            ]);
+        });
+
+        // Index page with all previews
+        Route::get('/', function () {
+            $templates = [
+                'Product' => [
+                    'purchase-confirmation' => 'Purchase Confirmation',
+                ],
+                'Service' => [
+                    'order-confirmation-buyer' => 'Order Confirmation (Buyer)',
+                    'order-received-seller' => 'Order Received (Seller)',
+                    'order-delivered' => 'Order Delivered',
+                    'order-completed' => 'Order Completed',
+                ],
+                'Job' => [
+                    'proposal-received' => 'Proposal Received',
+                    'proposal-accepted' => 'Proposal Accepted',
+                    'contract-started' => 'Contract Started',
+                ],
+                'Auth' => [
+                    'welcome' => 'Welcome Email',
+                    'password-reset' => 'Password Reset',
+                ],
+                'Escrow' => [
+                    'payment-held' => 'Payment Held',
+                    'payment-released' => 'Payment Released',
+                ],
+                'Dispute' => [
+                    'opened' => 'Dispute Opened',
+                    'resolved' => 'Dispute Resolved',
+                ],
+                'GDPR' => [
+                    'request-submitted' => 'Request Submitted',
+                    'request-completed' => 'Request Completed',
+                ],
+                'Admin' => [
+                    'fraud-alert' => 'Fraud Alert',
+                ],
+            ];
+
+            $html = '<html><head><title>Email Template Previews</title>';
+            $html .= '<style>body{font-family:system-ui;max-width:800px;margin:40px auto;padding:20px;background:#f3f4f6;}';
+            $html .= 'h1{color:#111827;}h2{color:#4f46e5;margin-top:30px;border-bottom:2px solid #e5e7eb;padding-bottom:10px;}';
+            $html .= 'a{display:inline-block;margin:5px 10px 5px 0;padding:8px 16px;background:#6366f1;color:white;text-decoration:none;border-radius:6px;font-size:14px;}';
+            $html .= 'a:hover{background:#4f46e5;}</style></head><body>';
+            $html .= '<h1>Email Template Previews</h1>';
+
+            foreach ($templates as $category => $items) {
+                $html .= "<h2>{$category}</h2>";
+                foreach ($items as $slug => $name) {
+                    $url = url("/email-preview/" . strtolower($category) . "/{$slug}");
+                    $html .= "<a href=\"{$url}\" target=\"_blank\">{$name}</a>";
+                }
+            }
+
+            $html .= '</body></html>';
+            return $html;
+        });
+    });
+}
+
+/*
+|--------------------------------------------------------------------------
 | Public Routes
 |--------------------------------------------------------------------------
 */
