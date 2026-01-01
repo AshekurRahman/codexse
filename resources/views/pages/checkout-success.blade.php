@@ -50,7 +50,7 @@
                                     <p class="text-sm text-surface-500 dark:text-surface-400">{{ ucfirst($item->license_type) }} License</p>
                                 </div>
                                 <div class="text-right">
-                                    <p class="font-semibold text-surface-900 dark:text-white">${{ number_format($item->price, 2) }}</p>
+                                    <p class="font-semibold text-surface-900 dark:text-white">{{ format_price($item->price) }}</p>
                                 </div>
                             </div>
 
@@ -100,10 +100,37 @@
 
                 <hr class="border-surface-200 dark:border-surface-700 mb-6">
 
-                <!-- Order Total -->
-                <div class="flex items-center justify-between">
-                    <span class="text-lg font-semibold text-surface-900 dark:text-white">Total Paid</span>
-                    <span class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($order->total, 2) }}</span>
+                <!-- Order Summary -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-surface-600 dark:text-surface-400">Subtotal</span>
+                        <span class="font-medium text-surface-900 dark:text-white">{{ format_price($order->subtotal) }}</span>
+                    </div>
+                    @if($order->discount > 0)
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-surface-600 dark:text-surface-400">Discount</span>
+                        <span class="font-medium text-green-500">-{{ format_price($order->discount) }}</span>
+                    </div>
+                    @endif
+                    @if($order->tax_amount && $order->tax_amount > 0)
+                    <div class="flex items-center justify-between text-sm">
+                        <span class="text-surface-600 dark:text-surface-400">
+                            {{ \App\Models\Setting::get('tax_label', 'Sales Tax') }}
+                            @if($order->billing_state)
+                                <span class="text-xs">({{ $order->billing_state_name ?? $order->billing_state }})</span>
+                            @endif
+                            @if($order->formatted_tax_rate)
+                                <span class="text-xs text-surface-400">{{ $order->formatted_tax_rate }}</span>
+                            @endif
+                        </span>
+                        <span class="font-medium text-surface-900 dark:text-white">{{ $order->formatted_tax_amount }}</span>
+                    </div>
+                    @endif
+                    <hr class="border-surface-200 dark:border-surface-700">
+                    <div class="flex items-center justify-between pt-2">
+                        <span class="text-lg font-semibold text-surface-900 dark:text-white">Total Paid</span>
+                        <span class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($order->total) }}</span>
+                    </div>
                 </div>
             </div>
 

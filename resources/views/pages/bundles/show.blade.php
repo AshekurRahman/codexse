@@ -35,7 +35,7 @@
                                         <h3 class="font-medium text-surface-900 dark:text-white">{{ $product->name }}</h3>
                                         <p class="text-sm text-surface-500 dark:text-surface-400">{{ $product->category->name }}</p>
                                     </div>
-                                    <span class="text-sm font-medium text-surface-600 dark:text-surface-400">${{ number_format($product->price, 2) }}</span>
+                                    <span class="text-sm font-medium text-surface-600 dark:text-surface-400">{{ format_price($product->price) }}</span>
                                 </a>
                             @endforeach
                         </div>
@@ -46,14 +46,14 @@
                     <div class="sticky top-24 rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-6 space-y-6">
                         <div class="flex items-center gap-2">
                             <span class="inline-flex items-center rounded-full bg-success-100 dark:bg-success-900/30 px-3 py-1 text-sm font-medium text-success-700 dark:text-success-400">
-                                Save ${{ number_format($bundle->savings, 2) }} ({{ $bundle->savings_percent }}%)
+                                Save {{ format_price($bundle->savings) }} ({{ $bundle->savings_percent }}%)
                             </span>
                         </div>
 
                         <div>
                             <div class="flex items-baseline gap-2">
-                                <span class="text-3xl font-bold text-surface-900 dark:text-white">${{ number_format($bundle->price, 2) }}</span>
-                                <span class="text-lg text-surface-500 dark:text-surface-400 line-through">${{ number_format($bundle->original_price, 2) }}</span>
+                                <span class="text-3xl font-bold text-surface-900 dark:text-white">{{ format_price($bundle->price) }}</span>
+                                <span class="text-lg text-surface-500 dark:text-surface-400 line-through">{{ format_price($bundle->original_price) }}</span>
                             </div>
                             <p class="mt-1 text-sm text-surface-500 dark:text-surface-400">{{ $bundle->products->count() }} products included</p>
                         </div>

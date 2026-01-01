@@ -97,7 +97,7 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <p class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($affiliate->total_earnings, 2) }}</p>
+                                    <p class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($affiliate->total_earnings) }}</p>
                                     <p class="text-sm text-surface-500 dark:text-surface-400">Total Earnings</p>
                                 </div>
                             </div>
@@ -109,9 +109,17 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                     </svg>
                                 </div>
-                                <div>
-                                    <p class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($affiliate->pending_earnings, 2) }}</p>
+                                <div class="flex-1">
+                                    <p class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($affiliate->pending_earnings) }}</p>
                                     <p class="text-sm text-surface-500 dark:text-surface-400">Pending</p>
+                                    @if($affiliate->pending_earnings >= 25)
+                                        <form action="{{ route('affiliate.transfer-to-wallet') }}" method="POST" class="mt-2">
+                                            @csrf
+                                            <button type="submit" class="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 font-medium">
+                                                Transfer to Wallet
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -123,7 +131,7 @@
                                     </svg>
                                 </div>
                                 <div>
-                                    <p class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($affiliate->paid_earnings, 2) }}</p>
+                                    <p class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($affiliate->paid_earnings) }}</p>
                                     <p class="text-sm text-surface-500 dark:text-surface-400">Paid Out</p>
                                 </div>
                             </div>
@@ -192,7 +200,7 @@
                                                 <td class="px-6 py-4 whitespace-nowrap">
                                                     <x-status-badge :status="$referral->status" size="sm" />
                                                 </td>
-                                                <td class="px-6 py-4 whitespace-nowrap font-medium text-surface-900 dark:text-white">${{ number_format($referral->commission_amount ?? 0, 2) }}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap font-medium text-surface-900 dark:text-white">{{ format_price($referral->commission_amount ?? 0) }}</td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-surface-500 dark:text-surface-400">{{ $referral->created_at->format('M d, Y') }}</td>
                                             </tr>
                                         @endforeach

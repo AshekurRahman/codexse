@@ -3,20 +3,20 @@
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="space-y-6">
+    <form method="post" action="{{ route('profile.update') }}" class="space-y-6" data-ajax-form>
         @csrf
         @method('patch')
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <x-input-label for="name" :value="__('Full Name')" />
-                <x-text-input id="name" name="name" type="text" :value="old('name', $user->name)" required autofocus autocomplete="name" placeholder="John Doe" />
+                <x-text-input id="name" name="name" type="text" :value="old('name', $user->name)" autofocus autocomplete="name" placeholder="John Doe" data-validate="required|min:2" />
                 <x-input-error class="mt-2" :messages="$errors->get('name')" />
             </div>
 
             <div>
                 <x-input-label for="email" :value="__('Email Address')" />
-                <x-text-input id="email" name="email" type="email" :value="old('email', $user->email)" required autocomplete="username" placeholder="you@example.com" />
+                <x-text-input id="email" name="email" type="email" :value="old('email', $user->email)" autocomplete="username" placeholder="you@example.com" data-validate="required|email" />
                 <x-input-error class="mt-2" :messages="$errors->get('email')" />
             </div>
         </div>

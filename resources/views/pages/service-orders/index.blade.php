@@ -130,7 +130,7 @@
                                             <div class="flex flex-wrap items-center gap-6 lg:gap-8">
                                                 <div class="text-center">
                                                     <p class="text-xs text-surface-500 dark:text-surface-400">Price</p>
-                                                    <p class="font-semibold text-surface-900 dark:text-white">${{ number_format($order->price, 2) }}</p>
+                                                    <p class="font-semibold text-surface-900 dark:text-white">{{ format_price($order->price) }}</p>
                                                 </div>
                                                 @if($order->due_at)
                                                     <div class="text-center">

@@ -207,7 +207,7 @@ class ProductController extends Controller
         // Track recently viewed
         RecentlyViewedController::trackProduct($product);
 
-        $product->load(['seller', 'category', 'reviews.user']);
+        $product->load(['seller', 'category', 'reviews.user', 'activeSubscriptionPlans']);
 
         $relatedProducts = Product::with(['seller', 'category'])
             ->where('status', 'published')

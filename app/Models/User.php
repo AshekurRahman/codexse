@@ -43,7 +43,12 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
         'total_referrals',
         'successful_referrals',
         'wishlist_share_token',
-        'wishlist_public',
+        'marketing_consent',
+        'analytics_consent',
+        'third_party_consent',
+        'privacy_policy_accepted_at',
+        'privacy_policy_version',
+        'gdpr_deletion_requested_at',
     ];
 
     /**
@@ -68,7 +73,11 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
             'two_factor_enabled' => 'boolean',
             'two_factor_confirmed_at' => 'datetime',
             'referral_balance' => 'decimal:2',
-            'wishlist_public' => 'boolean',
+            'marketing_consent' => 'boolean',
+            'analytics_consent' => 'boolean',
+            'third_party_consent' => 'boolean',
+            'privacy_policy_accepted_at' => 'datetime',
+            'gdpr_deletion_requested_at' => 'datetime',
         ];
     }
 
@@ -168,6 +177,90 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Get the user's subscriptions.
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    /**
+     * Get the user's active subscriptions.
+     */
+    public function activeSubscriptions(): HasMany
+    {
+        return $this->subscriptions()->whereIn('status', ['active', 'trialing']);
+    }
+
+    /**
+     * Get the user's subscription invoices.
+     */
+    public function subscriptionInvoices(): HasMany
+    {
+        return $this->hasMany(SubscriptionInvoice::class);
+    }
+
+    /**
+     * Get the user's wallet.
+     */
+    public function wallet(): HasOne
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+    /**
+     * Get the user's wallet transactions.
+     */
+    public function walletTransactions(): HasMany
+    {
+        return $this->hasMany(WalletTransaction::class);
+    }
+
+    /**
+     * Get or create the user's wallet.
+     */
+    public function getOrCreateWallet(): Wallet
+    {
+        return Wallet::getOrCreateForUser($this);
+    }
+
+    /**
+     * Get the user's wallet balance.
+     */
+    public function getWalletBalanceAttribute(): float
+    {
+        return $this->wallet?->balance ?? 0;
+    }
+
+    /**
+     * Get formatted wallet balance.
+     */
+    public function getFormattedWalletBalanceAttribute(): string
+    {
+        return format_price($this->wallet_balance);
+    }
+
+    /**
+     * Check if user has sufficient wallet balance.
+     */
+    public function hasWalletBalance(float $amount): bool
+    {
+        return $this->wallet && $this->wallet->hasSufficientBalance($amount);
+    }
+
+    /**
+     * Check if user has an active subscription to a plan.
+     */
+    public function hasActiveSubscription(?int $planId = null): bool
+    {
+        $query = $this->activeSubscriptions();
+        if ($planId) {
+            $query->where('subscription_plan_id', $planId);
+        }
+        return $query->exists();
     }
 
     /**
@@ -328,6 +421,54 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
     public function disputes(): HasMany
     {
         return $this->hasMany(Dispute::class, 'initiated_by');
+    }
+
+    /**
+     * Get the user's GDPR data requests.
+     */
+    public function gdprDataRequests(): HasMany
+    {
+        return $this->hasMany(GdprDataRequest::class);
+    }
+
+    /**
+     * Get the user's GDPR consent logs.
+     */
+    public function gdprConsentLogs(): HasMany
+    {
+        return $this->hasMany(GdprConsentLog::class);
+    }
+
+    /**
+     * Get the user's activity logs.
+     */
+    public function activityLogs(): HasMany
+    {
+        return $this->hasMany(ActivityLog::class);
+    }
+
+    /**
+     * Get the user's login attempts.
+     */
+    public function loginAttempts(): HasMany
+    {
+        return $this->hasMany(LoginAttempt::class);
+    }
+
+    /**
+     * Get the user's sessions.
+     */
+    public function userSessions(): HasMany
+    {
+        return $this->hasMany(UserSession::class);
+    }
+
+    /**
+     * Get active sessions for the user.
+     */
+    public function activeSessions(): HasMany
+    {
+        return $this->userSessions()->active();
     }
 
     /**

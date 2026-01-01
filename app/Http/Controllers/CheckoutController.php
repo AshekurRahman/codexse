@@ -6,11 +6,18 @@ use App\Filament\Admin\Pages\CommissionSettings;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Models\Wallet;
+use App\Models\Currency;
+use App\Services\CurrencyService;
+use App\Services\FraudDetectionService;
 use App\Services\LicenseService;
 use App\Services\PayoneerService;
+use App\Services\PayPalService;
 use App\Services\PushNotificationService;
 use App\Services\StripeService;
+use App\Services\TaxService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -21,11 +28,22 @@ class CheckoutController extends Controller
 {
     protected StripeService $stripeService;
     protected PayoneerService $payoneerService;
+    protected PayPalService $paypalService;
+    protected TaxService $taxService;
+    protected FraudDetectionService $fraudService;
 
-    public function __construct(StripeService $stripeService, PayoneerService $payoneerService)
-    {
+    public function __construct(
+        StripeService $stripeService,
+        PayoneerService $payoneerService,
+        PayPalService $paypalService,
+        TaxService $taxService,
+        FraudDetectionService $fraudService
+    ) {
         $this->stripeService = $stripeService;
         $this->payoneerService = $payoneerService;
+        $this->paypalService = $paypalService;
+        $this->taxService = $taxService;
+        $this->fraudService = $fraudService;
     }
 
     public function index()
@@ -59,25 +77,136 @@ class CheckoutController extends Controller
             }
         }
 
-        return view('pages.checkout', compact('products', 'cart', 'total'));
-    }
-
-    public function process(Request $request)
-    {
-        // Check if Stripe is configured
-        if (!$this->stripeService->isConfigured()) {
-            return redirect()->route('cart.index')->with('error', 'Payment system is not configured. Please contact support.');
+        // Get wallet info for logged-in users
+        $wallet = null;
+        $canPayWithWallet = false;
+        if (Auth::check()) {
+            $wallet = Auth::user()->getOrCreateWallet();
+            $canPayWithWallet = $wallet->canPurchase($total);
         }
 
+        // Get currency info for display
+        $baseCurrency = Currency::getDefault();
+        $userCurrency = current_currency();
+        $showCurrencyNote = $baseCurrency && $userCurrency && $baseCurrency->code !== $userCurrency->code;
+
+        // Tax calculation support
+        $taxEnabled = $this->taxService->isEnabled();
+        $usStates = $this->taxService->getUsStates();
+        $savedState = session('billing_state');
+        $taxData = null;
+
+        if ($taxEnabled && $savedState) {
+            $taxData = $this->taxService->calculateTotals($total, 0, $savedState);
+        }
+
+        return view('pages.checkout', compact(
+            'products',
+            'cart',
+            'total',
+            'wallet',
+            'canPayWithWallet',
+            'baseCurrency',
+            'userCurrency',
+            'showCurrencyNote',
+            'taxEnabled',
+            'usStates',
+            'savedState',
+            'taxData'
+        ));
+    }
+
+    /**
+     * Calculate tax via AJAX (no page reload)
+     */
+    public function calculateTax(Request $request)
+    {
         $request->validate([
-            'email' => 'required|email',
-            'name' => 'required|string|max:255',
-            'payment_method' => 'required|in:stripe,paypal,payoneer',
+            'state' => 'nullable|string|max:2',
         ]);
 
         $cart = session()->get('cart', []);
 
         if (empty($cart)) {
+            return response()->json(['error' => 'Cart is empty'], 400);
+        }
+
+        // Extract product IDs and calculate total
+        $productIds = collect($cart)->map(function ($item, $key) {
+            return is_array($item) ? ($item['product_id'] ?? $key) : $key;
+        })->unique()->values()->toArray();
+
+        $products = Product::whereIn('id', $productIds)->get();
+
+        $total = 0;
+        foreach ($cart as $cartKey => $cartItem) {
+            $productId = is_array($cartItem) ? ($cartItem['product_id'] ?? $cartKey) : $cartKey;
+            $product = $products->firstWhere('id', $productId);
+            if ($product) {
+                $price = is_array($cartItem) ? ($cartItem['price'] ?? $product->current_price) : $product->current_price;
+                $total += $price;
+            }
+        }
+
+        $stateCode = $request->input('state');
+
+        // Save state to session
+        if ($stateCode) {
+            session(['billing_state' => $stateCode]);
+        } else {
+            session()->forget('billing_state');
+        }
+
+        // Calculate tax
+        $taxData = $this->taxService->calculateTotals($total, 0, $stateCode);
+        $stateName = $stateCode ? config("tax.states.{$stateCode}", $stateCode) : null;
+
+        return response()->json([
+            'success' => true,
+            'tax_enabled' => $this->taxService->isEnabled(),
+            'tax_label' => Setting::get('tax_label', 'Sales Tax'),
+            'tax_rate' => $taxData['tax_rate'],
+            'tax_amount' => $taxData['tax_amount'],
+            'tax_amount_formatted' => format_price($taxData['tax_amount']),
+            'subtotal' => $total,
+            'subtotal_formatted' => format_price($total),
+            'total' => $taxData['total'],
+            'total_formatted' => format_price($taxData['total']),
+            'state_code' => $stateCode,
+            'state_name' => $stateName,
+        ]);
+    }
+
+    public function process(Request $request)
+    {
+        $isAjax = $request->expectsJson() || $request->ajax();
+
+        // Check if Stripe is configured
+        if (!$this->stripeService->isConfigured()) {
+            if ($isAjax) {
+                return response()->json(['message' => 'Payment system is not configured. Please contact support.'], 422);
+            }
+            return redirect()->route('cart.index')->with('error', 'Payment system is not configured. Please contact support.');
+        }
+
+        $validated = $request->validate([
+            'email' => 'required|email',
+            'name' => 'required|string|max:255',
+            'payment_method' => 'required|in:stripe,paypal,payoneer,wallet',
+            'billing_state' => 'nullable|string|max:2',
+        ]);
+
+        // Store billing state in session for future reference
+        if ($request->filled('billing_state')) {
+            session(['billing_state' => $request->input('billing_state')]);
+        }
+
+        $cart = session()->get('cart', []);
+
+        if (empty($cart)) {
+            if ($isAjax) {
+                return response()->json(['message' => 'Your cart is empty.'], 422);
+            }
             return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
 
@@ -90,6 +219,9 @@ class CheckoutController extends Controller
 
         // Check all products are still available
         if ($products->count() !== count($productIds)) {
+            if ($isAjax) {
+                return response()->json(['message' => 'Some products are no longer available.'], 422);
+            }
             return redirect()->route('cart.index')->with('error', 'Some products are no longer available.');
         }
 
@@ -137,6 +269,38 @@ class CheckoutController extends Controller
         }
 
         $paymentMethod = $request->input('payment_method');
+        $billingState = $request->input('billing_state');
+
+        // Calculate tax if enabled
+        $taxData = $this->taxService->calculateTotals($total, 0, $billingState);
+        $orderTotal = $taxData['total'];
+
+        // Fraud detection check
+        $fraudResult = $this->fraudService->analyze(
+            user: Auth::user(),
+            amount: $orderTotal,
+            paymentMethod: $paymentMethod,
+            request: $request
+        );
+
+        // Block transaction if fraud detected
+        if ($fraudResult->shouldBlock) {
+            Log::warning('Checkout blocked by fraud detection', [
+                'user_id' => Auth::id(),
+                'amount' => $orderTotal,
+                'risk_score' => $fraudResult->riskScore,
+                'ip' => $request->ip(),
+            ]);
+
+            if ($isAjax) {
+                return response()->json([
+                    'message' => 'Your transaction could not be processed. Please contact support if you believe this is an error.',
+                    'reference' => $fraudResult->alert?->alert_number,
+                ], 403);
+            }
+            return redirect()->route('cart.index')
+                ->with('error', 'Your transaction could not be processed. Please contact support if you believe this is an error.');
+        }
 
         try {
             // Create pending order first
@@ -145,27 +309,42 @@ class CheckoutController extends Controller
                 'order_number' => 'ORD-' . strtoupper(Str::random(10)),
                 'email' => $request->input('email'),
                 'subtotal' => $total,
-                'total' => $total,
+                'tax_rate' => $taxData['tax_rate'],
+                'tax_amount' => $taxData['tax_amount'],
+                'billing_state' => $billingState,
+                'total' => $orderTotal,
                 'status' => 'pending',
                 'payment_method' => $paymentMethod,
                 'notes' => $request->input('notes'),
+                'ip_address' => $request->ip(),
+                'fraud_score' => $fraudResult->riskScore > 0 ? $fraudResult->riskScore : null,
             ]);
+
+            // Link fraud alert to order if created
+            if ($fraudResult->alert) {
+                $fraudResult->alert->update([
+                    'alertable_type' => Order::class,
+                    'alertable_id' => $order->id,
+                ]);
+            }
 
             // Store order items temporarily in session for webhook
             session()->put('pending_order_items', $orderItems);
 
             // Process based on payment method
             switch ($paymentMethod) {
+                case 'wallet':
+                    return $this->processWalletCheckout($request, $order, $orderItems, $orderTotal);
+
                 case 'payoneer':
-                    return $this->processPayoneerCheckout($request, $order, $products, $total);
+                    return $this->processPayoneerCheckout($request, $order, $products, $orderTotal, $taxData);
 
                 case 'paypal':
-                    // PayPal implementation placeholder
-                    return redirect()->back()->with('error', 'PayPal payment is coming soon.');
+                    return $this->processPayPalCheckout($request, $order, $orderItems, $taxData);
 
                 case 'stripe':
                 default:
-                    return $this->processStripeCheckout($request, $order, $lineItems);
+                    return $this->processStripeCheckout($request, $order, $lineItems, $taxData);
             }
 
         } catch (\Exception $e) {
@@ -175,10 +354,154 @@ class CheckoutController extends Controller
     }
 
     /**
+     * Process Wallet checkout
+     */
+    protected function processWalletCheckout(Request $request, Order $order, array $orderItems, float $total)
+    {
+        $isAjax = $request->expectsJson() || $request->ajax();
+
+        if (!Auth::check()) {
+            $order->update(['status' => 'failed']);
+            if ($isAjax) {
+                return response()->json(['message' => 'Please log in to use wallet payment.'], 401);
+            }
+            return redirect()->route('login')->with('error', 'Please log in to use wallet payment.');
+        }
+
+        $user = Auth::user();
+        $wallet = $user->getOrCreateWallet();
+
+        // Verify wallet can make this purchase
+        if (!$wallet->canPurchase($total)) {
+            $order->update(['status' => 'failed']);
+            if ($isAjax) {
+                return response()->json(['message' => 'Insufficient wallet balance. Please add funds or choose another payment method.'], 422);
+            }
+            return redirect()->route('checkout.index')->with('error', 'Insufficient wallet balance. Please add funds or choose another payment method.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Deduct from wallet
+            $transaction = $wallet->purchase(
+                amount: $total,
+                description: 'Purchase: Order #' . $order->order_number,
+                transactionable: $order
+            );
+
+            // Store order items in session for completeOrder
+            session()->put('pending_order_items', $orderItems);
+
+            // Complete the order immediately
+            $this->completeOrder($order, 'wallet_' . $transaction->reference);
+
+            DB::commit();
+
+            // Clear cart
+            session()->forget('cart');
+            session()->forget('pending_order_items');
+
+            if ($isAjax) {
+                return response()->json(['redirect' => route('checkout.success') . '?order=' . $order->id]);
+            }
+            return view('pages.checkout-success', compact('order'));
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Wallet checkout error: ' . $e->getMessage());
+            $order->update(['status' => 'failed']);
+            if ($isAjax) {
+                return response()->json(['message' => 'Payment failed. Please try again.'], 422);
+            }
+            return redirect()->route('checkout.index')->with('error', 'Payment failed. Please try again.');
+        }
+    }
+
+    /**
+     * Process PayPal checkout
+     */
+    protected function processPayPalCheckout(Request $request, Order $order, array $orderItems, array $taxData)
+    {
+        $isAjax = $request->expectsJson() || $request->ajax();
+
+        if (!$this->paypalService->isConfigured()) {
+            $order->update(['status' => 'failed']);
+            if ($isAjax) {
+                return response()->json(['message' => 'PayPal is not configured. Please contact support.'], 422);
+            }
+            return redirect()->back()->with('error', 'PayPal is not configured. Please contact support.');
+        }
+
+        // Prepare items for PayPal
+        $items = [];
+        foreach ($orderItems as $item) {
+            $items[] = [
+                'name' => $item['product_name'],
+                'price' => $item['price'],
+            ];
+        }
+
+        // Create PayPal order
+        $paypalOrder = $this->paypalService->createOrder([
+            'order_number' => $order->order_number,
+            'subtotal' => $order->subtotal,
+            'tax_amount' => $taxData['tax_amount'] ?? 0,
+            'total' => $order->total,
+            'items' => $items,
+            'return_url' => route('checkout.paypal.success', ['order' => $order->id]),
+            'cancel_url' => route('checkout.cancel'),
+        ]);
+
+        if (!$paypalOrder || !$paypalOrder['approval_url']) {
+            $order->update(['status' => 'failed']);
+            if ($isAjax) {
+                return response()->json(['message' => 'Failed to create PayPal order. Please try again.'], 422);
+            }
+            return redirect()->back()->with('error', 'Failed to create PayPal order. Please try again.');
+        }
+
+        // Store PayPal order ID
+        $order->update([
+            'paypal_order_id' => $paypalOrder['id'],
+        ]);
+
+        // Store order items in session
+        session()->put('pending_order_items', $orderItems);
+
+        // Redirect to PayPal
+        if ($isAjax) {
+            return response()->json(['redirect' => $paypalOrder['approval_url']]);
+        }
+        return redirect($paypalOrder['approval_url']);
+    }
+
+    /**
      * Process Stripe checkout
      */
-    protected function processStripeCheckout(Request $request, Order $order, array $lineItems)
+    protected function processStripeCheckout(Request $request, Order $order, array $lineItems, array $taxData)
     {
+        $isAjax = $request->expectsJson() || $request->ajax();
+
+        // Add tax as a separate line item if applicable
+        if ($taxData['tax_amount'] > 0) {
+            $taxLabel = $this->taxService->getLabel();
+            $stateCode = $taxData['state_code'] ?? '';
+            $taxName = $stateCode ? "{$taxLabel} ({$stateCode})" : $taxLabel;
+
+            $lineItems[] = [
+                'price_data' => [
+                    'currency' => $this->stripeService->getCurrency(),
+                    'product_data' => [
+                        'name' => $taxName,
+                        'description' => number_format($taxData['tax_rate'], 2) . '% tax',
+                    ],
+                    'unit_amount' => (int) ($taxData['tax_amount'] * 100),
+                ],
+                'quantity' => 1,
+            ];
+        }
+
         // Create Stripe Checkout Session
         $checkoutSession = StripeSession::create([
             'payment_method_types' => ['card'],
@@ -204,13 +527,16 @@ class CheckoutController extends Controller
         ]);
 
         // Redirect to Stripe Checkout
+        if ($isAjax) {
+            return response()->json(['redirect' => $checkoutSession->url]);
+        }
         return redirect($checkoutSession->url);
     }
 
     /**
      * Process Payoneer checkout
      */
-    protected function processPayoneerCheckout(Request $request, Order $order, $products, float $total)
+    protected function processPayoneerCheckout(Request $request, Order $order, $products, float $total, array $taxData)
     {
         if (!$this->payoneerService->isConfigured()) {
             return redirect()->back()->with('error', 'Payoneer is not configured. Please contact support.');
@@ -221,12 +547,38 @@ class CheckoutController extends Controller
         $firstName = $nameParts[0] ?? '';
         $lastName = $nameParts[1] ?? '';
 
-        // Prepare items for Payoneer
+        // Get base currency for payment processing (always process in USD)
+        $baseCurrency = Currency::getDefault();
+        $paymentCurrency = $baseCurrency ? $baseCurrency->code : 'USD';
+
+        // Prepare items for Payoneer (prices are stored in base currency)
         $items = [];
-        foreach ($products as $product) {
+        $cart = session()->get('cart', []);
+        foreach ($cart as $cartKey => $cartItem) {
+            $productId = is_array($cartItem) ? ($cartItem['product_id'] ?? $cartKey) : $cartKey;
+            $product = $products->firstWhere('id', $productId);
+            if (!$product) continue;
+
+            $price = is_array($cartItem) ? ($cartItem['price'] ?? $product->current_price) : $product->current_price;
+            $variationName = is_array($cartItem) ? ($cartItem['variation_name'] ?? null) : null;
+            $productName = $variationName ? $product->name . ' - ' . $variationName : $product->name;
+
             $items[] = [
-                'name' => $product->name,
-                'price' => $product->current_price,
+                'name' => $productName,
+                'price' => $price,
+                'quantity' => 1,
+            ];
+        }
+
+        // Add tax as a separate line item if applicable
+        if ($taxData['tax_amount'] > 0) {
+            $taxLabel = $this->taxService->getLabel();
+            $stateCode = $taxData['state_code'] ?? '';
+            $taxName = $stateCode ? "{$taxLabel} ({$stateCode})" : $taxLabel;
+
+            $items[] = [
+                'name' => $taxName,
+                'price' => $taxData['tax_amount'],
                 'quantity' => 1,
             ];
         }
@@ -235,7 +587,7 @@ class CheckoutController extends Controller
         $checkoutData = [
             'transaction_id' => $order->order_number,
             'amount' => $total,
-            'currency' => Setting::get('stripe_currency', 'usd'),
+            'currency' => $paymentCurrency,
             'email' => $request->input('email'),
             'first_name' => $firstName,
             'last_name' => $lastName,
@@ -312,6 +664,48 @@ class CheckoutController extends Controller
     public function cancel()
     {
         return redirect()->route('checkout.index')->with('error', 'Payment was cancelled. Please try again.');
+    }
+
+    /**
+     * Handle PayPal success callback
+     */
+    public function paypalSuccess(Request $request, Order $order)
+    {
+        // Verify the order belongs to the current user (if logged in)
+        if (auth()->check() && $order->user_id && $order->user_id !== auth()->id()) {
+            return redirect()->route('products.index')->with('error', 'Unauthorized access.');
+        }
+
+        $paypalOrderId = $request->query('token') ?? $order->paypal_order_id;
+
+        if (!$paypalOrderId) {
+            return redirect()->route('checkout.index')->with('error', 'Invalid PayPal order.');
+        }
+
+        try {
+            // Capture the payment
+            $captureResult = $this->paypalService->captureOrder($paypalOrderId);
+
+            if ($captureResult && $captureResult['status'] === 'COMPLETED') {
+                // Payment successful
+                if ($order->status === 'pending') {
+                    $this->completeOrder($order, 'paypal_' . ($captureResult['capture_id'] ?? $paypalOrderId));
+                }
+
+                // Clear cart
+                session()->forget('cart');
+                session()->forget('pending_order_items');
+
+                return view('pages.checkout-success', compact('order'));
+            }
+
+            // Payment not completed
+            return redirect()->route('checkout.index')->with('error', 'Payment was not completed. Please try again.');
+
+        } catch (\Exception $e) {
+            Log::error('PayPal success callback error: ' . $e->getMessage());
+            return redirect()->route('products.index')->with('error', 'Error processing payment confirmation.');
+        }
     }
 
     /**
@@ -553,8 +947,15 @@ class CheckoutController extends Controller
                     // Create License record for tracking activations
                     $licenseService->createForOrderItem($orderItem);
 
-                    // Update seller balance
-                    $product->seller->increment('available_balance', $sellerAmount);
+                    // Credit seller's wallet
+                    $sellerWallet = $product->seller->user->getOrCreateWallet();
+                    $sellerWallet->deposit(
+                        amount: $sellerAmount,
+                        description: 'Sale: ' . $product->name,
+                        paymentMethod: 'product_sale',
+                        paymentId: $order->order_number,
+                        transactionable: $orderItem
+                    );
                     $product->seller->increment('total_earnings', $sellerAmount);
                     $product->seller->increment('total_sales', $item['price']);
 
@@ -624,7 +1025,7 @@ class CheckoutController extends Controller
                     $pushService->notifyNewSale($notification['seller']->user, [
                         'order_id' => $order->order_number,
                         'product_name' => $productName,
-                        'amount' => '$' . number_format($notification['total'], 2),
+                        'amount' => format_price($notification['total']),
                         'url' => '/seller/orders',
                     ]);
                 }

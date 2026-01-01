@@ -105,7 +105,7 @@ class JobMilestone extends Model
     // Accessors
     public function getFormattedAmountAttribute(): string
     {
-        return '$' . number_format($this->amount, 2);
+        return format_price($this->amount);
     }
 
     public function getStatusLabelAttribute(): string

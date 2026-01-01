@@ -55,7 +55,7 @@
                             {{ abs($stats['revenue_change']) }}%
                         </span>
                     </div>
-                    <h3 class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($stats['revenue'], 2) }}</h3>
+                    <h3 class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($stats['revenue']) }}</h3>
                     <p class="text-surface-600 dark:text-surface-400 text-sm mt-1">Revenue ({{ $period }} days)</p>
                 </div>
 
@@ -106,7 +106,7 @@
                             </svg>
                         </div>
                     </div>
-                    <h3 class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($stats['avg_order_value'], 2) }}</h3>
+                    <h3 class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($stats['avg_order_value']) }}</h3>
                     <p class="text-surface-600 dark:text-surface-400 text-sm mt-1">Avg Order Value</p>
                 </div>
             </div>
@@ -141,7 +141,7 @@
                                         <span class="w-3 h-3 rounded-full mr-2" style="background-color: {{ $loop->index == 0 ? '#6366f1' : ($loop->index == 1 ? '#06b6d4' : ($loop->index == 2 ? '#10b981' : '#f59e0b')) }}"></span>
                                         <span class="text-sm text-surface-600 dark:text-surface-400">{{ $license['type'] }}</span>
                                     </div>
-                                    <span class="text-sm font-medium text-surface-900 dark:text-white">${{ number_format($license['revenue'], 2) }}</span>
+                                    <span class="text-sm font-medium text-surface-900 dark:text-white">{{ format_price($license['revenue']) }}</span>
                                 </div>
                             @empty
                                 <p class="text-center text-surface-500 dark:text-surface-400 text-sm py-4">No data available</p>
@@ -170,7 +170,7 @@
                                     <p class="text-sm text-surface-500 dark:text-surface-400">{{ $product['sales'] }} sales &bull; {{ number_format($product['views']) }} views</p>
                                 </div>
                                 <div class="text-right">
-                                    <p class="font-semibold text-surface-900 dark:text-white">${{ number_format($product['revenue'], 2) }}</p>
+                                    <p class="font-semibold text-surface-900 dark:text-white">{{ format_price($product['revenue']) }}</p>
                                 </div>
                             </div>
                         @empty
@@ -250,7 +250,7 @@
                                         <p class="text-surface-600 dark:text-surface-400">{{ $transaction->created_at->format('M d, Y') }}</p>
                                     </td>
                                     <td class="px-6 py-4 text-right">
-                                        <p class="font-semibold text-success-600">${{ number_format($transaction->seller_amount, 2) }}</p>
+                                        <p class="font-semibold text-success-600">{{ format_price($transaction->seller_amount) }}</p>
                                     </td>
                                 </tr>
                             @empty

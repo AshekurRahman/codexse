@@ -12,13 +12,13 @@
         </p>
     </div>
 
-    <form method="POST" action="{{ route('password.confirm') }}">
+    <form method="POST" action="{{ route('password.confirm') }}" data-ajax-form>
         @csrf
 
         <!-- Password -->
         <div>
             <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" type="password" name="password" required autocomplete="current-password" placeholder="Enter your password" />
+            <x-text-input id="password" type="password" name="password" autocomplete="current-password" placeholder="Enter your password" data-validate="required" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 

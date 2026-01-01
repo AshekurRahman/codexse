@@ -30,8 +30,8 @@ class StatsOverview extends BaseWidget
         $pendingProducts = Product::where('status', 'pending')->count();
 
         return [
-            Stat::make('Total Revenue', '$' . number_format($totalRevenue, 2))
-                ->description('$' . number_format($monthlyRevenue, 2) . ' this month')
+            Stat::make('Total Revenue', format_price($totalRevenue))
+                ->description(format_price($monthlyRevenue) . ' this month')
                 ->descriptionIcon('heroicon-m-arrow-trending-up')
                 ->color('success')
                 ->chart([7, 3, 4, 5, 6, 3, 5, 8]),

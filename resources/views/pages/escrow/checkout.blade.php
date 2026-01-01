@@ -135,16 +135,16 @@
                         <div class="space-y-4 mb-6">
                             <div class="flex items-center justify-between text-sm">
                                 <span class="text-surface-600 dark:text-surface-400">Amount</span>
-                                <span class="font-medium text-surface-900 dark:text-white">${{ number_format($fees['amount'], 2) }}</span>
+                                <span class="font-medium text-surface-900 dark:text-white">{{ format_price($fees['amount']) }}</span>
                             </div>
                             <div class="flex items-center justify-between text-sm">
                                 <span class="text-surface-600 dark:text-surface-400">Processing Fee</span>
-                                <span class="font-medium text-surface-900 dark:text-white">${{ number_format($fees['platform_fee'], 2) }}</span>
+                                <span class="font-medium text-surface-900 dark:text-white">{{ format_price($fees['platform_fee']) }}</span>
                             </div>
                             <hr class="border-surface-200 dark:border-surface-700">
                             <div class="flex items-center justify-between">
                                 <span class="font-semibold text-surface-900 dark:text-white">Total</span>
-                                <span class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($fees['amount'], 2) }}</span>
+                                <span class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($fees['amount']) }}</span>
                             </div>
                         </div>
 
@@ -161,7 +161,7 @@
                                 <svg id="lock-icon" xmlns="http://www.w3.org/2000/svg" class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                 </svg>
-                                <span id="button-text">Pay ${{ number_format($fees['amount'], 2) }}</span>
+                                <span id="button-text">Pay {{ format_price($fees['amount']) }}</span>
                             </button>
                         </div>
 
@@ -273,7 +273,7 @@
                 submitButton.disabled = false;
                 spinner.classList.add('hidden');
                 lockIcon.classList.remove('hidden');
-                buttonText.textContent = 'Pay ${{ number_format($fees['amount'], 2) }}';
+                buttonText.textContent = 'Pay {{ format_price($fees['amount']) }}';
             }
         }
     </script>

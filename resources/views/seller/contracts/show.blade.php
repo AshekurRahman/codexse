@@ -64,7 +64,7 @@
                                                 </div>
                                                 <p class="text-sm text-surface-600 dark:text-surface-400 ml-9 mb-3">{{ $milestone->description ?? 'No description' }}</p>
                                                 <div class="flex items-center gap-4 ml-9 text-sm text-surface-500 dark:text-surface-400">
-                                                    <span class="font-medium text-surface-900 dark:text-white">${{ number_format($milestone->amount, 2) }}</span>
+                                                    <span class="font-medium text-surface-900 dark:text-white">{{ format_price($milestone->amount) }}</span>
                                                     @if($milestone->due_date)
                                                         <span>Due: {{ $milestone->due_date->format('M d, Y') }}</span>
                                                     @endif
@@ -73,16 +73,16 @@
 
                                             <div class="flex flex-col gap-2">
                                                 @if($milestone->status === 'in_progress')
-                                                    <a href="{{ route('seller.milestones.submit', $milestone) }}" class="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                                    <a href="{{ route('seller.milestones.submit-form', $milestone) }}" class="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                                                         </svg>
                                                         Submit Work
                                                     </a>
-                                                @elseif($milestone->status === 'pending_review')
+                                                @elseif($milestone->status === 'pending_review' || $milestone->status === 'submitted')
                                                     <span class="text-xs text-info-600 dark:text-info-400">Awaiting client review</span>
                                                 @elseif($milestone->status === 'revision_requested')
-                                                    <a href="{{ route('seller.milestones.submit', $milestone) }}" class="inline-flex items-center gap-2 px-3 py-1.5 bg-warning-600 hover:bg-warning-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                                    <a href="{{ route('seller.milestones.submit-form', $milestone) }}" class="inline-flex items-center gap-2 px-3 py-1.5 bg-warning-600 hover:bg-warning-700 text-white text-sm font-medium rounded-lg transition-colors">
                                                         Resubmit
                                                     </a>
                                                 @endif
@@ -164,7 +164,7 @@
                         <div class="space-y-4">
                             <div class="flex justify-between">
                                 <span class="text-surface-600 dark:text-surface-400">Total Value</span>
-                                <span class="font-semibold text-surface-900 dark:text-white">${{ number_format($contract->total_amount, 2) }}</span>
+                                <span class="font-semibold text-surface-900 dark:text-white">{{ format_price($contract->total_amount) }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-surface-600 dark:text-surface-400">Payment Type</span>
@@ -178,11 +178,11 @@
                                 <div class="pt-3 border-t border-surface-200 dark:border-surface-700">
                                     <div class="flex justify-between mb-2">
                                         <span class="text-surface-600 dark:text-surface-400">Released</span>
-                                        <span class="text-success-600 dark:text-success-400">${{ number_format($releasedAmount, 2) }}</span>
+                                        <span class="text-success-600 dark:text-success-400">{{ format_price($releasedAmount) }}</span>
                                     </div>
                                     <div class="flex justify-between">
                                         <span class="text-surface-600 dark:text-surface-400">In Escrow</span>
-                                        <span class="text-surface-900 dark:text-white">${{ number_format($pendingAmount, 2) }}</span>
+                                        <span class="text-surface-900 dark:text-white">{{ format_price($pendingAmount) }}</span>
                                     </div>
                                 </div>
                             @endif

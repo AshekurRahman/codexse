@@ -31,8 +31,8 @@
                                 <h3 class="font-semibold text-surface-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{{ $bundle->name }}</h3>
                                 <p class="mt-2 text-sm text-surface-600 dark:text-surface-400 line-clamp-2">{!! strip_tags($bundle->description) !!}</p>
                                 <div class="mt-4 flex items-center gap-2">
-                                    <span class="text-lg font-bold text-surface-900 dark:text-white">${{ number_format($bundle->price, 2) }}</span>
-                                    <span class="text-sm text-surface-500 dark:text-surface-400 line-through">${{ number_format($bundle->original_price, 2) }}</span>
+                                    <span class="text-lg font-bold text-surface-900 dark:text-white">{{ format_price($bundle->price) }}</span>
+                                    <span class="text-sm text-surface-500 dark:text-surface-400 line-through">{{ format_price($bundle->original_price) }}</span>
                                 </div>
                                 <div class="mt-4 flex items-center gap-2">
                                     <img src="{{ $bundle->seller->logo_url }}" alt="{{ $bundle->seller->store_name }}" class="h-6 w-6 rounded-full object-cover">

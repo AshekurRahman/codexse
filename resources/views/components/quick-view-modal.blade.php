@@ -133,12 +133,8 @@
 
                     <!-- Price -->
                     <div class="flex items-baseline gap-3 mb-6">
-                        <span class="text-3xl font-bold text-surface-900 dark:text-white">
-                            $<span x-text="(product?.sale_price || product?.price)?.toFixed(2)"></span>
-                        </span>
-                        <span x-show="product?.sale_price" class="text-lg text-surface-400 line-through">
-                            $<span x-text="product?.price?.toFixed(2)"></span>
-                        </span>
+                        <span class="text-3xl font-bold text-surface-900 dark:text-white" x-text="formatPrice(product?.sale_price || product?.price)"></span>
+                        <span x-show="product?.sale_price" class="text-lg text-surface-400 line-through" x-text="formatPrice(product?.price)"></span>
                     </div>
 
                     <!-- Description -->
@@ -217,6 +213,16 @@
 @push('scripts')
 <script>
 function quickViewModal() {
+    const currencySymbol = '{{ current_currency_symbol() }}';
+    const currencyPosition = '{{ current_currency()->symbol_position }}';
+    const exchangeRate = {{ current_currency()->exchange_rate }};
+
+    function formatPrice(amount) {
+        if (!amount) return currencySymbol + '0.00';
+        const converted = (parseFloat(amount) * exchangeRate).toFixed(2);
+        return currencyPosition === 'after' ? converted + ' ' + currencySymbol : currencySymbol + converted;
+    }
+
     return {
         isOpen: false,
         loading: false,
@@ -226,6 +232,7 @@ function quickViewModal() {
         inWishlist: false,
         cartLoading: false,
         wishlistLoading: false,
+        formatPrice: formatPrice,
 
         open(data) {
             this.isOpen = true;

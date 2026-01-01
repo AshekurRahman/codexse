@@ -115,7 +115,7 @@ class AnalyticsController extends Controller
             'avg_order_value' => round($avgOrderValue, 2),
             'total_products' => $seller->products()->where('status', 'published')->count(),
             'total_earnings' => $seller->total_earnings ?? 0,
-            'available_balance' => $seller->available_balance ?? 0,
+            'wallet_balance' => auth()->user()->getOrCreateWallet()->balance,
         ];
     }
 
@@ -307,9 +307,9 @@ class AnalyticsController extends Controller
                 'Product' => $item->product_name,
                 'Customer' => $item->order->user->name ?? 'N/A',
                 'License Type' => ucfirst($item->license_type ?? 'standard'),
-                'Price' => '$' . number_format($item->price, 2),
-                'Your Earnings' => '$' . number_format($item->seller_amount, 2),
-                'Platform Fee' => '$' . number_format($item->platform_fee, 2),
+                'Price' => format_price($item->price),
+                'Your Earnings' => format_price($item->seller_amount),
+                'Platform Fee' => format_price($item->platform_fee),
             ]);
 
         $filename = 'analytics-' . now()->format('Y-m-d') . '.csv';

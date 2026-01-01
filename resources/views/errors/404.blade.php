@@ -64,7 +64,7 @@
                     <a href="{{ url('/products') }}" class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">Products</a>
                     <a href="{{ url('/services') }}" class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">Services</a>
                     <a href="{{ url('/sellers') }}" class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">Sellers</a>
-                    <a href="{{ url('/jobs') }}" class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">Jobs</a>
+                    <a href="{{ url('/contact') }}" class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">Contact</a>
                 </div>
             </div>
         </div>

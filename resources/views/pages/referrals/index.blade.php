@@ -7,6 +7,18 @@
                 <p class="mt-2 text-surface-600 dark:text-surface-400">Invite friends and earn rewards when they join and make purchases.</p>
             </div>
 
+            @if(session('success'))
+                <div class="mb-6 rounded-lg bg-success-50 dark:bg-success-900/20 border border-success-200 dark:border-success-800 p-4">
+                    <p class="text-sm text-success-700 dark:text-success-300">{{ session('success') }}</p>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="mb-6 rounded-lg bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 p-4">
+                    <p class="text-sm text-danger-700 dark:text-danger-300">{{ session('error') }}</p>
+                </div>
+            @endif
+
             <!-- Stats Cards -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <div class="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
@@ -16,9 +28,17 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                         </div>
-                        <div>
-                            <p class="text-sm text-surface-500 dark:text-surface-400">Available Balance</p>
-                            <p class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($balance, 2) }}</p>
+                        <div class="flex-1">
+                            <p class="text-sm text-surface-500 dark:text-surface-400">Referral Balance</p>
+                            <p class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($balance) }}</p>
+                            @if($balance >= $minWithdrawal)
+                                <form action="{{ route('referrals.transfer-to-wallet') }}" method="POST" class="mt-2">
+                                    @csrf
+                                    <button type="submit" class="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 font-medium">
+                                        Transfer to Wallet
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -60,7 +80,7 @@
                         </div>
                         <div>
                             <p class="text-sm text-surface-500 dark:text-surface-400">Total Earned</p>
-                            <p class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($totalEarnings, 2) }}</p>
+                            <p class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($totalEarnings) }}</p>
                         </div>
                     </div>
                 </div>
@@ -185,7 +205,7 @@
                                                 <p class="text-sm text-surface-500 dark:text-surface-400">{{ $reward->created_at->diffForHumans() }}</p>
                                             </div>
                                         </div>
-                                        <span class="font-semibold text-success-600 dark:text-success-400">+${{ number_format($reward->amount, 2) }}</span>
+                                        <span class="font-semibold text-success-600 dark:text-success-400">+{{ format_price($reward->amount) }}</span>
                                     </div>
                                 @endforeach
                             </div>
@@ -223,7 +243,7 @@
                                 </div>
                                 <div>
                                     <h4 class="font-medium text-surface-900 dark:text-white">They Sign Up</h4>
-                                    <p class="text-sm text-surface-600 dark:text-surface-400">When they register, you both get ${{ number_format($signupReward, 2) }}!</p>
+                                    <p class="text-sm text-surface-600 dark:text-surface-400">When they register, you both get {{ format_price($signupReward) }}!</p>
                                 </div>
                             </div>
 
@@ -246,7 +266,7 @@
                         <div class="space-y-3">
                             <div class="flex justify-between items-center">
                                 <span class="text-primary-100">Signup Bonus</span>
-                                <span class="font-bold">${{ number_format($signupReward, 2) }}</span>
+                                <span class="font-bold">{{ format_price($signupReward) }}</span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-primary-100">Purchase Commission</span>
@@ -254,7 +274,7 @@
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-primary-100">Min. Withdrawal</span>
-                                <span class="font-bold">${{ number_format($minWithdrawal, 2) }}</span>
+                                <span class="font-bold">{{ format_price($minWithdrawal) }}</span>
                             </div>
                         </div>
                     </div>

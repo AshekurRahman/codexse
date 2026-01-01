@@ -13,13 +13,13 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form method="POST" action="{{ route('password.email') }}">
+    <form method="POST" action="{{ route('password.email') }}" data-ajax-form>
         @csrf
 
         <!-- Email Address -->
         <div>
             <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" type="email" name="email" :value="old('email')" required autofocus placeholder="you@example.com" />
+            <x-text-input id="email" type="email" name="email" :value="old('email')" autofocus placeholder="you@example.com" data-validate="required|email" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 

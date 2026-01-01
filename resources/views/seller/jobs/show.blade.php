@@ -84,7 +84,7 @@
                             <div class="grid grid-cols-2 gap-4 mb-4">
                                 <div class="p-4 bg-surface-50 dark:bg-surface-900/50 rounded-lg">
                                     <p class="text-sm text-surface-500 dark:text-surface-400">Your Bid</p>
-                                    <p class="text-xl font-bold text-surface-900 dark:text-white">${{ number_format($existingProposal->proposed_price, 2) }}</p>
+                                    <p class="text-xl font-bold text-surface-900 dark:text-white">{{ format_price($existingProposal->proposed_price) }}</p>
                                 </div>
                                 <div class="p-4 bg-surface-50 dark:bg-surface-900/50 rounded-lg">
                                     <p class="text-sm text-surface-500 dark:text-surface-400">Duration</p>
@@ -113,7 +113,7 @@
                                     <div>
                                         <label for="proposed_price" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Your Bid ($) *</label>
                                         <input type="number" id="proposed_price" name="proposed_price" value="{{ old('proposed_price') }}" step="0.01" min="1" required class="w-full px-4 py-2.5 bg-white dark:bg-surface-900 border border-surface-300 dark:border-surface-600 rounded-lg focus:ring-2 focus:ring-primary-500 text-surface-900 dark:text-white">
-                                        <p class="mt-1 text-xs text-surface-500 dark:text-surface-400">Client budget: ${{ number_format($job->budget_min) }} - ${{ number_format($job->budget_max) }}</p>
+                                        <p class="mt-1 text-xs text-surface-500 dark:text-surface-400">Client budget: {{ format_price($job->budget_min) }} - {{ format_price($job->budget_max) }}</p>
                                         @error('proposed_price')
                                             <p class="mt-2 text-sm text-danger-600 dark:text-danger-400">{{ $message }}</p>
                                         @enderror
@@ -177,7 +177,7 @@
                         <div class="space-y-4">
                             <div>
                                 <p class="text-sm text-surface-500 dark:text-surface-400">Budget</p>
-                                <p class="text-xl font-bold text-surface-900 dark:text-white">${{ number_format($job->budget_min) }} - ${{ number_format($job->budget_max) }}</p>
+                                <p class="text-xl font-bold text-surface-900 dark:text-white">{{ format_price($job->budget_min) }} - {{ format_price($job->budget_max) }}</p>
                                 <p class="text-sm text-surface-500 dark:text-surface-400">{{ ucfirst($job->budget_type) }} price</p>
                             </div>
                             @if($job->deadline)

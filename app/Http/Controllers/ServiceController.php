@@ -100,7 +100,8 @@ class ServiceController extends Controller
             },
             'requirements' => function ($q) {
                 $q->orderBy('sort_order');
-            }
+            },
+            'activeSubscriptionPlans'
         ]);
 
         // Get related services

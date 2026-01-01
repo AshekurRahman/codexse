@@ -176,6 +176,35 @@ class ServiceOrderController extends Controller
     }
 
     /**
+     * Reject a pending order.
+     */
+    public function reject(ServiceOrder $serviceOrder)
+    {
+        $this->authorizeOrder($serviceOrder);
+
+        if ($serviceOrder->status !== 'pending') {
+            return redirect()->back()->with('error', 'Only pending orders can be rejected.');
+        }
+
+        // Refund buyer if escrow exists
+        if ($serviceOrder->escrowTransaction) {
+            app(\App\Services\EscrowService::class)->refundFunds(
+                $serviceOrder->escrowTransaction,
+                'Order rejected by seller'
+            );
+        }
+
+        $serviceOrder->update([
+            'status' => 'cancelled',
+            'cancelled_at' => now(),
+            'cancellation_reason' => 'Rejected by seller',
+        ]);
+
+        return redirect()->route('seller.service-orders.index')
+            ->with('success', 'Order rejected. Buyer has been refunded.');
+    }
+
+    /**
      * Request order cancellation (requires buyer approval or dispute).
      */
     public function requestCancellation(Request $request, ServiceOrder $serviceOrder)

@@ -22,7 +22,7 @@
         </div>
     @endif
 
-    <form method="POST" action="{{ route('two-factor.verify') }}" x-data="{ useRecovery: false }">
+    <form method="POST" action="{{ route('two-factor.verify') }}" x-data="{ useRecovery: false }" data-ajax-form>
         @csrf
 
         <div x-show="!useRecovery">
@@ -41,6 +41,7 @@
                     inputmode="numeric"
                     autocomplete="one-time-code"
                     autofocus
+                    data-validate="required|min:6|max:10"
                 >
                 <p class="mt-2 text-sm text-surface-500 dark:text-surface-400">
                     Enter the 6-digit code from your authenticator app

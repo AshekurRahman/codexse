@@ -54,7 +54,7 @@
                                     <div class="p-3 rounded-lg bg-surface-50 dark:bg-surface-700/50">
                                         <p class="text-xs text-surface-500 dark:text-surface-400 uppercase">Budget Range</p>
                                         <p class="font-semibold text-surface-900 dark:text-white">
-                                            ${{ number_format($quoteRequest->budget_min ?? 0) }} - ${{ number_format($quoteRequest->budget_max ?? 0) }}
+                                            {{ format_price($quoteRequest->budget_min ?? 0) }} - {{ format_price($quoteRequest->budget_max ?? 0) }}
                                         </p>
                                     </div>
                                 @endif
@@ -105,7 +105,7 @@
                                 <!-- Price & Delivery -->
                                 <div class="grid grid-cols-3 gap-4 mb-6">
                                     <div class="text-center p-4 rounded-lg bg-surface-50 dark:bg-surface-700/50">
-                                        <p class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($quoteRequest->quote->price, 2) }}</p>
+                                        <p class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($quoteRequest->quote->price) }}</p>
                                         <p class="text-sm text-surface-500 dark:text-surface-400">Total Price</p>
                                     </div>
                                     <div class="text-center p-4 rounded-lg bg-surface-50 dark:bg-surface-700/50">
@@ -144,7 +144,7 @@
                                         <form action="{{ route('quotes.accept', $quoteRequest) }}" method="POST" class="flex-1">
                                             @csrf
                                             <button type="submit" class="w-full inline-flex items-center justify-center rounded-xl bg-green-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-green-500/30 hover:bg-green-700 transition-all">
-                                                Accept & Pay ${{ number_format($quoteRequest->quote->price, 2) }}
+                                                Accept & Pay {{ format_price($quoteRequest->quote->price) }}
                                             </button>
                                         </form>
                                         <form action="{{ route('quotes.reject', $quoteRequest) }}" method="POST">

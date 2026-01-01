@@ -72,7 +72,7 @@
                             <div class="flex-1">
                                 <div class="flex items-start gap-3 mb-2">
                                     <h3 class="text-lg font-semibold text-surface-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400">
-                                        <a href="{{ route('seller.jobs.show', $proposal->jobPosting) }}">{{ $proposal->jobPosting->title ?? 'Job Deleted' }}</a>
+                                        <a href="{{ route('jobs.show', $proposal->jobPosting) }}">{{ $proposal->jobPosting->title ?? 'Job Deleted' }}</a>
                                     </h3>
                                     <x-status-badge :status="$proposal->status" size="sm" />
                                 </div>
@@ -83,7 +83,7 @@
                                 <div class="grid grid-cols-3 gap-4 mb-4">
                                     <div>
                                         <p class="text-xs text-surface-500 dark:text-surface-400">Your Bid</p>
-                                        <p class="font-semibold text-surface-900 dark:text-white">${{ number_format($proposal->proposed_price, 2) }}</p>
+                                        <p class="font-semibold text-surface-900 dark:text-white">{{ format_price($proposal->proposed_price) }}</p>
                                     </div>
                                     <div>
                                         <p class="text-xs text-surface-500 dark:text-surface-400">Duration</p>
@@ -91,7 +91,7 @@
                                     </div>
                                     <div>
                                         <p class="text-xs text-surface-500 dark:text-surface-400">Job Budget</p>
-                                        <p class="font-semibold text-surface-900 dark:text-white">${{ number_format($proposal->jobPosting->budget_min ?? 0) }} - ${{ number_format($proposal->jobPosting->budget_max ?? 0) }}</p>
+                                        <p class="font-semibold text-surface-900 dark:text-white">{{ format_price($proposal->jobPosting->budget_min ?? 0) }} - {{ format_price($proposal->jobPosting->budget_max ?? 0) }}</p>
                                     </div>
                                 </div>
 
@@ -101,7 +101,7 @@
                             </div>
 
                             <div class="flex lg:flex-col items-center lg:items-end gap-3">
-                                <a href="{{ route('seller.jobs.show', $proposal->jobPosting) }}" class="inline-flex items-center gap-2 px-4 py-2 border border-surface-300 dark:border-surface-600 text-surface-700 dark:text-surface-300 rounded-lg hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors">
+                                <a href="{{ route('jobs.show', $proposal->jobPosting) }}" class="inline-flex items-center gap-2 px-4 py-2 border border-surface-300 dark:border-surface-600 text-surface-700 dark:text-surface-300 rounded-lg hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors">
                                     View Job
                                 </a>
                                 @if($proposal->status === 'pending')

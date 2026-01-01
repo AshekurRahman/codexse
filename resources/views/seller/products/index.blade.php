@@ -63,10 +63,10 @@
                                         </td>
                                         <td class="px-6 py-4">
                                             @if($product->sale_price)
-                                                <span class="font-semibold text-surface-900 dark:text-white">${{ number_format($product->sale_price, 2) }}</span>
-                                                <span class="text-sm text-surface-400 line-through ml-1">${{ number_format($product->price, 2) }}</span>
+                                                <span class="font-semibold text-surface-900 dark:text-white">{{ format_price($product->sale_price) }}</span>
+                                                <span class="text-sm text-surface-400 line-through ml-1">{{ format_price($product->price) }}</span>
                                             @else
-                                                <span class="font-semibold text-surface-900 dark:text-white">${{ number_format($product->price, 2) }}</span>
+                                                <span class="font-semibold text-surface-900 dark:text-white">{{ format_price($product->price) }}</span>
                                             @endif
                                         </td>
                                         <td class="px-6 py-4">

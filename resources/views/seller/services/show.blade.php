@@ -72,7 +72,7 @@
                                                 <span class="text-xs bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300 px-2 py-0.5 rounded">Popular</span>
                                             @endif
                                         </div>
-                                        <p class="text-2xl font-bold text-surface-900 dark:text-white mb-4">${{ number_format($package->price, 2) }}</p>
+                                        <p class="text-2xl font-bold text-surface-900 dark:text-white mb-4">{{ format_price($package->price) }}</p>
                                         <ul class="space-y-2 text-sm text-surface-600 dark:text-surface-400">
                                             <li class="flex items-center gap-2">
                                                 <svg class="w-4 h-4 text-success-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,7 +153,7 @@
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-surface-600 dark:text-surface-400">Total Earnings</span>
-                                <span class="font-semibold text-surface-900 dark:text-white">${{ number_format($service->orders()->where('status', 'completed')->sum('price'), 2) }}</span>
+                                <span class="font-semibold text-surface-900 dark:text-white">{{ format_price($service->orders()->where('status', 'completed')->sum('price')) }}</span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-surface-600 dark:text-surface-400">Views</span>
@@ -176,7 +176,7 @@
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-surface-600 dark:text-surface-400">Starting Price</span>
-                                <span class="text-surface-900 dark:text-white">${{ number_format($service->packages->min('price') ?? 0, 2) }}</span>
+                                <span class="text-surface-900 dark:text-white">{{ format_price($service->packages->min('price') ?? 0) }}</span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-surface-600 dark:text-surface-400">Packages</span>
@@ -213,7 +213,7 @@
                                         </div>
                                         <div class="flex items-center justify-between mt-1 text-sm text-surface-500 dark:text-surface-400">
                                             <span>{{ $order->buyer->name }}</span>
-                                            <span>${{ number_format($order->price, 2) }}</span>
+                                            <span>{{ format_price($order->price) }}</span>
                                         </div>
                                     </a>
                                 @endforeach

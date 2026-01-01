@@ -1,24 +1,24 @@
 <section>
-    <form method="post" action="{{ route('password.update') }}" class="space-y-6">
+    <form method="post" action="{{ route('password.update') }}" class="space-y-6" data-ajax-form>
         @csrf
         @method('put')
 
         <div>
             <x-input-label for="update_password_current_password" :value="__('Current Password')" />
-            <x-text-input id="update_password_current_password" name="current_password" type="password" autocomplete="current-password" placeholder="Enter your current password" />
+            <x-text-input id="update_password_current_password" name="current_password" type="password" autocomplete="current-password" placeholder="Enter your current password" data-validate="required" />
             <x-input-error :messages="$errors->updatePassword->get('current_password')" class="mt-2" />
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
                 <x-input-label for="update_password_password" :value="__('New Password')" />
-                <x-text-input id="update_password_password" name="password" type="password" autocomplete="new-password" placeholder="Enter new password" />
+                <x-text-input id="update_password_password" name="password" type="password" autocomplete="new-password" placeholder="Enter new password" data-validate="required|min:8" />
                 <x-input-error :messages="$errors->updatePassword->get('password')" class="mt-2" />
             </div>
 
             <div>
                 <x-input-label for="update_password_password_confirmation" :value="__('Confirm New Password')" />
-                <x-text-input id="update_password_password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" placeholder="Confirm new password" />
+                <x-text-input id="update_password_password_confirmation" name="password_confirmation" type="password" autocomplete="new-password" placeholder="Confirm new password" data-validate="required|match:password" />
                 <x-input-error :messages="$errors->updatePassword->get('password_confirmation')" class="mt-2" />
             </div>
         </div>

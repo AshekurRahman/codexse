@@ -259,11 +259,11 @@
                         <div class="space-y-3">
                             <div class="flex justify-between">
                                 <span class="text-surface-600 dark:text-surface-400">Package Price</span>
-                                <span class="text-surface-900 dark:text-white">${{ number_format($serviceOrder->price, 2) }}</span>
+                                <span class="text-surface-900 dark:text-white">{{ format_price($serviceOrder->price) }}</span>
                             </div>
                             <div class="pt-3 border-t border-surface-200 dark:border-surface-700 flex justify-between">
                                 <span class="font-semibold text-surface-900 dark:text-white">Total Paid</span>
-                                <span class="font-semibold text-primary-600 dark:text-primary-400">${{ number_format($serviceOrder->price, 2) }}</span>
+                                <span class="font-semibold text-primary-600 dark:text-primary-400">{{ format_price($serviceOrder->price) }}</span>
                             </div>
                         </div>
                     </div>
@@ -328,7 +328,7 @@
                                 </svg>
                                 <div>
                                     <p class="font-medium text-success-700 dark:text-success-300">Funds Protected</p>
-                                    <p class="text-sm text-success-600 dark:text-success-400">${{ number_format($serviceOrder->escrowTransaction->amount, 2) }} in escrow</p>
+                                    <p class="text-sm text-success-600 dark:text-success-400">{{ format_price($serviceOrder->escrowTransaction->amount) }} in escrow</p>
                                 </div>
                             </div>
                         </div>

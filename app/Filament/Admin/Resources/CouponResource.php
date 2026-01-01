@@ -130,7 +130,7 @@ class CouponResource extends Resource
                 Tables\Columns\TextColumn::make('value')
                     ->formatStateUsing(fn ($record) => $record->type === 'percentage'
                         ? $record->value . '%'
-                        : '$' . number_format($record->value, 2))
+                        : format_price($record->value))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('used_count')
                     ->label('Used')

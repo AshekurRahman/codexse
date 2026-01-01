@@ -92,24 +92,24 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('contact.submit') }}" method="POST" class="space-y-6">
+                    <form action="{{ route('contact.submit') }}" method="POST" class="space-y-6" data-ajax-form>
                         @csrf
 
                         <div>
                             <label for="name" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Your Name</label>
-                            <input type="text" id="name" name="name" value="{{ old('name') }}" required class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-primary-500" placeholder="John Doe">
+                            <input type="text" id="name" name="name" value="{{ old('name') }}" class="w-full rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 px-4 py-3 text-surface-900 dark:text-white placeholder-surface-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors" placeholder="John Doe" data-validate="required|min:2">
                             @error('name')<p class="mt-1 text-sm text-danger-500">{{ $message }}</p>@enderror
                         </div>
 
                         <div>
                             <label for="email" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Email Address</label>
-                            <input type="email" id="email" name="email" value="{{ old('email') }}" required class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-primary-500" placeholder="you@example.com">
+                            <input type="email" id="email" name="email" value="{{ old('email') }}" class="w-full rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 px-4 py-3 text-surface-900 dark:text-white placeholder-surface-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors" placeholder="you@example.com" data-validate="required|email">
                             @error('email')<p class="mt-1 text-sm text-danger-500">{{ $message }}</p>@enderror
                         </div>
 
                         <div>
                             <label for="subject" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Subject</label>
-                            <select id="subject" name="subject" required class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-primary-500">
+                            <select id="subject" name="subject" class="w-full rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 px-4 py-3 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors" data-validate="required">
                                 <option value="">Select a subject</option>
                                 <option value="General Inquiry" {{ old('subject') == 'General Inquiry' ? 'selected' : '' }}>General Inquiry</option>
                                 <option value="Technical Support" {{ old('subject') == 'Technical Support' ? 'selected' : '' }}>Technical Support</option>
@@ -124,7 +124,7 @@
 
                         <div>
                             <label for="message" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Message</label>
-                            <textarea id="message" name="message" rows="5" required class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-primary-500" placeholder="Tell us how we can help...">{{ old('message') }}</textarea>
+                            <textarea id="message" name="message" rows="5" class="w-full rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 px-4 py-3 text-surface-900 dark:text-white placeholder-surface-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition-colors" placeholder="Tell us how we can help..." data-validate="required|min:10">{{ old('message') }}</textarea>
                             @error('message')<p class="mt-1 text-sm text-danger-500">{{ $message }}</p>@enderror
                         </div>
 

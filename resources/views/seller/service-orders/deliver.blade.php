@@ -21,7 +21,7 @@
                     @endif
                     <div class="flex-1">
                         <h3 class="font-medium text-surface-900 dark:text-white">{{ $order->service->name ?? 'Service' }}</h3>
-                        <p class="text-sm text-surface-500 dark:text-surface-400">{{ $order->package->name ?? 'Package' }} - ${{ number_format($order->price, 2) }}</p>
+                        <p class="text-sm text-surface-500 dark:text-surface-400">{{ $order->package->name ?? 'Package' }} - {{ format_price($order->price) }}</p>
                     </div>
                     <div class="text-right">
                         <p class="text-sm text-surface-500 dark:text-surface-400">Buyer</p>
@@ -31,7 +31,7 @@
             </div>
 
             <!-- Delivery Form -->
-            <form action="{{ route('seller.service-orders.submit-delivery', $order) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            <form action="{{ route('seller.service-orders.deliver', $serviceOrder) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                 @csrf
 
                 <div class="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-6 space-y-6">

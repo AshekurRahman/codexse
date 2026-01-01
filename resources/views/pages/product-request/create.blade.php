@@ -11,7 +11,7 @@
 
             <!-- Form Card -->
             <div class="bg-white dark:bg-surface-800 rounded-2xl shadow-sm border border-surface-200 dark:border-surface-700 p-6 md:p-8">
-                <form action="{{ route('product-request.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                <form action="{{ route('product-request.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6" data-ajax-form>
                     @csrf
 
                     <!-- Contact Information -->
@@ -27,8 +27,8 @@
                                     name="name"
                                     id="name"
                                     value="{{ old('name', auth()->user()?->name) }}"
-                                    required
                                     class="w-full rounded-lg border-surface-300 dark:border-surface-600 dark:bg-surface-700 dark:text-white focus:border-primary-500 focus:ring-primary-500"
+                                    data-validate="required|min:2"
                                 >
                                 @error('name')
                                     <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
@@ -44,8 +44,8 @@
                                     name="email"
                                     id="email"
                                     value="{{ old('email', auth()->user()?->email) }}"
-                                    required
                                     class="w-full rounded-lg border-surface-300 dark:border-surface-600 dark:bg-surface-700 dark:text-white focus:border-primary-500 focus:ring-primary-500"
+                                    data-validate="required|email"
                                 >
                                 @error('email')
                                     <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
@@ -83,9 +83,9 @@
                                     name="product_title"
                                     id="product_title"
                                     value="{{ old('product_title') }}"
-                                    required
                                     placeholder="e.g., E-commerce Dashboard Template"
                                     class="w-full rounded-lg border-surface-300 dark:border-surface-600 dark:bg-surface-700 dark:text-white focus:border-primary-500 focus:ring-primary-500"
+                                    data-validate="required|min:5"
                                 >
                                 @error('product_title')
                                     <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
@@ -121,9 +121,9 @@
                                     name="description"
                                     id="description"
                                     rows="5"
-                                    required
                                     placeholder="Describe in detail what kind of product you're looking for, its purpose, and any specific requirements..."
                                     class="w-full rounded-lg border-surface-300 dark:border-surface-600 dark:bg-surface-700 dark:text-white focus:border-primary-500 focus:ring-primary-500"
+                                    data-validate="required|min:50"
                                 >{{ old('description') }}</textarea>
                                 <p class="mt-1 text-xs text-surface-500">Minimum 50 characters</p>
                                 @error('description')

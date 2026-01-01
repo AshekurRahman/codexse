@@ -111,7 +111,7 @@
                                 <img src="{{ $productRequest->fulfilledByProduct->thumbnail_url }}" alt="{{ $productRequest->fulfilledByProduct->name }}" class="w-16 h-16 rounded-lg object-cover">
                                 <div class="flex-1">
                                     <h3 class="font-medium text-surface-900 dark:text-white">{{ $productRequest->fulfilledByProduct->name }}</h3>
-                                    <p class="text-sm text-surface-500">${{ number_format($productRequest->fulfilledByProduct->price, 2) }}</p>
+                                    <p class="text-sm text-surface-500">{{ format_price($productRequest->fulfilledByProduct->price) }}</p>
                                 </div>
                                 <svg class="w-5 h-5 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />

@@ -87,7 +87,7 @@
             </div>
             <div class="text-right">
                 <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">From</span>
-                <p class="text-lg font-bold text-surface-900 dark:text-white">${{ number_format($startingPrice, 2) }}</p>
+                <p class="text-lg font-bold text-surface-900 dark:text-white">{{ format_price($startingPrice) }}</p>
             </div>
         </div>
     </div>

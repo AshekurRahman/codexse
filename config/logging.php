@@ -130,8 +130,16 @@ return [
         'errors' => [
             'driver' => 'daily',
             'path' => storage_path('logs/errors.log'),
-            'level' => 'error',
+            'level' => 'warning',
             'days' => 30,
+            'replace_placeholders' => true,
+        ],
+
+        'fraud' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/fraud.log'),
+            'level' => 'info',
+            'days' => 90,
             'replace_placeholders' => true,
         ],
 

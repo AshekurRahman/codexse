@@ -55,15 +55,15 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-surface-600 dark:text-surface-400">Amount</span>
-                                <span class="text-surface-900 dark:text-white font-medium">${{ number_format($transaction->amount, 2) }}</span>
+                                <span class="text-surface-900 dark:text-white font-medium">{{ format_price($transaction->amount) }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-surface-600 dark:text-surface-400">Platform Fee</span>
-                                <span class="text-surface-900 dark:text-white font-medium">${{ number_format($transaction->platform_fee, 2) }}</span>
+                                <span class="text-surface-900 dark:text-white font-medium">{{ format_price($transaction->platform_fee) }}</span>
                             </div>
                             <div class="flex justify-between pt-4 border-t border-surface-200 dark:border-surface-700">
                                 <span class="text-surface-900 dark:text-white font-semibold">Seller Receives</span>
-                                <span class="text-success-600 dark:text-success-400 font-bold">${{ number_format($transaction->seller_amount, 2) }}</span>
+                                <span class="text-success-600 dark:text-success-400 font-bold">{{ format_price($transaction->seller_amount) }}</span>
                             </div>
                         </div>
                     </div>

@@ -75,7 +75,7 @@
                                         <p class="text-surface-600 dark:text-surface-400 line-clamp-2">{{ $request->description }}</p>
                                         <div class="flex flex-wrap items-center gap-4 mt-3 text-sm">
                                             <span class="text-surface-500 dark:text-surface-400">
-                                                Budget: <span class="font-medium text-surface-900 dark:text-white">${{ number_format($request->budget_min) }} - ${{ number_format($request->budget_max) }}</span>
+                                                Budget: <span class="font-medium text-surface-900 dark:text-white">{{ format_price($request->budget_min) }} - {{ format_price($request->budget_max) }}</span>
                                             </span>
                                             @if($request->service)
                                                 <span class="text-surface-500 dark:text-surface-400">
@@ -100,7 +100,7 @@
                                 @if($request->quote)
                                     <div class="text-right mt-2">
                                         <p class="text-sm text-surface-500 dark:text-surface-400">Your quote</p>
-                                        <p class="font-semibold text-surface-900 dark:text-white">${{ number_format($request->quote->price, 2) }}</p>
+                                        <p class="font-semibold text-surface-900 dark:text-white">{{ format_price($request->quote->price) }}</p>
                                     </div>
                                 @endif
                             </div>

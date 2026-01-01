@@ -124,21 +124,21 @@ class JobPosting extends Model
     {
         if ($this->budget_type === 'hourly') {
             if ($this->budget_min && $this->budget_max) {
-                return '$' . number_format($this->budget_min) . ' - $' . number_format($this->budget_max) . '/hr';
+                return format_price($this->budget_min) . ' - ' . format_price($this->budget_max) . '/hr';
             } elseif ($this->budget_min) {
-                return 'From $' . number_format($this->budget_min) . '/hr';
+                return 'From ' . format_price($this->budget_min) . '/hr';
             } elseif ($this->budget_max) {
-                return 'Up to $' . number_format($this->budget_max) . '/hr';
+                return 'Up to ' . format_price($this->budget_max) . '/hr';
             }
             return 'Hourly';
         }
 
         if ($this->budget_min && $this->budget_max) {
-            return '$' . number_format($this->budget_min) . ' - $' . number_format($this->budget_max);
+            return format_price($this->budget_min) . ' - ' . format_price($this->budget_max);
         } elseif ($this->budget_min) {
-            return 'From $' . number_format($this->budget_min);
+            return 'From ' . format_price($this->budget_min);
         } elseif ($this->budget_max) {
-            return 'Up to $' . number_format($this->budget_max);
+            return 'Up to ' . format_price($this->budget_max);
         }
         return 'Fixed Price';
     }

@@ -99,6 +99,21 @@ class Service extends Model
         return $this->hasMany(Review::class);
     }
 
+    public function subscriptionPlans(): HasMany
+    {
+        return $this->hasMany(SubscriptionPlan::class);
+    }
+
+    public function activeSubscriptionPlans(): HasMany
+    {
+        return $this->hasMany(SubscriptionPlan::class)->where('is_active', true)->orderBy('sort_order');
+    }
+
+    public function hasSubscriptionPlans(): bool
+    {
+        return $this->subscriptionPlans()->where('is_active', true)->exists();
+    }
+
     // Scopes
     public function scopePublished($query)
     {
@@ -128,6 +143,22 @@ class Service extends Model
     {
         $basicPackage = $this->packages()->where('tier', 'basic')->first();
         return $basicPackage?->price;
+    }
+
+    // Alias accessors for backward compatibility
+    public function getRatingCountAttribute(): int
+    {
+        return $this->reviews_count ?? 0;
+    }
+
+    public function getRatingAverageAttribute(): float
+    {
+        return (float) ($this->average_rating ?? 0);
+    }
+
+    public function getTitleAttribute(): string
+    {
+        return $this->name ?? '';
     }
 
     public function getRouteKeyName(): string

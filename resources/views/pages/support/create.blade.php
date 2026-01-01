@@ -13,12 +13,12 @@
             </div>
 
             <div class="rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 overflow-hidden">
-                <form action="{{ route('support.store') }}" method="POST" class="p-6 space-y-6">
+                <form action="{{ route('support.store') }}" method="POST" class="p-6 space-y-6" data-ajax-form>
                     @csrf
 
                     <div>
                         <label for="subject" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Subject</label>
-                        <input type="text" name="subject" id="subject" value="{{ old('subject') }}" required class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-primary-500" placeholder="Brief description of your issue">
+                        <input type="text" name="subject" id="subject" value="{{ old('subject') }}" class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-primary-500" placeholder="Brief description of your issue" data-validate="required|min:5">
                         @error('subject')
                             <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
                         @enderror
@@ -59,7 +59,7 @@
                                 <option value="">Select an order...</option>
                                 @foreach($orders as $order)
                                     <option value="{{ $order->id }}" {{ old('order_id') == $order->id ? 'selected' : '' }}>
-                                        {{ $order->order_number }} - ${{ number_format($order->total, 2) }} ({{ $order->created_at->format('M d, Y') }})
+                                        {{ $order->order_number }} - {{ format_price($order->total) }} ({{ $order->created_at->format('M d, Y') }})
                                     </option>
                                 @endforeach
                             </select>
@@ -68,7 +68,7 @@
 
                     <div>
                         <label for="description" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Description</label>
-                        <textarea name="description" id="description" rows="6" required class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-primary-500" placeholder="Please describe your issue in detail...">{{ old('description') }}</textarea>
+                        <textarea name="description" id="description" rows="6" class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-primary-500" placeholder="Please describe your issue in detail..." data-validate="required|min:20">{{ old('description') }}</textarea>
                         @error('description')
                             <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
                         @enderror

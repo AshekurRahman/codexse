@@ -52,10 +52,25 @@ class ChatbotFaqSeeder extends Seeder
             ],
             [
                 'question' => 'What payment methods do you accept?',
-                'answer' => '<p>We accept the following payment methods:</p><ul><li><strong>Credit/Debit Cards</strong> - Visa, Mastercard, American Express</li><li><strong>Digital Wallets</strong> - Apple Pay, Google Pay</li></ul><p>All payments are securely processed through Stripe.</p>',
-                'keywords' => 'payment, credit card, debit card, visa, mastercard, pay, payment methods',
+                'answer' => '<p>We accept the following payment methods:</p><ul><li><strong>Wallet Balance</strong> - Use your Codexse wallet for instant checkout</li><li><strong>Credit/Debit Cards</strong> - Visa, Mastercard, American Express</li><li><strong>Digital Wallets</strong> - Apple Pay, Google Pay</li></ul><p>All payments are securely processed through Stripe.</p>',
+                'keywords' => 'payment, credit card, debit card, visa, mastercard, pay, payment methods, wallet',
                 'category' => 'Payments',
                 'sort_order' => 6,
+            ],
+            [
+                'question' => 'What is the wallet and how do I use it?',
+                'answer' => '<p>Your Codexse wallet is a secure balance you can use for purchases:</p><ol><li>Go to <strong>Dashboard</strong> → <strong>Wallet</strong></li><li>Click <strong>Add Funds</strong> to deposit money</li><li>Use your balance at checkout for instant payment</li></ol><p>Benefits: Faster checkout, no need to enter card details each time, and you can receive refunds directly to your wallet.</p>',
+                'keywords' => 'wallet, balance, add funds, deposit, wallet balance, codexse wallet',
+                'category' => 'Payments',
+                'sort_order' => 7,
+                'is_suggested' => true,
+            ],
+            [
+                'question' => 'How do I add funds to my wallet?',
+                'answer' => '<p>To add funds to your wallet:</p><ol><li>Log in to your account</li><li>Go to <strong>Dashboard</strong> → <strong>Wallet</strong></li><li>Click <strong>Add Funds</strong></li><li>Enter the amount you want to deposit</li><li>Complete the payment with your card</li></ol><p>Funds are available immediately after payment.</p>',
+                'keywords' => 'add funds, deposit, wallet deposit, add money, top up',
+                'category' => 'Payments',
+                'sort_order' => 8,
             ],
 
             // Downloads & Licenses

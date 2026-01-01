@@ -36,7 +36,7 @@ class ServicePackage extends Model
 
     public function getFormattedPriceAttribute(): string
     {
-        return '$' . number_format($this->price, 2);
+        return format_price($this->price);
     }
 
     public function getDeliveryTextAttribute(): string

@@ -91,6 +91,27 @@ class JobContractController extends Controller
     }
 
     /**
+     * Show milestone submission form.
+     */
+    public function showSubmitForm(JobMilestone $milestone)
+    {
+        $contract = $milestone->contract;
+
+        if ($contract->seller_id !== auth()->user()->seller->id) {
+            abort(403);
+        }
+
+        if (!$milestone->canSubmit()) {
+            return redirect()->route('seller.contracts.show', $contract)
+                ->with('error', 'This milestone cannot be submitted.');
+        }
+
+        $milestone->load('contract.jobPosting');
+
+        return view('seller.contracts.milestone-submit', compact('milestone', 'contract'));
+    }
+
+    /**
      * Submit milestone for approval.
      */
     public function submitMilestone(Request $request, JobMilestone $milestone)

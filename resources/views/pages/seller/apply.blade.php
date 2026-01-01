@@ -15,7 +15,7 @@
 
             <!-- Application Form -->
             <div class="bg-white dark:bg-surface-800 rounded-2xl shadow-sm border border-surface-200 dark:border-surface-700 p-6 sm:p-8">
-                <form action="{{ route('seller.apply.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                <form action="{{ route('seller.apply.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6" data-ajax-form>
                     @csrf
 
                     <!-- Store Name -->
@@ -30,7 +30,7 @@
                             value="{{ old('store_name', $existingApplication?->store_name) }}"
                             placeholder="e.g., DesignStudio Pro"
                             class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white placeholder-surface-400 focus:border-primary-500 focus:ring-primary-500"
-                            required
+                            data-validate="required|min:2"
                         >
                         <p class="mt-1 text-sm text-surface-500 dark:text-surface-400">This will be your public store name on Codexse</p>
                         @error('store_name')
@@ -49,7 +49,7 @@
                             rows="4"
                             placeholder="Tell us about your store, what products you create, and your design philosophy..."
                             class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white placeholder-surface-400 focus:border-primary-500 focus:ring-primary-500"
-                            required
+                            data-validate="required|min:50"
                         >{{ old('description', $existingApplication?->description) }}</textarea>
                         <p class="mt-1 text-sm text-surface-500 dark:text-surface-400">Minimum 50 characters. This will appear on your store page.</p>
                         @error('description')

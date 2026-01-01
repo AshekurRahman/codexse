@@ -34,6 +34,7 @@ use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\LiveChatController;
 use App\Http\Controllers\Admin\LiveChatController as AdminLiveChatController;
+use App\Http\Controllers\SubscriptionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -43,6 +44,11 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+// Currency
+Route::post('/currency/switch', [App\Http\Controllers\CurrencyController::class, 'switch'])->name('currency.switch');
+Route::get('/currency/list', [App\Http\Controllers\CurrencyController::class, 'list'])->name('currency.list');
+Route::post('/currency/convert', [App\Http\Controllers\CurrencyController::class, 'convert'])->name('currency.convert');
 
 // SEO Routes
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
@@ -146,6 +152,13 @@ Route::post('/payoneer/webhook', [CheckoutController::class, 'payoneerWebhook'])
 // Escrow Webhook
 Route::post('/escrow/webhook', [EscrowController::class, 'webhook'])->name('escrow.webhook');
 
+// Subscription Webhook
+Route::post('/subscriptions/webhook', [SubscriptionController::class, 'handleWebhook'])->name('subscriptions.webhook');
+
+// Subscription Plans (public browsing)
+Route::get('/subscriptions', [SubscriptionController::class, 'index'])->name('subscriptions.index');
+Route::get('/subscriptions/plans/{plan:slug}', [SubscriptionController::class, 'show'])->name('subscriptions.show');
+
 // Social Login
 Route::get('/auth/{provider}/redirect', [SocialLoginController::class, 'redirect'])->name('social.redirect');
 Route::get('/auth/{provider}/callback', [SocialLoginController::class, 'callback'])->name('social.callback');
@@ -212,6 +225,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Referrals
     Route::get('/referrals', [ReferralController::class, 'index'])->name('referrals.index');
+    Route::post('/referrals/transfer-to-wallet', [ReferralController::class, 'transferToWallet'])->name('referrals.transfer-to-wallet');
 
     // Push Notifications
     Route::prefix('push')->name('push.')->group(function () {
@@ -233,9 +247,47 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Checkout
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
     Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
+    Route::post('/checkout/calculate-tax', [CheckoutController::class, 'calculateTax'])->name('checkout.calculate-tax');
     Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
     Route::get('/checkout/cancel', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
     Route::get('/checkout/payoneer/success/{order}', [CheckoutController::class, 'payoneerSuccess'])->name('checkout.payoneer.success');
+    Route::get('/checkout/paypal/success/{order}', [CheckoutController::class, 'paypalSuccess'])->name('checkout.paypal.success');
+
+    // Wallet
+    Route::prefix('wallet')->name('wallet.')->group(function () {
+        Route::get('/', [App\Http\Controllers\WalletController::class, 'index'])->name('index');
+        Route::get('/deposit', [App\Http\Controllers\WalletController::class, 'showDeposit'])->name('deposit');
+        Route::post('/deposit', [App\Http\Controllers\WalletController::class, 'deposit'])->name('deposit.process');
+        Route::get('/deposit/success', [App\Http\Controllers\WalletController::class, 'depositSuccess'])->name('deposit.success');
+        Route::get('/deposit/cancel', [App\Http\Controllers\WalletController::class, 'depositCancel'])->name('deposit.cancel');
+        Route::get('/transactions', [App\Http\Controllers\WalletController::class, 'transactions'])->name('transactions');
+        Route::get('/transactions/{transaction}', [App\Http\Controllers\WalletController::class, 'showTransaction'])->name('transactions.show');
+        Route::get('/balance', [App\Http\Controllers\WalletController::class, 'balance'])->name('balance');
+    });
+
+    // GDPR / Privacy Center
+    Route::prefix('privacy-center')->name('gdpr.')->group(function () {
+        Route::get('/', [App\Http\Controllers\GdprController::class, 'index'])->name('index');
+        Route::get('/export', [App\Http\Controllers\GdprController::class, 'exportForm'])->name('export');
+        Route::post('/export', [App\Http\Controllers\GdprController::class, 'submitExport'])->name('export.submit');
+        Route::get('/delete', [App\Http\Controllers\GdprController::class, 'deleteForm'])->name('delete');
+        Route::post('/delete', [App\Http\Controllers\GdprController::class, 'submitDelete'])->name('delete.submit');
+        Route::get('/requests', [App\Http\Controllers\GdprController::class, 'requests'])->name('requests');
+        Route::get('/requests/{request}', [App\Http\Controllers\GdprController::class, 'showRequest'])->name('request.show');
+        Route::delete('/requests/{request}', [App\Http\Controllers\GdprController::class, 'cancelRequest'])->name('request.cancel');
+        Route::get('/download/{request}', [App\Http\Controllers\GdprController::class, 'download'])->name('download');
+        Route::get('/consent', [App\Http\Controllers\GdprController::class, 'consentPreferences'])->name('consent');
+        Route::put('/consent', [App\Http\Controllers\GdprController::class, 'updateConsent'])->name('consent.update');
+        Route::get('/activity', [App\Http\Controllers\GdprController::class, 'activityLog'])->name('activity');
+    });
+
+    // Activity & Sessions
+    Route::prefix('activity')->name('activity.')->group(function () {
+        Route::get('/', [App\Http\Controllers\ActivityController::class, 'index'])->name('index');
+        Route::delete('/sessions/{session}', [App\Http\Controllers\ActivityController::class, 'revokeSession'])->name('revoke');
+        Route::delete('/sessions', [App\Http\Controllers\ActivityController::class, 'revokeAllSessions'])->name('revoke-all');
+        Route::get('/filter', [App\Http\Controllers\ActivityController::class, 'filter'])->name('filter');
+    });
 
     // Seller Application
     Route::get('/seller/apply', [SellerApplicationController::class, 'create'])->name('seller.apply');
@@ -266,6 +318,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/affiliate/apply', [AffiliateController::class, 'store'])->name('affiliate.apply.store');
     Route::get('/affiliate/settings', [AffiliateController::class, 'settings'])->name('affiliate.settings');
     Route::put('/affiliate/settings', [AffiliateController::class, 'updateSettings'])->name('affiliate.settings.update');
+    Route::post('/affiliate/transfer-to-wallet', [AffiliateController::class, 'transferToWallet'])->name('affiliate.transfer-to-wallet');
 
     // Product Requests (user's requests)
     Route::get('/my-requests', [ProductRequestController::class, 'index'])->name('product-request.index');
@@ -309,6 +362,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/milestones/{milestone}/revision', [JobContractController::class, 'requestMilestoneRevision'])->name('milestones.revision');
     Route::post('/contracts/{contract}/cancel', [JobContractController::class, 'cancel'])->name('contracts.cancel');
 
+    // Disputes
+    Route::get('/disputes', [App\Http\Controllers\DisputeController::class, 'index'])->name('disputes.index');
+    Route::get('/disputes/contract/{contract}', [App\Http\Controllers\DisputeController::class, 'createForContract'])->name('disputes.create');
+    Route::get('/disputes/service-order/{serviceOrder}', [App\Http\Controllers\DisputeController::class, 'createForServiceOrder'])->name('disputes.create.service-order');
+    Route::post('/disputes', [App\Http\Controllers\DisputeController::class, 'store'])->name('disputes.store');
+    Route::get('/disputes/{dispute}', [App\Http\Controllers\DisputeController::class, 'show'])->name('disputes.show');
+    Route::post('/disputes/{dispute}/evidence', [App\Http\Controllers\DisputeController::class, 'addEvidence'])->name('disputes.add-evidence');
+    Route::post('/disputes/{dispute}/cancel', [App\Http\Controllers\DisputeController::class, 'cancel'])->name('disputes.cancel');
+
     // Escrow Payments
     Route::get('/escrow/service-order/{serviceOrder}', [EscrowController::class, 'checkoutServiceOrder'])->name('escrow.checkout.service-order');
     Route::get('/escrow/milestone/{milestone}', [EscrowController::class, 'checkoutMilestone'])->name('escrow.checkout.milestone');
@@ -318,6 +380,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/escrow/{transaction}', [EscrowController::class, 'show'])->name('escrow.show');
     Route::post('/escrow/{transaction}/release', [EscrowController::class, 'release'])->name('escrow.release');
     Route::post('/escrow/{transaction}/refund', [EscrowController::class, 'requestRefund'])->name('escrow.refund');
+
+    // Subscriptions
+    Route::prefix('subscriptions')->name('subscriptions.')->group(function () {
+        Route::get('/manage', [SubscriptionController::class, 'manage'])->name('manage');
+        Route::get('/checkout/{plan}', [SubscriptionController::class, 'checkout'])->name('checkout');
+        Route::post('/checkout/{plan}/session', [SubscriptionController::class, 'createCheckoutSession'])->name('create-checkout-session');
+        Route::get('/success', [SubscriptionController::class, 'success'])->name('success');
+        Route::get('/billing-portal', [SubscriptionController::class, 'billingPortal'])->name('billing-portal');
+        Route::get('/{subscription}', [SubscriptionController::class, 'showSubscription'])->name('subscription');
+        Route::get('/{subscription}/invoices', [SubscriptionController::class, 'invoices'])->name('invoices');
+        Route::post('/{subscription}/cancel', [SubscriptionController::class, 'cancel'])->name('cancel');
+        Route::post('/{subscription}/resume', [SubscriptionController::class, 'resume'])->name('resume');
+        Route::post('/{subscription}/pause', [SubscriptionController::class, 'pause'])->name('pause');
+    });
 });
 
 /*
@@ -350,6 +426,7 @@ Route::middleware(['auth', 'verified', 'seller'])->prefix('seller')->name('selle
     Route::post('/service-orders/{serviceOrder}/deliver', [App\Http\Controllers\Seller\ServiceOrderController::class, 'deliver'])->name('service-orders.deliver');
     Route::post('/service-orders/{serviceOrder}/cancel-request', [App\Http\Controllers\Seller\ServiceOrderController::class, 'requestCancellation'])->name('service-orders.cancel-request');
     Route::post('/service-orders/{serviceOrder}/extend', [App\Http\Controllers\Seller\ServiceOrderController::class, 'extendDelivery'])->name('service-orders.extend');
+    Route::post('/service-orders/{serviceOrder}/reject', [App\Http\Controllers\Seller\ServiceOrderController::class, 'reject'])->name('service-orders.reject');
 
     // Custom Quote Requests
     Route::get('/quote-requests', [App\Http\Controllers\Seller\CustomQuoteController::class, 'index'])->name('quotes.index');
@@ -374,6 +451,7 @@ Route::middleware(['auth', 'verified', 'seller'])->prefix('seller')->name('selle
     Route::get('/contracts', [App\Http\Controllers\Seller\JobContractController::class, 'index'])->name('contracts.index');
     Route::get('/contracts/{contract}', [App\Http\Controllers\Seller\JobContractController::class, 'show'])->name('contracts.show');
     Route::post('/milestones/{milestone}/start', [App\Http\Controllers\Seller\JobContractController::class, 'startMilestone'])->name('milestones.start');
+    Route::get('/milestones/{milestone}/submit', [App\Http\Controllers\Seller\JobContractController::class, 'showSubmitForm'])->name('milestones.submit-form');
     Route::post('/milestones/{milestone}/submit', [App\Http\Controllers\Seller\JobContractController::class, 'submitMilestone'])->name('milestones.submit');
     Route::post('/contracts/{contract}/extension', [App\Http\Controllers\Seller\JobContractController::class, 'requestExtension'])->name('contracts.extension');
 

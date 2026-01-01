@@ -66,7 +66,7 @@
                                             <p class="text-sm text-surface-500 dark:text-surface-400 mt-1">
                                                 Level {{ $proposal->seller->level ?? 1 }} Seller
                                                 @if($proposal->seller->total_sales > 0)
-                                                    &middot; ${{ number_format($proposal->seller->total_sales) }} earned
+                                                    &middot; {{ format_price($proposal->seller->total_sales) }} earned
                                                 @endif
                                             </p>
                                         </div>
@@ -74,7 +74,7 @@
 
                                     <!-- Bid Amount -->
                                     <div class="text-right">
-                                        <p class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($proposal->bid_amount, 2) }}</p>
+                                        <p class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($proposal->bid_amount) }}</p>
                                         <p class="text-sm text-surface-500 dark:text-surface-400">
                                             {{ $proposal->estimated_duration }} day{{ $proposal->estimated_duration != 1 ? 's' : '' }} delivery
                                         </p>
@@ -100,7 +100,7 @@
                                                             <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5">{{ $milestone['description'] }}</p>
                                                         @endif
                                                     </div>
-                                                    <span class="text-sm font-semibold text-surface-900 dark:text-white">${{ number_format($milestone['amount'] ?? 0, 2) }}</span>
+                                                    <span class="text-sm font-semibold text-surface-900 dark:text-white">{{ format_price($milestone['amount'] ?? 0) }}</span>
                                                 </div>
                                             @endforeach
                                         </div>

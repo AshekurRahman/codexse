@@ -39,7 +39,7 @@
                                         </p>
                                     </template>
                                     <div class="mt-3 flex items-center justify-between">
-                                        <span class="text-lg font-bold text-surface-900 dark:text-white" x-text="'$' + item.price.toFixed(2)"></span>
+                                        <span class="text-lg font-bold text-surface-900 dark:text-white" x-text="formatPrice(item.price)"></span>
                                         <button
                                             @click="removeItem(item.cart_key)"
                                             :disabled="item.removing"
@@ -113,16 +113,16 @@
                             <div class="space-y-4">
                                 <div class="flex items-center justify-between text-sm">
                                     <span class="text-surface-600 dark:text-surface-400">Subtotal (<span x-text="cartItems.length"></span> items)</span>
-                                    <span class="font-medium text-surface-900 dark:text-white" x-text="'$' + subtotal.toFixed(2)"></span>
+                                    <span class="font-medium text-surface-900 dark:text-white" x-text="formatPrice(subtotal)"></span>
                                 </div>
                                 <div class="flex items-center justify-between text-sm">
                                     <span class="text-surface-600 dark:text-surface-400">Discount</span>
-                                    <span class="font-medium text-green-500" x-text="'-$' + discount.toFixed(2)"></span>
+                                    <span class="font-medium text-green-500" x-text="'-' + formatPrice(discount)"></span>
                                 </div>
                                 <hr class="border-surface-200 dark:border-surface-700">
                                 <div class="flex items-center justify-between">
                                     <span class="font-semibold text-surface-900 dark:text-white">Total</span>
-                                    <span class="text-2xl font-bold text-surface-900 dark:text-white" x-text="'$' + total.toFixed(2)"></span>
+                                    <span class="text-2xl font-bold text-surface-900 dark:text-white" x-text="formatPrice(total)"></span>
                                 </div>
                             </div>
 
@@ -188,7 +188,7 @@
                 'id' => $product->id,
                 'name' => $product->name,
                 'seller' => $product->seller->store_name ?? 'Unknown Seller',
-                'price' => (float) $item['price'],
+                'price' => (float) convert_price($item['price']),
                 'thumbnail' => $product->thumbnail ? asset('storage/' . $product->thumbnail) : null,
                 'variation_id' => $item['variation_id'],
                 'variation_name' => $item['variation_name'],
@@ -198,22 +198,33 @@
         })->values()->toArray();
 
         $couponData = session('coupon') ? ['code' => session('coupon.code')] : null;
+        $currencySymbol = current_currency_symbol();
+        $currencyPosition = current_currency()->symbol_position;
     @endphp
 
     @push('scripts')
     <script>
         function cartPage() {
             const baseUrl = '{{ url('/') }}';
+            const currencySymbol = '{{ $currencySymbol }}';
+            const currencyPosition = '{{ $currencyPosition }}';
+
+            function formatPrice(amount) {
+                const formatted = parseFloat(amount).toFixed(2);
+                return currencyPosition === 'after' ? formatted + ' ' + currencySymbol : currencySymbol + formatted;
+            }
+
             return {
                 cartItems: @json($cartItemsData),
-                subtotal: {{ $total }},
-                discount: {{ session('coupon.discount', 0) }},
+                subtotal: {{ convert_price($total) }},
+                discount: {{ convert_price(session('coupon.discount', 0)) }},
                 coupon: @json($couponData),
                 couponCode: '',
                 couponLoading: false,
                 couponError: '',
                 couponSuccess: '',
                 baseUrl: baseUrl,
+                formatPrice: formatPrice,
 
                 get total() {
                     return Math.max(0, this.subtotal - this.discount);

@@ -494,14 +494,14 @@
                             <div class="mb-6">
                                 @if($product->sale_price)
                                     <div class="flex items-baseline gap-3">
-                                        <span class="text-3xl font-bold text-surface-900 dark:text-white">${{ number_format($product->sale_price, 2) }}</span>
-                                        <span class="text-lg text-surface-400 line-through">${{ number_format($product->price, 2) }}</span>
+                                        <span class="text-3xl font-bold text-surface-900 dark:text-white">{{ format_price($product->sale_price) }}</span>
+                                        <span class="text-lg text-surface-400 line-through">{{ format_price($product->price) }}</span>
                                         <span class="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
                                             {{ round((($product->price - $product->sale_price) / $product->price) * 100) }}% OFF
                                         </span>
                                     </div>
                                 @else
-                                    <span class="text-3xl font-bold text-surface-900 dark:text-white">${{ number_format($product->price, 2) }}</span>
+                                    <span class="text-3xl font-bold text-surface-900 dark:text-white">{{ format_price($product->price) }}</span>
                                 @endif
                             </div>
 
@@ -629,6 +629,45 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                         </svg>
                                         Preview
+                                    </a>
+                                @endif
+                            </div>
+                        @endif
+
+                        <!-- Subscription Plans -->
+                        @if($product->hasSubscriptionPlans())
+                            <div class="mt-6 pt-6 border-t border-surface-200 dark:border-surface-700">
+                                <div class="flex items-center gap-2 mb-4">
+                                    <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                    </svg>
+                                    <h3 class="font-semibold text-surface-900 dark:text-white">Subscription Available</h3>
+                                </div>
+                                <p class="text-sm text-surface-600 dark:text-surface-400 mb-4">Get ongoing access with a subscription plan</p>
+                                <div class="space-y-3">
+                                    @foreach($product->activeSubscriptionPlans->take(2) as $plan)
+                                        <a href="{{ route('subscriptions.show', $plan) }}" class="block p-3 rounded-xl border border-surface-200 dark:border-surface-700 hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all">
+                                            <div class="flex items-center justify-between">
+                                                <div>
+                                                    <span class="font-medium text-surface-900 dark:text-white">{{ $plan->name }}</span>
+                                                    @if($plan->trial_days > 0)
+                                                        <span class="ml-2 text-xs text-success-600 dark:text-success-400">{{ $plan->trial_days }}-day trial</span>
+                                                    @endif
+                                                </div>
+                                                <div class="text-right">
+                                                    <span class="font-bold text-surface-900 dark:text-white">{{ $plan->formatted_price }}</span>
+                                                    <span class="text-xs text-surface-500">/{{ strtolower($plan->billing_period_label) }}</span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    @endforeach
+                                </div>
+                                @if($product->activeSubscriptionPlans->count() > 2)
+                                    <a href="{{ route('subscriptions.index', ['product_id' => $product->id]) }}" class="inline-flex items-center gap-1 mt-3 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
+                                        View all plans
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
                                     </a>
                                 @endif
                             </div>

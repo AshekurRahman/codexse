@@ -12,31 +12,39 @@ class PayoutController extends Controller
     {
         $seller = auth()->user()->seller;
         $payouts = $seller->payouts()->latest()->paginate(20);
+        $wallet = auth()->user()->getOrCreateWallet();
 
-        return view('seller.payouts.index', compact('seller', 'payouts'));
+        return view('seller.payouts.index', compact('seller', 'payouts', 'wallet'));
     }
 
     public function request(Request $request)
     {
         $seller = auth()->user()->seller;
+        $wallet = auth()->user()->getOrCreateWallet();
 
-        if ($seller->available_balance < 50) {
-            return redirect()->back()->with('error', 'Minimum payout amount is $50.');
+        if ($wallet->balance < 50) {
+            return redirect()->back()->with('error', 'Minimum payout amount is $50. Your wallet balance is ' . $wallet->formatted_balance);
         }
 
         if (!$seller->stripe_account_id) {
             return redirect()->back()->with('error', 'Please connect your Stripe account first.');
         }
 
+        $payoutAmount = $wallet->balance;
+
+        // Withdraw from wallet
+        $wallet->withdraw(
+            amount: $payoutAmount,
+            description: 'Payout request to Stripe',
+            paymentMethod: 'stripe_payout'
+        );
+
         $payout = Payout::create([
             'seller_id' => $seller->id,
-            'amount' => $seller->available_balance,
+            'amount' => $payoutAmount,
             'status' => 'pending',
         ]);
 
-        // Reset seller balance (in production, this would be done after actual payout)
-        $seller->update(['available_balance' => 0]);
-
-        return redirect()->back()->with('success', 'Payout request submitted successfully.');
+        return redirect()->back()->with('success', 'Payout request of $' . number_format($payoutAmount, 2) . ' submitted successfully.');
     }
 }

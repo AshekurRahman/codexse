@@ -136,7 +136,7 @@
                                             @foreach($service->packages as $package)
                                                 <th class="text-center py-3 px-4 min-w-[180px]">
                                                     <span class="text-sm uppercase text-primary-600 dark:text-primary-400 font-semibold">{{ $package->tier }}</span>
-                                                    <p class="text-lg font-bold text-surface-900 dark:text-white">${{ number_format($package->price, 2) }}</p>
+                                                    <p class="text-lg font-bold text-surface-900 dark:text-white">{{ format_price($package->price) }}</p>
                                                 </th>
                                             @endforeach
                                         </tr>
@@ -212,7 +212,7 @@
                                     <div x-show="activeTab === {{ $index }}" class="p-6" x-cloak>
                                         <div class="flex items-center justify-between mb-4">
                                             <h3 class="text-lg font-bold text-surface-900 dark:text-white">{{ $package->name }}</h3>
-                                            <span class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($package->price, 2) }}</span>
+                                            <span class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($package->price) }}</span>
                                         </div>
 
                                         <p class="text-sm text-surface-600 dark:text-surface-400 mb-4">{{ $package->description }}</p>
@@ -247,7 +247,7 @@
 
                                         <a href="{{ route('services.order', [$service, $package]) }}"
                                             class="w-full inline-flex items-center justify-center rounded-xl bg-primary-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-primary-500/30 hover:bg-primary-700 transition-all">
-                                            Continue (${{ number_format($package->price, 2) }})
+                                            Continue ({{ format_price($package->price) }})
                                         </a>
                                     </div>
                                 @endforeach
@@ -273,6 +273,41 @@
                                 Request Custom Quote
                             </a>
                         </div>
+
+                        <!-- Subscription Plans -->
+                        @if($service->hasSubscriptionPlans())
+                            <div class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-6">
+                                <div class="flex items-center gap-3 mb-3">
+                                    <div class="w-10 h-10 rounded-lg bg-warning-100 dark:bg-warning-900/30 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-warning-600 dark:text-warning-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                        </svg>
+                                    </div>
+                                    <h3 class="font-semibold text-surface-900 dark:text-white">Subscription Plans</h3>
+                                </div>
+                                <p class="text-sm text-surface-600 dark:text-surface-400 mb-4">Get ongoing access with a subscription plan for recurring service benefits.</p>
+                                <div class="space-y-3">
+                                    @foreach($service->activeSubscriptionPlans->take(2) as $plan)
+                                        <a href="{{ route('subscriptions.show', $plan) }}" class="block p-3 rounded-xl border border-surface-200 dark:border-surface-700 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-surface-50 dark:hover:bg-surface-700/50 transition-all group">
+                                            <div class="flex items-center justify-between mb-1">
+                                                <span class="font-medium text-surface-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400">{{ $plan->name }}</span>
+                                                <span class="text-sm font-semibold text-primary-600 dark:text-primary-400">
+                                                    {{ format_price($plan->price) }}/{{ $plan->billing_interval }}
+                                                </span>
+                                            </div>
+                                            @if($plan->description)
+                                                <p class="text-xs text-surface-500 dark:text-surface-400 line-clamp-2">{{ Str::limit($plan->description, 60) }}</p>
+                                            @endif
+                                        </a>
+                                    @endforeach
+                                </div>
+                                @if($service->activeSubscriptionPlans->count() > 2)
+                                    <a href="{{ route('subscriptions.index', ['service' => $service->id]) }}" class="block mt-3 text-center text-sm text-primary-600 dark:text-primary-400 hover:underline">
+                                        View all {{ $service->activeSubscriptionPlans->count() }} plans
+                                    </a>
+                                @endif
+                            </div>
+                        @endif
 
                         <!-- Seller Card -->
                         <div class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-6">

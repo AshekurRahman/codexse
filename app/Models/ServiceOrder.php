@@ -179,7 +179,7 @@ class ServiceOrder extends Model
     // Accessors
     public function getFormattedPriceAttribute(): string
     {
-        return '$' . number_format($this->price, 2);
+        return format_price($this->price);
     }
 
     public function getStatusLabelAttribute(): string

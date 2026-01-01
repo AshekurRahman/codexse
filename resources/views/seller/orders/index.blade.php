@@ -90,10 +90,10 @@
                                             {{ $orderItem->created_at->format('M d, Y') }}
                                         </td>
                                         <td class="px-6 py-4 text-sm font-medium text-surface-900 dark:text-white">
-                                            ${{ number_format($orderItem->price, 2) }}
+                                            {{ format_price($orderItem->price) }}
                                         </td>
                                         <td class="px-6 py-4">
-                                            <span class="text-sm font-semibold text-success-600 dark:text-success-400">${{ number_format($orderItem->seller_amount, 2) }}</span>
+                                            <span class="text-sm font-semibold text-success-600 dark:text-success-400">{{ format_price($orderItem->seller_amount) }}</span>
                                         </td>
                                         <td class="px-6 py-4">
                                             <a href="{{ route('seller.invoice.download', $orderItem->order) }}" class="inline-flex items-center gap-1 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium">

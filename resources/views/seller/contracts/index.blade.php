@@ -31,7 +31,7 @@
                 </div>
                 <div class="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-4">
                     <p class="text-sm text-surface-500 dark:text-surface-400">Total Earnings</p>
-                    <p class="text-2xl font-bold text-surface-900 dark:text-white mt-1">${{ number_format($totalEarnings ?? 0, 2) }}</p>
+                    <p class="text-2xl font-bold text-surface-900 dark:text-white mt-1">{{ format_price($totalEarnings ?? 0) }}</p>
                 </div>
             </div>
 
@@ -89,7 +89,7 @@
 
                                 <div class="flex flex-wrap items-center gap-4 text-sm">
                                     <span class="text-surface-600 dark:text-surface-400">
-                                        Total Value: <span class="font-semibold text-surface-900 dark:text-white">${{ number_format($contract->total_amount, 2) }}</span>
+                                        Total Value: <span class="font-semibold text-surface-900 dark:text-white">{{ format_price($contract->total_amount) }}</span>
                                     </span>
                                     <span class="text-surface-600 dark:text-surface-400">
                                         Type: <span class="font-semibold text-surface-900 dark:text-white">{{ ucfirst($contract->payment_type) }}</span>

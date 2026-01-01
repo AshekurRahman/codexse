@@ -80,4 +80,34 @@ class AffiliateController extends Controller
 
         return back()->with('success', 'Settings updated successfully.');
     }
+
+    public function transferToWallet(Request $request)
+    {
+        $affiliate = auth()->user()->affiliate;
+
+        if (!$affiliate) {
+            return redirect()->route('affiliate.apply');
+        }
+
+        $minWithdrawal = 25.00; // Minimum withdrawal for affiliates
+
+        if ($affiliate->pending_earnings < $minWithdrawal) {
+            return redirect()->back()->with('error', 'Minimum transfer amount is $' . number_format($minWithdrawal, 2));
+        }
+
+        $amount = $affiliate->pending_earnings;
+        $wallet = auth()->user()->getOrCreateWallet();
+
+        // Transfer to wallet
+        $wallet->deposit(
+            amount: $amount,
+            description: 'Affiliate earnings transfer',
+            paymentMethod: 'affiliate'
+        );
+
+        // Mark as paid
+        $affiliate->markAsPaid($amount);
+
+        return redirect()->back()->with('success', 'Successfully transferred $' . number_format($amount, 2) . ' to your wallet!');
+    }
 }

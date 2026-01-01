@@ -77,7 +77,7 @@
                             <p class="text-sm text-surface-500 dark:text-surface-400">Completed</p>
                         </div>
                         <div class="rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-4">
-                            <p class="text-2xl font-bold text-primary-600">${{ number_format($stats['total_value'] ?? 0, 0) }}</p>
+                            <p class="text-2xl font-bold text-primary-600">{{ format_price($stats['total_value'] ?? 0) }}</p>
                             <p class="text-sm text-surface-500 dark:text-surface-400">Total Value</p>
                         </div>
                     </div>
@@ -137,7 +137,7 @@
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                                         </svg>
-                                                        ${{ number_format($contract->total_amount, 2) }}
+                                                        {{ format_price($contract->total_amount) }}
                                                     </span>
                                                     <span class="flex items-center gap-1">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -127,6 +127,15 @@
                             </svg>
                             Licenses
                         </a>
+                        <a href="{{ route('wallet.index') }}" class="flex items-center gap-3 px-4 py-3 text-surface-600 dark:text-surface-400 hover:bg-surface-50 dark:hover:bg-surface-700 border-l-4 border-transparent transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                            </svg>
+                            Wallet
+                            @if(isset($wallet) && $wallet->balance > 0)
+                                <span class="ml-auto text-xs font-medium text-success-600 dark:text-success-400">{{ format_price($wallet->balance) }}</span>
+                            @endif
+                        </a>
 
                         <div class="px-4 py-3 bg-surface-50 dark:bg-surface-700/50 border-y border-surface-200 dark:border-surface-700">
                             <p class="text-xs font-semibold text-surface-400 uppercase tracking-wider">More</p>
@@ -219,7 +228,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                             </div>
-                            <p class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($stats['total_sales'] ?? 0, 0) }}</p>
+                            <p class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($stats['total_sales'] ?? 0) }}</p>
                             <p class="text-xs text-surface-500 dark:text-surface-400">Total Sales</p>
                         </div>
                         <div class="rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-4">
@@ -237,7 +246,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
                             </div>
-                            <p class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($stats['pending_payouts'] ?? 0, 0) }}</p>
+                            <p class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($stats['pending_payouts'] ?? 0) }}</p>
                             <p class="text-xs text-surface-500 dark:text-surface-400">Balance</p>
                         </div>
                         <div class="rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-4">
@@ -278,7 +287,7 @@
                                                     <p class="text-xs text-surface-500 dark:text-surface-400">{{ $orderItem->created_at->diffForHumans() }}</p>
                                                 </div>
                                             </div>
-                                            <p class="font-semibold text-surface-900 dark:text-white text-sm">${{ number_format($orderItem->seller_amount ?? 0, 2) }}</p>
+                                            <p class="font-semibold text-surface-900 dark:text-white text-sm">{{ format_price($orderItem->seller_amount ?? 0) }}</p>
                                         </div>
                                     @endforeach
                                 </div>
@@ -305,7 +314,7 @@
                                                     <p class="text-xs text-surface-500 dark:text-surface-400">{{ $order->created_at->diffForHumans() }}</p>
                                                 </div>
                                                 <div class="text-right ml-4">
-                                                    <p class="font-semibold text-surface-900 dark:text-white text-sm">${{ number_format($order->price, 2) }}</p>
+                                                    <p class="font-semibold text-surface-900 dark:text-white text-sm">{{ format_price($order->price) }}</p>
                                                     <x-status-badge :status="$order->status" size="sm" />
                                                 </div>
                                             </div>
@@ -335,7 +344,7 @@
                                                     <p class="text-xs text-surface-500 dark:text-surface-400">{{ $contract->client->name ?? 'Client' }}</p>
                                                 </div>
                                                 <div class="text-right ml-4">
-                                                    <p class="font-semibold text-surface-900 dark:text-white text-sm">${{ number_format($contract->total_amount, 2) }}</p>
+                                                    <p class="font-semibold text-surface-900 dark:text-white text-sm">{{ format_price($contract->total_amount) }}</p>
                                                     <x-status-badge :status="$contract->status" size="sm" />
                                                 </div>
                                             </div>

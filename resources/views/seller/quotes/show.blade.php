@@ -59,7 +59,7 @@
                             <div class="grid grid-cols-3 gap-4 mb-4">
                                 <div class="text-center p-4 bg-surface-50 dark:bg-surface-900/50 rounded-lg">
                                     <p class="text-sm text-surface-500 dark:text-surface-400">Price</p>
-                                    <p class="text-xl font-bold text-surface-900 dark:text-white">${{ number_format($quoteRequest->quote->price, 2) }}</p>
+                                    <p class="text-xl font-bold text-surface-900 dark:text-white">{{ format_price($quoteRequest->quote->price) }}</p>
                                 </div>
                                 <div class="text-center p-4 bg-surface-50 dark:bg-surface-900/50 rounded-lg">
                                     <p class="text-sm text-surface-500 dark:text-surface-400">Delivery</p>
@@ -92,7 +92,7 @@
                         <div class="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
                             <h2 class="text-lg font-semibold text-surface-900 dark:text-white mb-4">Send Your Quote</h2>
 
-                            <form action="{{ route('seller.quotes.submit', $quoteRequest) }}" method="POST" class="space-y-6">
+                            <form action="{{ route('seller.quotes.store-quote', $quoteRequest) }}" method="POST" class="space-y-6">
                                 @csrf
 
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -173,7 +173,7 @@
                     <!-- Budget Range -->
                     <div class="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-6">
                         <h3 class="font-semibold text-surface-900 dark:text-white mb-4">Budget Range</h3>
-                        <p class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($quoteRequest->budget_min) }} - ${{ number_format($quoteRequest->budget_max) }}</p>
+                        <p class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($quoteRequest->budget_min) }} - {{ format_price($quoteRequest->budget_max) }}</p>
                     </div>
 
                     <!-- Related Service -->
@@ -186,7 +186,7 @@
                                 @endif
                                 <div class="flex-1 min-w-0">
                                     <p class="font-medium text-surface-900 dark:text-white truncate">{{ $quoteRequest->service->name }}</p>
-                                    <p class="text-sm text-surface-500 dark:text-surface-400">Starting at ${{ number_format($quoteRequest->service->packages->min('price') ?? 0, 2) }}</p>
+                                    <p class="text-sm text-surface-500 dark:text-surface-400">Starting at {{ format_price($quoteRequest->service->packages->min('price') ?? 0) }}</p>
                                 </div>
                             </div>
                         </div>

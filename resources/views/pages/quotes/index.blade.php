@@ -56,7 +56,7 @@
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                                     </svg>
-                                                    Budget: ${{ number_format($request->budget_min ?? 0) }} - ${{ number_format($request->budget_max ?? 0) }}
+                                                    Budget: {{ format_price($request->budget_min ?? 0) }} - {{ format_price($request->budget_max ?? 0) }}
                                                 </span>
                                             @endif
                                             <span class="flex items-center gap-1">
@@ -72,7 +72,7 @@
                                             <div class="mt-4 p-3 rounded-lg bg-surface-50 dark:bg-surface-700/50 border border-surface-200 dark:border-surface-600">
                                                 <div class="flex items-center justify-between">
                                                     <span class="text-sm font-medium text-surface-900 dark:text-white">
-                                                        Quoted: ${{ number_format($request->quote->price, 2) }}
+                                                        Quoted: {{ format_price($request->quote->price) }}
                                                     </span>
                                                     <span class="text-sm text-surface-500 dark:text-surface-400">
                                                         {{ $request->quote->delivery_days }} day{{ $request->quote->delivery_days != 1 ? 's' : '' }} delivery

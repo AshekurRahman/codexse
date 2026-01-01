@@ -27,7 +27,7 @@
                             </a>
                         @endif
                         @if($order->status === 'pending')
-                            <form action="{{ route('seller.service-orders.accept', $order) }}" method="POST" class="inline">
+                            <form action="{{ route('seller.service-orders.start', $order) }}" method="POST" class="inline">
                                 @csrf
                                 <button type="submit" class="inline-flex items-center gap-2 bg-success-600 hover:bg-success-700 text-white font-medium px-4 py-2 rounded-lg transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,15 +209,15 @@
                         <div class="space-y-3">
                             <div class="flex justify-between">
                                 <span class="text-surface-600 dark:text-surface-400">Package Price</span>
-                                <span class="text-surface-900 dark:text-white">${{ number_format($order->price, 2) }}</span>
+                                <span class="text-surface-900 dark:text-white">{{ format_price($order->price) }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-surface-600 dark:text-surface-400">Platform Fee</span>
-                                <span class="text-surface-900 dark:text-white">-${{ number_format($order->platform_fee ?? $order->price * 0.1, 2) }}</span>
+                                <span class="text-surface-900 dark:text-white">-{{ format_price($order->platform_fee ?? $order->price * 0.1) }}</span>
                             </div>
                             <div class="pt-3 border-t border-surface-200 dark:border-surface-700 flex justify-between">
                                 <span class="font-semibold text-surface-900 dark:text-white">Your Earnings</span>
-                                <span class="font-semibold text-success-600 dark:text-success-400">${{ number_format($order->price - ($order->platform_fee ?? $order->price * 0.1), 2) }}</span>
+                                <span class="font-semibold text-success-600 dark:text-success-400">{{ format_price($order->price - ($order->platform_fee ?? $order->price * 0.1)) }}</span>
                             </div>
                         </div>
                     </div>
@@ -278,7 +278,7 @@
                                 </svg>
                                 <div>
                                     <p class="font-medium text-success-700 dark:text-success-300">Funds in Escrow</p>
-                                    <p class="text-sm text-success-600 dark:text-success-400">${{ number_format($order->escrowTransaction->amount, 2) }}</p>
+                                    <p class="text-sm text-success-600 dark:text-success-400">{{ format_price($order->escrowTransaction->amount) }}</p>
                                 </div>
                             </div>
                         </div>

@@ -14,12 +14,17 @@ class DashboardController extends Controller
     {
         $seller = auth()->user()->seller;
 
+        $wallet = auth()->user()->getOrCreateWallet();
+
         $stats = [
             'total_products' => $seller->products()->count(),
+            'total_services' => $seller->services()->count(),
             'total_sales' => $seller->orderItems()->sum('price'),
             'total_orders' => $seller->orderItems()->count(),
             'active_licenses' => \App\Models\License::whereIn('product_id', $seller->products()->pluck('id'))->where('status', 'active')->count(),
-            'pending_payouts' => $seller->balance,
+            'active_contracts' => $seller->jobContracts()->where('status', 'active')->count(),
+            'pending_payouts' => $wallet->balance,
+            'average_rating' => $seller->rating ?? 0,
         ];
 
         $recentOrders = $seller->orderItems()
@@ -53,13 +58,21 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+        // Recent wallet transactions
+        $recentWalletTransactions = $wallet->transactions()
+            ->latest()
+            ->take(5)
+            ->get();
+
         return view('seller.dashboard', compact(
             'seller',
             'stats',
             'recentOrders',
             'quoteRequests',
             'recentServiceOrders',
-            'activeContracts'
+            'activeContracts',
+            'wallet',
+            'recentWalletTransactions'
         ));
     }
 

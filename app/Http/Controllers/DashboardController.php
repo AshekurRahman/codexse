@@ -6,6 +6,7 @@ use App\Models\ServiceOrder;
 use App\Models\JobContract;
 use App\Models\JobPosting;
 use App\Models\Order;
+use App\Models\Subscription;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -23,6 +24,11 @@ class DashboardController extends Controller
             ->sum('items_count');
         $wishlistCount = $user->wishlists()->count();
         $activeLicenses = $user->licenses()->where('status', 'active')->count();
+
+        // Subscriptions
+        $activeSubscriptions = $user->subscriptions()
+            ->whereIn('status', ['active', 'trialing'])
+            ->count();
 
         // Service orders (as buyer)
         $serviceOrders = ServiceOrder::where('buyer_id', $user->id)->count();
@@ -63,6 +69,14 @@ class DashboardController extends Controller
         // Recent job posts
         $recentJobPosts = JobPosting::where('client_id', $user->id)
             ->withCount('proposals')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // Active subscriptions list
+        $recentSubscriptions = $user->subscriptions()
+            ->with(['plan.product', 'plan.service'])
+            ->whereIn('status', ['active', 'trialing', 'past_due'])
             ->latest()
             ->take(5)
             ->get();
@@ -113,15 +127,31 @@ class DashboardController extends Controller
         $activityBreakdown = [
             'products' => $totalOrders,
             'services' => $serviceOrders,
+            'subscriptions' => $activeSubscriptions,
             'contracts' => $activeContracts,
             'jobs' => $jobPosts,
         ];
+
+        // Subscription Status Distribution (Pie Chart)
+        $subscriptionStatusData = $user->subscriptions()
+            ->selectRaw('status, COUNT(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status')
+            ->toArray();
+
+        // Wallet data
+        $wallet = $user->getOrCreateWallet();
+        $recentWalletTransactions = $wallet->transactions()
+            ->latest()
+            ->take(5)
+            ->get();
 
         return view('pages.dashboard', compact(
             'totalOrders',
             'totalDownloads',
             'wishlistCount',
             'activeLicenses',
+            'activeSubscriptions',
             'serviceOrders',
             'activeContracts',
             'jobPosts',
@@ -129,13 +159,17 @@ class DashboardController extends Controller
             'recentServiceOrders',
             'recentContracts',
             'recentJobPosts',
+            'recentSubscriptions',
             'orderStatusData',
             'serviceStatusData',
             'contractStatusData',
+            'subscriptionStatusData',
             'monthlySpending',
             'totalSpent',
             'totalServiceSpent',
-            'activityBreakdown'
+            'activityBreakdown',
+            'wallet',
+            'recentWalletTransactions'
         ));
     }
 

@@ -97,7 +97,7 @@
                             <!-- Price -->
                             <div class="flex items-center justify-between">
                                 <div class="font-bold text-lg text-surface-900 dark:text-white">
-                                    ${{ number_format($item->product->price, 2) }}
+                                    {{ format_price($item->product->price) }}
                                 </div>
                                 @if($item->product->reviews_count > 0)
                                     <div class="flex items-center gap-1 text-sm">

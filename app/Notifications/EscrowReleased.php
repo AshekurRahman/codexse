@@ -29,8 +29,8 @@ class EscrowReleased extends Notification implements ShouldQueue
             ->line('Great news! Payment has been released to your account.')
             ->line('Transaction: ' . $this->transaction->transaction_number)
             ->line('Amount: $' . number_format($this->transaction->payee_amount, 2))
-            ->action('View Balance', url('/seller/wallet'))
-            ->line('The funds are now available in your seller balance.');
+            ->action('View Wallet', route('wallet.index'))
+            ->line('The funds are now available in your wallet.');
     }
 
     public function toArray(object $notifiable): array
@@ -41,7 +41,7 @@ class EscrowReleased extends Notification implements ShouldQueue
             'transaction_number' => $this->transaction->transaction_number,
             'amount' => $this->transaction->payee_amount,
             'message' => 'Payment released: $' . number_format($this->transaction->payee_amount, 2),
-            'url' => '/seller/wallet',
+            'url' => route('wallet.index'),
         ];
     }
 }

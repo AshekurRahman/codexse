@@ -180,7 +180,7 @@ class JobContract extends Model
     // Accessors
     public function getFormattedTotalAttribute(): string
     {
-        return '$' . number_format($this->total_amount, 2);
+        return format_price($this->total_amount);
     }
 
     public function getStatusLabelAttribute(): string

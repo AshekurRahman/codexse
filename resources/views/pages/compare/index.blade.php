@@ -105,10 +105,10 @@
                                 <td class="p-6 text-center">
                                     <div class="flex flex-col items-center gap-1">
                                         @if($product->isOnSale())
-                                            <span class="text-2xl font-bold text-green-600 dark:text-green-400">${{ number_format($product->sale_price, 2) }}</span>
-                                            <span class="text-sm text-surface-400 line-through">${{ number_format($product->price, 2) }}</span>
+                                            <span class="text-2xl font-bold text-green-600 dark:text-green-400">{{ format_price($product->sale_price) }}</span>
+                                            <span class="text-sm text-surface-400 line-through">{{ format_price($product->price) }}</span>
                                         @else
-                                            <span class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($product->price, 2) }}</span>
+                                            <span class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($product->price) }}</span>
                                         @endif
                                     </div>
                                 </td>
@@ -238,7 +238,7 @@
                                         @if($product->license_types && count($product->license_types) > 0)
                                             @foreach($product->license_types as $type => $price)
                                                 <span class="px-2.5 py-1 bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-300 rounded-lg text-xs font-medium">
-                                                    {{ ucfirst($type) }}: ${{ number_format($price, 2) }}
+                                                    {{ ucfirst($type) }}: {{ format_price($price) }}
                                                 </span>
                                             @endforeach
                                         @else

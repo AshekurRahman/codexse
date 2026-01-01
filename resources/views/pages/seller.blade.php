@@ -182,7 +182,7 @@
                     </div>
                     <div class="h-8 w-px bg-surface-200 dark:bg-surface-700"></div>
                     <div class="text-center px-6">
-                        <div class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($seller->total_sales, 0) }}</div>
+                        <div class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($seller->total_sales) }}</div>
                         <div class="text-sm text-surface-500 dark:text-surface-400">Total Sales</div>
                     </div>
                     <div class="h-8 w-px bg-surface-200 dark:bg-surface-700"></div>

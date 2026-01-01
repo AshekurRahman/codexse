@@ -94,7 +94,7 @@ class JobProposal extends Model
     // Accessors
     public function getFormattedPriceAttribute(): string
     {
-        return '$' . number_format($this->proposed_price, 2);
+        return format_price($this->proposed_price);
     }
 
     public function getDurationTextAttribute(): ?string

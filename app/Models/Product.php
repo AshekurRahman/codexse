@@ -135,6 +135,21 @@ class Product extends Model implements HasMedia
         return $this->hasMany(ProductVariation::class)->where('is_active', true)->orderBy('sort_order');
     }
 
+    public function subscriptionPlans(): HasMany
+    {
+        return $this->hasMany(SubscriptionPlan::class);
+    }
+
+    public function activeSubscriptionPlans(): HasMany
+    {
+        return $this->hasMany(SubscriptionPlan::class)->where('is_active', true)->orderBy('sort_order');
+    }
+
+    public function hasSubscriptionPlans(): bool
+    {
+        return $this->subscriptionPlans()->where('is_active', true)->exists();
+    }
+
     public function defaultVariation()
     {
         return $this->hasOne(ProductVariation::class)->where('is_default', true);
@@ -162,7 +177,7 @@ class Product extends Model implements HasMedia
             $lowest = $this->lowest_price;
             $highest = $this->highest_price;
             if ($lowest !== $highest) {
-                return '$' . number_format($lowest, 2) . ' - $' . number_format($highest, 2);
+                return format_price($lowest) . ' - ' . format_price($highest);
             }
         }
         return null;
@@ -174,7 +189,7 @@ class Product extends Model implements HasMedia
             return asset('storage/' . $this->thumbnail);
         }
 
-        return asset('images/placeholder-product.png');
+        return asset('images/placeholder-product.svg');
     }
 
     public function getCurrentPriceAttribute(): float

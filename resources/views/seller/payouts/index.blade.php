@@ -25,19 +25,27 @@
             <div class="bg-gradient-to-br from-primary-600 to-accent-600 rounded-xl p-6 mb-8 text-white">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
                     <div>
-                        <p class="text-primary-100 text-sm font-medium mb-1">Available Balance</p>
-                        <p class="text-4xl font-bold">${{ number_format($seller->available_balance, 2) }}</p>
+                        <p class="text-primary-100 text-sm font-medium mb-1">Wallet Balance</p>
+                        <p class="text-4xl font-bold">{{ $wallet->formatted_balance }}</p>
                         <p class="text-primary-100 text-sm mt-2">Minimum payout: $50.00</p>
                     </div>
-                    <form action="{{ route('seller.payouts.request') }}" method="POST">
-                        @csrf
-                        <button type="submit" {{ $seller->available_balance < 50 ? 'disabled' : '' }} class="inline-flex items-center gap-2 px-6 py-3 bg-white text-primary-600 font-semibold rounded-lg hover:bg-primary-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <a href="{{ route('wallet.index') }}" class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-white/20 text-white font-semibold rounded-lg hover:bg-white/30 transition-colors">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                             </svg>
-                            Request Payout
-                        </button>
-                    </form>
+                            View Wallet
+                        </a>
+                        <form action="{{ route('seller.payouts.request') }}" method="POST">
+                            @csrf
+                            <button type="submit" {{ $wallet->balance < 50 ? 'disabled' : '' }} class="inline-flex items-center gap-2 px-6 py-3 bg-white text-primary-600 font-semibold rounded-lg hover:bg-primary-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
+                                Request Payout
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
 
@@ -65,7 +73,7 @@
                                             {{ $payout->created_at->format('M d, Y') }}
                                         </td>
                                         <td class="px-6 py-4 text-sm font-semibold text-surface-900 dark:text-white">
-                                            ${{ number_format($payout->amount, 2) }}
+                                            {{ format_price($payout->amount) }}
                                         </td>
                                         <td class="px-6 py-4">
                                             @if($payout->status === 'completed')

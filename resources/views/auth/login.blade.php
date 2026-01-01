@@ -8,20 +8,20 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form method="POST" action="{{ route('login') }}">
+    <form method="POST" action="{{ route('login') }}" data-ajax-form>
         @csrf
 
         <!-- Email Address -->
         <div>
             <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" placeholder="you@example.com" />
+            <x-text-input id="email" type="email" name="email" :value="old('email')" autofocus autocomplete="username" placeholder="you@example.com" data-validate="required|email" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
         <!-- Password -->
         <div class="mt-4">
             <x-input-label for="password" :value="__('Password')" />
-            <x-text-input id="password" type="password" name="password" required autocomplete="current-password" placeholder="Enter your password" />
+            <x-text-input id="password" type="password" name="password" autocomplete="current-password" placeholder="Enter your password" data-validate="required" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 

@@ -86,7 +86,7 @@
                                                 $startingPrice = $service->packages->min('price');
                                             @endphp
                                             <span class="font-semibold text-surface-900 dark:text-white">
-                                                ${{ number_format($startingPrice ?? 0, 2) }}
+                                                {{ format_price($startingPrice ?? 0) }}
                                             </span>
                                         </td>
                                         <td class="px-6 py-4">

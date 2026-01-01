@@ -60,11 +60,11 @@ class CustomQuoteRequest extends Model
     public function getBudgetRangeAttribute(): ?string
     {
         if ($this->budget_min && $this->budget_max) {
-            return '$' . number_format($this->budget_min) . ' - $' . number_format($this->budget_max);
+            return format_price($this->budget_min) . ' - ' . format_price($this->budget_max);
         } elseif ($this->budget_min) {
-            return 'From $' . number_format($this->budget_min);
+            return 'From ' . format_price($this->budget_min);
         } elseif ($this->budget_max) {
-            return 'Up to $' . number_format($this->budget_max);
+            return 'Up to ' . format_price($this->budget_max);
         }
         return null;
     }

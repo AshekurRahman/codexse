@@ -43,7 +43,7 @@
                 </div>
 
                 <!-- Form -->
-                <form action="{{ route('quotes.store', $service) }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-6">
+                <form action="{{ route('quotes.store', $service) }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-6" data-ajax-form>
                     @csrf
 
                     <!-- Title -->
@@ -51,9 +51,9 @@
                         <label for="title" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
                             Project Title <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="title" id="title" value="{{ old('title') }}" required
+                        <input type="text" name="title" id="title" value="{{ old('title') }}"
                             class="w-full rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 px-4 py-2.5 text-surface-900 dark:text-white placeholder-surface-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-                            placeholder="e.g., Custom Logo Design for Tech Startup">
+                            placeholder="e.g., Custom Logo Design for Tech Startup" data-validate="required|min:5">
                         @error('title')
                             <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                         @enderror
@@ -64,9 +64,9 @@
                         <label for="description" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
                             Describe Your Project <span class="text-red-500">*</span>
                         </label>
-                        <textarea name="description" id="description" rows="6" required
+                        <textarea name="description" id="description" rows="6"
                             class="w-full rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 px-4 py-2.5 text-surface-900 dark:text-white placeholder-surface-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
-                            placeholder="Please provide as much detail as possible about your requirements...">{{ old('description') }}</textarea>
+                            placeholder="Please provide as much detail as possible about your requirements..." data-validate="required|min:20">{{ old('description') }}</textarea>
                         @error('description')
                             <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                         @enderror

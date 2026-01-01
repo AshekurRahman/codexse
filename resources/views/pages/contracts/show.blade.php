@@ -72,29 +72,26 @@
                                                 <p class="text-sm text-surface-600 dark:text-surface-400 mb-3">{{ $milestone->description }}</p>
                                             @endif
                                             <div class="flex items-center gap-4 text-sm text-surface-500 dark:text-surface-400">
-                                                <span>${{ number_format($milestone->amount, 2) }}</span>
+                                                <span>{{ format_price($milestone->amount) }}</span>
                                                 @if($milestone->due_date)
                                                     <span>Due: {{ $milestone->due_date->format('M d, Y') }}</span>
                                                 @endif
                                             </div>
                                         </div>
                                         <div class="text-right">
-                                            @if($milestone->status === 'pending' && $contract->seller_id === auth()->user()->seller?->id)
-                                                <form action="{{ route('seller.milestones.submit', $milestone) }}" method="POST">
-                                                    @csrf
-                                                    <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors">
-                                                        Submit Work
-                                                    </button>
-                                                </form>
+                                            @if(in_array($milestone->status, ['in_progress', 'revision_requested']) && $contract->seller_id === auth()->user()->seller?->id)
+                                                <a href="{{ route('seller.milestones.submit-form', $milestone) }}" class="inline-flex items-center px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors">
+                                                    {{ $milestone->status === 'revision_requested' ? 'Resubmit Work' : 'Submit Work' }}
+                                                </a>
                                             @elseif($milestone->status === 'submitted' && $contract->client_id === auth()->id())
                                                 <div class="flex items-center gap-2">
-                                                    <form action="{{ route('contracts.milestones.approve', $milestone) }}" method="POST">
+                                                    <form action="{{ route('milestones.approve', $milestone) }}" method="POST">
                                                         @csrf
                                                         <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-success-600 hover:bg-success-700 text-white text-sm font-medium rounded-lg transition-colors">
                                                             Approve
                                                         </button>
                                                     </form>
-                                                    <form action="{{ route('contracts.milestones.revision', $milestone) }}" method="POST">
+                                                    <form action="{{ route('milestones.revision', $milestone) }}" method="POST">
                                                         @csrf
                                                         <button type="submit" class="inline-flex items-center px-3 py-1.5 bg-warning-600 hover:bg-warning-700 text-white text-sm font-medium rounded-lg transition-colors">
                                                             Request Revision
@@ -182,7 +179,7 @@
                         <div class="p-6 space-y-4">
                             <div class="flex justify-between">
                                 <span class="text-surface-600 dark:text-surface-400">Total Value</span>
-                                <span class="font-semibold text-surface-900 dark:text-white">${{ number_format($contract->total_amount, 2) }}</span>
+                                <span class="font-semibold text-surface-900 dark:text-white">{{ format_price($contract->total_amount) }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-surface-600 dark:text-surface-400">Payment Type</span>
@@ -252,7 +249,7 @@
                                 @foreach($contract->escrowTransactions as $escrow)
                                     <div class="flex items-center justify-between {{ !$loop->last ? 'mb-3 pb-3 border-b border-surface-200 dark:border-surface-700' : '' }}">
                                         <div>
-                                            <p class="text-sm font-medium text-surface-900 dark:text-white">${{ number_format($escrow->amount, 2) }}</p>
+                                            <p class="text-sm font-medium text-surface-900 dark:text-white">{{ format_price($escrow->amount) }}</p>
                                             <p class="text-xs text-surface-500 dark:text-surface-400">{{ ucfirst($escrow->status) }}</p>
                                         </div>
                                         @if($escrow->status === 'held')

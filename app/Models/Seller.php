@@ -152,6 +152,21 @@ class Seller extends Model
         return $this->hasMany(EscrowTransaction::class);
     }
 
+    public function subscriptionPlans(): HasMany
+    {
+        return $this->hasMany(SubscriptionPlan::class);
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    public function activeSubscriptions(): HasMany
+    {
+        return $this->subscriptions()->whereIn('status', ['active', 'trialing']);
+    }
+
     public function verifications(): HasMany
     {
         return $this->hasMany(SellerVerification::class);

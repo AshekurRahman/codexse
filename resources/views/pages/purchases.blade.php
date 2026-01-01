@@ -120,7 +120,7 @@
                                             </div>
                                             <div>
                                                 <p class="text-xs text-surface-500 dark:text-surface-400">Total</p>
-                                                <p class="font-semibold text-surface-900 dark:text-white">${{ number_format($order->total, 2) }}</p>
+                                                <p class="font-semibold text-surface-900 dark:text-white">{{ format_price($order->total) }}</p>
                                             </div>
                                         </div>
                                         <div class="flex items-center gap-3">
@@ -211,7 +211,7 @@
                                                     @endif
                                                 </div>
                                                 <div class="text-right">
-                                                    <p class="font-semibold text-surface-900 dark:text-white">${{ number_format($item->price, 2) }}</p>
+                                                    <p class="font-semibold text-surface-900 dark:text-white">{{ format_price($item->price) }}</p>
                                                     @if($order->status === 'completed' && $item->product)
                                                         <a href="{{ route('download', $item) }}" class="inline-flex items-center gap-1 mt-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 font-medium">
                                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

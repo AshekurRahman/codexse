@@ -92,10 +92,10 @@
                                 <div class="flex items-center justify-between">
                                     <div>
                                         @if($product->sale_price)
-                                            <span class="text-lg font-bold text-surface-900 dark:text-white">${{ number_format($product->sale_price, 2) }}</span>
-                                            <span class="text-sm text-surface-400 line-through ml-1">${{ number_format($product->price, 2) }}</span>
+                                            <span class="text-lg font-bold text-surface-900 dark:text-white">{{ format_price($product->sale_price) }}</span>
+                                            <span class="text-sm text-surface-400 line-through ml-1">{{ format_price($product->price) }}</span>
                                         @else
-                                            <span class="text-lg font-bold text-surface-900 dark:text-white">${{ number_format($product->price, 2) }}</span>
+                                            <span class="text-lg font-bold text-surface-900 dark:text-white">{{ format_price($product->price) }}</span>
                                         @endif
                                     </div>
 

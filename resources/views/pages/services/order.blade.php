@@ -129,12 +129,12 @@
                             <div class="space-y-4 mb-6">
                                 <div class="flex items-center justify-between text-sm">
                                     <span class="text-surface-600 dark:text-surface-400">{{ $package->name }} Package</span>
-                                    <span class="font-medium text-surface-900 dark:text-white">${{ number_format($package->price, 2) }}</span>
+                                    <span class="font-medium text-surface-900 dark:text-white">{{ format_price($package->price) }}</span>
                                 </div>
                                 <hr class="border-surface-200 dark:border-surface-700">
                                 <div class="flex items-center justify-between">
                                     <span class="font-semibold text-surface-900 dark:text-white">Total</span>
-                                    <span class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($package->price, 2) }}</span>
+                                    <span class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($package->price) }}</span>
                                 </div>
                             </div>
 

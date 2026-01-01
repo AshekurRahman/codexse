@@ -35,7 +35,7 @@
                 </div>
                 <div class="bg-white dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700 p-4">
                     <p class="text-sm text-surface-500 dark:text-surface-400">Total Earnings</p>
-                    <p class="text-2xl font-bold text-surface-900 dark:text-white mt-1">${{ number_format($totalEarnings ?? 0, 2) }}</p>
+                    <p class="text-2xl font-bold text-surface-900 dark:text-white mt-1">{{ format_price($totalEarnings ?? 0) }}</p>
                 </div>
             </div>
 
@@ -102,7 +102,7 @@
                                             <p class="text-sm text-surface-500 dark:text-surface-400">{{ $order->package->name ?? '' }}</p>
                                         </td>
                                         <td class="px-6 py-4">
-                                            <span class="font-semibold text-surface-900 dark:text-white">${{ number_format($order->price, 2) }}</span>
+                                            <span class="font-semibold text-surface-900 dark:text-white">{{ format_price($order->price) }}</span>
                                         </td>
                                         <td class="px-6 py-4">
                                             @if($order->due_at)
@@ -131,7 +131,7 @@
                                                     </svg>
                                                 </a>
                                                 @if($order->status === 'pending')
-                                                    <form action="{{ route('seller.service-orders.accept', $order) }}" method="POST" class="inline">
+                                                    <form action="{{ route('seller.service-orders.start', $order) }}" method="POST" class="inline">
                                                         @csrf
                                                         <button type="submit" class="p-2 text-success-500 hover:text-success-600 dark:text-success-400 dark:hover:text-success-300 transition-colors" title="Accept">
                                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

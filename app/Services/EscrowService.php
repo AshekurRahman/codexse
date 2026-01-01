@@ -144,8 +144,18 @@ class EscrowService
                 ]);
                 $stripeTransferId = $transfer->id;
             } else {
-                // If no Stripe Connect, add to seller's platform balance
-                $transaction->seller->increment('available_balance', $transaction->seller_amount);
+                // If no Stripe Connect, add to seller's wallet
+                $sellerUser = $transaction->seller->user;
+                $wallet = $sellerUser->getOrCreateWallet();
+                $wallet->deposit(
+                    amount: $transaction->seller_amount,
+                    description: 'Escrow release: ' . $transaction->transaction_number,
+                    paymentMethod: 'escrow',
+                    paymentId: $transaction->transaction_number,
+                    transactionable: $transaction
+                );
+
+                // Also update seller's total earnings for analytics
                 $transaction->seller->increment('total_earnings', $transaction->seller_amount);
             }
 

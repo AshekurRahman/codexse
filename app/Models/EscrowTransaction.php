@@ -141,17 +141,17 @@ class EscrowTransaction extends Model
     // Accessors
     public function getFormattedAmountAttribute(): string
     {
-        return '$' . number_format($this->amount, 2);
+        return format_price($this->amount);
     }
 
     public function getFormattedFeeAttribute(): string
     {
-        return '$' . number_format($this->platform_fee, 2);
+        return format_price($this->platform_fee);
     }
 
     public function getFormattedSellerAmountAttribute(): string
     {
-        return '$' . number_format($this->seller_amount, 2);
+        return format_price($this->seller_amount);
     }
 
     public function getStatusLabelAttribute(): string

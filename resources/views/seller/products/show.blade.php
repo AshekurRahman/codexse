@@ -83,12 +83,12 @@
                         <h3 class="text-sm font-medium text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-4">Pricing</h3>
                         @if($product->sale_price)
                             <div class="flex items-baseline gap-2">
-                                <span class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($product->sale_price, 2) }}</span>
-                                <span class="text-lg text-surface-400 line-through">${{ number_format($product->price, 2) }}</span>
+                                <span class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($product->sale_price) }}</span>
+                                <span class="text-lg text-surface-400 line-through">{{ format_price($product->price) }}</span>
                             </div>
                             <p class="text-sm text-success-600 dark:text-success-400 mt-1">{{ round((1 - $product->sale_price / $product->price) * 100) }}% off</p>
                         @else
-                            <span class="text-2xl font-bold text-surface-900 dark:text-white">${{ number_format($product->price, 2) }}</span>
+                            <span class="text-2xl font-bold text-surface-900 dark:text-white">{{ format_price($product->price) }}</span>
                         @endif
                     </div>
 
