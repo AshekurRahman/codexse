@@ -95,10 +95,10 @@
 
                 <!-- Auth Links -->
                 @guest
-                    <a href="{{ route('login') }}" class="hidden sm:flex items-center px-4 py-2 text-sm font-medium text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                    <a href="{{ route('login') }}" class="hidden sm:flex items-center whitespace-nowrap px-4 py-2 text-sm font-medium text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
                         Sign In
                     </a>
-                    <a href="{{ route('register') }}" class="hidden sm:flex items-center rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 transition-all hover:-translate-y-0.5">
+                    <a href="{{ route('register') }}" class="hidden sm:flex items-center whitespace-nowrap rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 transition-all hover:-translate-y-0.5">
                         Get Started
                     </a>
                 @else
