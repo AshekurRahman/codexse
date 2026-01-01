@@ -53,21 +53,25 @@ class UserSession extends Model
     {
         $userAgent = request()->userAgent();
         $deviceInfo = self::parseUserAgent($userAgent);
+        $sessionId = session()->getId();
 
         // Mark all other sessions as not current
         self::where('user_id', $user->id)->update(['is_current' => false]);
 
-        return self::create([
-            'user_id' => $user->id,
-            'session_id' => session()->getId(),
-            'ip_address' => request()->ip(),
-            'user_agent' => $userAgent,
-            'device_type' => $deviceInfo['device'],
-            'browser' => $deviceInfo['browser'],
-            'platform' => $deviceInfo['platform'],
-            'is_current' => true,
-            'last_active_at' => now(),
-        ]);
+        return self::updateOrCreate(
+            ['session_id' => $sessionId],
+            [
+                'user_id' => $user->id,
+                'ip_address' => request()->ip(),
+                'user_agent' => $userAgent,
+                'device_type' => $deviceInfo['device'],
+                'browser' => $deviceInfo['browser'],
+                'platform' => $deviceInfo['platform'],
+                'is_current' => true,
+                'last_active_at' => now(),
+                'logged_out_at' => null,
+            ]
+        );
     }
 
     public static function parseUserAgent(?string $userAgent): array
