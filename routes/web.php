@@ -394,6 +394,17 @@ Route::delete('/cart/remove/{item}', [CartController::class, 'remove'])->name('c
 Route::post('/coupon/apply', [CouponController::class, 'apply'])->name('coupon.apply');
 Route::post('/coupon/remove', [CouponController::class, 'remove'])->name('coupon.remove');
 
+// Checkout (auth only, no email verification required)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
+    Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
+    Route::post('/checkout/calculate-tax', [CheckoutController::class, 'calculateTax'])->name('checkout.calculate-tax');
+    Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
+    Route::get('/checkout/cancel', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
+    Route::get('/checkout/payoneer/success/{order}', [CheckoutController::class, 'payoneerSuccess'])->name('checkout.payoneer.success');
+    Route::get('/checkout/paypal/success/{order}', [CheckoutController::class, 'paypalSuccess'])->name('checkout.paypal.success');
+});
+
 // Static Pages
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
@@ -551,15 +562,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/reviews/{review}', [ReviewController::class, 'update'])->name('reviews.update');
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
     Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])->name('reviews.vote');
-
-    // Checkout
-    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
-    Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
-    Route::post('/checkout/calculate-tax', [CheckoutController::class, 'calculateTax'])->name('checkout.calculate-tax');
-    Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
-    Route::get('/checkout/cancel', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
-    Route::get('/checkout/payoneer/success/{order}', [CheckoutController::class, 'payoneerSuccess'])->name('checkout.payoneer.success');
-    Route::get('/checkout/paypal/success/{order}', [CheckoutController::class, 'paypalSuccess'])->name('checkout.paypal.success');
 
     // Wallet
     Route::prefix('wallet')->name('wallet.')->group(function () {
