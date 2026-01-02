@@ -1,6 +1,6 @@
 @props(['seller'])
 
-<a href="{{ route('seller.profile', $seller->slug) }}" class="seller-card-compact group">
+<a href="{{ route('sellers.show', $seller) }}" class="seller-card-compact group">
     <!-- Avatar -->
     <div class="relative mx-auto mb-3">
         <img src="{{ $seller->user->avatar_url ?? 'https://ui-avatars.com/api/?name=' . urlencode($seller->store_name) . '&background=6366f1&color=fff' }}"

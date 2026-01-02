@@ -1,0 +1,7 @@
+[01-Jan-2026 13:43:49 UTC] PHP Warning:  copy(): https:// wrapper is disabled in the server configuration by allow_url_fopen=0 in Command line code on line 1
+[01-Jan-2026 13:43:49 UTC] PHP Warning:  copy(https://getcomposer.org/installer): Failed to open stream: no suitable wrapper could be found in Command line code on line 1
+[01-Jan-2026 13:43:58 UTC] PHP Warning:  hash_file(composer-setup.php): Failed to open stream: No such file or directory in Command line code on line 1
+[01-Jan-2026 13:43:58 UTC] PHP Warning:  file_get_contents(): https:// wrapper is disabled in the server configuration by allow_url_fopen=0 in Command line code on line 1
+[01-Jan-2026 13:43:58 UTC] PHP Warning:  file_get_contents(https://composer.github.io/installer.sig): Failed to open stream: no suitable wrapper could be found in Command line code on line 1
+[01-Jan-2026 13:45:52 UTC] PHP Warning:  copy(): https:// wrapper is disabled in the server configuration by allow_url_fopen=0 in Command line code on line 1
+[01-Jan-2026 13:45:52 UTC] PHP Warning:  copy(https://getcomposer.org/installer): Failed to open stream: no suitable wrapper could be found in Command line code on line 1
