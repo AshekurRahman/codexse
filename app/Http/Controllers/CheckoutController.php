@@ -16,6 +16,8 @@ use App\Services\PayPalService;
 use App\Services\PushNotificationService;
 use App\Services\StripeService;
 use App\Services\TaxService;
+use App\Notifications\ProductPurchaseConfirmation;
+use App\Notifications\NewSaleNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -990,16 +992,24 @@ class CheckoutController extends Controller
         try {
             $pushService = app(PushNotificationService::class);
 
-            // Notify buyer about their order
+            // Load order with relationships
+            $order->load('items.seller.user', 'items.product', 'user');
+
+            // Send purchase confirmation email to buyer
+            try {
+                $order->user->notify(new ProductPurchaseConfirmation($order));
+            } catch (\Exception $e) {
+                Log::error('Failed to send purchase confirmation email: ' . $e->getMessage());
+            }
+
+            // Notify buyer about their order (push notification)
             $pushService->notifyOrderUpdate($order->user, [
                 'order_id' => $order->order_number,
                 'status' => 'Order Confirmed',
                 'url' => route('purchases'),
             ]);
 
-            // Notify each seller about their sale
-            $order->load('items.seller.user', 'items.product');
-
+            // Group items by seller for notifications
             $sellerNotifications = [];
             foreach ($order->items as $item) {
                 $sellerId = $item->seller_id;
@@ -1007,22 +1017,37 @@ class CheckoutController extends Controller
                 if (!isset($sellerNotifications[$sellerId])) {
                     $sellerNotifications[$sellerId] = [
                         'seller' => $item->seller,
-                        'items' => [],
+                        'items' => collect(),
                         'total' => 0,
                     ];
                 }
 
-                $sellerNotifications[$sellerId]['items'][] = $item;
+                $sellerNotifications[$sellerId]['items']->push($item);
                 $sellerNotifications[$sellerId]['total'] += $item->seller_amount;
             }
 
+            // Send notifications to each seller
             foreach ($sellerNotifications as $notification) {
                 if ($notification['seller'] && $notification['seller']->user) {
-                    $productName = count($notification['items']) > 1
-                        ? $notification['items'][0]->product_name . ' +' . (count($notification['items']) - 1) . ' more'
-                        : $notification['items'][0]->product_name;
+                    $sellerUser = $notification['seller']->user;
 
-                    $pushService->notifyNewSale($notification['seller']->user, [
+                    // Send email notification to seller
+                    try {
+                        $sellerUser->notify(new NewSaleNotification(
+                            $order,
+                            $notification['items'],
+                            $notification['total']
+                        ));
+                    } catch (\Exception $e) {
+                        Log::error('Failed to send new sale email to seller: ' . $e->getMessage());
+                    }
+
+                    // Send push notification to seller
+                    $productName = $notification['items']->count() > 1
+                        ? $notification['items']->first()->product_name . ' +' . ($notification['items']->count() - 1) . ' more'
+                        : $notification['items']->first()->product_name;
+
+                    $pushService->notifyNewSale($sellerUser, [
                         'order_id' => $order->order_number,
                         'product_name' => $productName,
                         'amount' => format_price($notification['total']),

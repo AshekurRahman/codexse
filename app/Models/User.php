@@ -164,6 +164,30 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
     }
 
     /**
+     * Send the email verification notification.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        try {
+            $this->notify(new \App\Notifications\VerifyEmailNotification);
+        } catch (\Exception $e) {
+            \Log::warning('Failed to send verification email to ' . $this->email . ': ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send the password reset notification.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        try {
+            $this->notify(new \App\Notifications\PasswordResetNotification($token));
+        } catch (\Exception $e) {
+            \Log::warning('Failed to send password reset email to ' . $this->email . ': ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Get the seller profile for the user.
      */
     public function seller(): HasOne
