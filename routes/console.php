@@ -8,6 +8,12 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+// Process queue jobs every minute (for emails, notifications, etc.)
+Schedule::command('queue:work --stop-when-empty --max-time=55')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground();
+
 // Process email campaigns every hour during business hours
 Schedule::command('campaigns:process')
     ->hourly()
