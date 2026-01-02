@@ -385,9 +385,8 @@
 
                         <!-- Header -->
                         <div class="email-header" style="background-color: #ffffff; padding: 32px 40px; text-align: center; border-bottom: 1px solid #e2e8f0;">
-                            <a href="{{ $siteUrl }}" style="display: inline-flex; align-items: center; text-decoration: none;">
-                                <img src="{{ $logoUrl }}" alt="{{ $siteName }}" width="48" height="48" style="max-height: 48px;">
-                                <span style="margin-left: 12px; font-size: 24px; font-weight: 700; color: #0f172a;">{{ $siteName }}</span>
+                            <a href="{{ $siteUrl }}" style="text-decoration: none;">
+                                <span style="font-size: 28px; font-weight: 700; color: #6366f1;">{{ $siteName }}</span>
                             </a>
                         </div>
 
@@ -406,40 +405,6 @@
                                         <a href="{{ url('/products') }}" style="color: #64748b; text-decoration: none; font-size: 14px; margin: 0 12px;">Products</a>
                                         <a href="{{ url('/services') }}" style="color: #64748b; text-decoration: none; font-size: 14px; margin: 0 12px;">Services</a>
                                         <a href="{{ url('/support') }}" style="color: #64748b; text-decoration: none; font-size: 14px; margin: 0 12px;">Support</a>
-                                    </td>
-                                </tr>
-                            </table>
-
-                            <!-- Social Links -->
-                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                                <tr>
-                                    <td align="center" style="padding-bottom: 24px;">
-                                        @php
-                                            $facebook = Setting::get('social_facebook');
-                                            $twitter = Setting::get('social_twitter');
-                                            $instagram = Setting::get('social_instagram');
-                                            $linkedin = Setting::get('social_linkedin');
-                                        @endphp
-                                        @if($facebook)
-                                        <a href="{{ $facebook }}" style="display: inline-block; width: 36px; height: 36px; background: #e2e8f0; border-radius: 50%; margin: 0 4px; text-align: center; line-height: 36px;">
-                                            <img src="{{ asset('images/icons/facebook.png') }}" alt="Facebook" width="18" height="18" style="vertical-align: middle;">
-                                        </a>
-                                        @endif
-                                        @if($twitter)
-                                        <a href="{{ $twitter }}" style="display: inline-block; width: 36px; height: 36px; background: #e2e8f0; border-radius: 50%; margin: 0 4px; text-align: center; line-height: 36px;">
-                                            <img src="{{ asset('images/icons/twitter.png') }}" alt="Twitter" width="18" height="18" style="vertical-align: middle;">
-                                        </a>
-                                        @endif
-                                        @if($instagram)
-                                        <a href="{{ $instagram }}" style="display: inline-block; width: 36px; height: 36px; background: #e2e8f0; border-radius: 50%; margin: 0 4px; text-align: center; line-height: 36px;">
-                                            <img src="{{ asset('images/icons/instagram.png') }}" alt="Instagram" width="18" height="18" style="vertical-align: middle;">
-                                        </a>
-                                        @endif
-                                        @if($linkedin)
-                                        <a href="{{ $linkedin }}" style="display: inline-block; width: 36px; height: 36px; background: #e2e8f0; border-radius: 50%; margin: 0 4px; text-align: center; line-height: 36px;">
-                                            <img src="{{ asset('images/icons/linkedin.png') }}" alt="LinkedIn" width="18" height="18" style="vertical-align: middle;">
-                                        </a>
-                                        @endif
                                     </td>
                                 </tr>
                             </table>

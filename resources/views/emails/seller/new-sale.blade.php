@@ -7,24 +7,33 @@ You just made a sale! {{ format_price($totalEarnings) }} has been added to your 
 @endsection
 
 @section('hero')
-<div style="background: #ffffff; padding: 32px 40px; text-align: center;">
-    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 20px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="#ffffff"/>
-        </svg>
+<div style="background: #ffffff; padding: 40px; text-align: center;">
+    <!-- Success Icon -->
+    <div style="width: 96px; height: 96px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 24px; margin: 0 auto 24px; box-shadow: 0 16px 32px -8px rgba(16, 185, 129, 0.4);">
+        <table role="presentation" width="100%" height="100%">
+            <tr>
+                <td align="center" valign="middle">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="#ffffff"/>
+                    </svg>
+                </td>
+            </tr>
+        </table>
     </div>
-    <h1 style="font-size: 28px; font-weight: 700; color: #0f172a; margin: 0 0 8px;">New Sale!</h1>
+    <h1 style="font-size: 28px; font-weight: 700; color: #0f172a; margin: 0 0 12px; line-height: 1.3;">New Sale!</h1>
     <p style="font-size: 16px; color: #64748b; margin: 0;">Congratulations! You just made a sale.</p>
 </div>
 @endsection
 
 @section('content')
-<div class="email-content" style="padding: 40px;">
-    <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+<div style="padding: 0 40px 40px;">
+    <!-- Greeting -->
+    <p style="font-size: 16px; color: #334155; margin: 0 0 24px;">
         Hi {{ $seller->seller->business_name ?? $seller->name }},
     </p>
 
-    <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 24px;">
+    <!-- Main Text -->
+    <p style="font-size: 16px; color: #334155; margin: 0 0 24px;">
         Great news! A customer just purchased your product{{ $items->count() > 1 ? 's' : '' }}.
     </p>
 
