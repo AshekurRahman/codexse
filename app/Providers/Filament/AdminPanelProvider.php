@@ -2,11 +2,22 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Admin\Widgets\ActivityLog;
+use App\Filament\Admin\Widgets\ConversionRateTracker;
+use App\Filament\Admin\Widgets\CustomerInsightsWidget;
+use App\Filament\Admin\Widgets\GeographicSalesMap;
 use App\Filament\Admin\Widgets\LatestOrders;
+use App\Filament\Admin\Widgets\LowStockAlert;
 use App\Filament\Admin\Widgets\OrdersChart;
+use App\Filament\Admin\Widgets\PaymentAnalytics;
+use App\Filament\Admin\Widgets\PendingReviews;
+use App\Filament\Admin\Widgets\RecentUsers;
+use App\Filament\Admin\Widgets\RevenueForecastWidget;
 use App\Filament\Admin\Widgets\RevenueChart;
+use App\Filament\Admin\Widgets\SalesFunnelWidget;
 use App\Filament\Admin\Widgets\SellersChart;
 use App\Filament\Admin\Widgets\StatsOverview;
+use App\Filament\Admin\Widgets\SystemHealth;
 use App\Filament\Admin\Widgets\TopProductsChart;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -103,11 +114,22 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->widgets([
                 StatsOverview::class,
+                PaymentAnalytics::class,
                 RevenueChart::class,
                 OrdersChart::class,
                 TopProductsChart::class,
                 LatestOrders::class,
                 SellersChart::class,
+                SalesFunnelWidget::class,
+                GeographicSalesMap::class,
+                CustomerInsightsWidget::class,
+                RevenueForecastWidget::class,
+                ConversionRateTracker::class,
+                LowStockAlert::class,
+                PendingReviews::class,
+                RecentUsers::class,
+                SystemHealth::class,
+                ActivityLog::class,
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -119,6 +141,9 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                \App\Http\Middleware\ForceHttps::class,
+                \App\Http\Middleware\SecurityHeaders::class,
+                \App\Http\Middleware\BlockMaliciousIps::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

@@ -26,7 +26,7 @@
                         </div>
 
                         <!-- Contact Information -->
-                        <div class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-6">
+                        <div class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-4 sm:p-6">
                             <h2 class="text-lg font-semibold text-surface-900 dark:text-white mb-6">Contact Information</h2>
                             <div class="space-y-4">
                                 <div>
@@ -80,8 +80,8 @@
                                 }
                             }
                         @endphp
-                        <div class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-6" x-data="{ selectedMethod: '{{ $defaultPayment }}' }">
-                            <h2 class="text-lg font-semibold text-surface-900 dark:text-white mb-6">Payment Method</h2>
+                        <div class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-4 sm:p-6" x-data="{ selectedMethod: '{{ $defaultPayment }}' }">
+                            <h2 class="text-lg font-semibold text-surface-900 dark:text-white mb-4 sm:mb-6">Payment Method</h2>
                             <div class="space-y-3">
                                 {{-- Wallet Payment Option --}}
                                 @auth
@@ -236,8 +236,8 @@
                         </div>
 
                         <!-- Order Notes -->
-                        <div class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-6">
-                            <h2 class="text-lg font-semibold text-surface-900 dark:text-white mb-6">Order Notes (Optional)</h2>
+                        <div class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-4 sm:p-6">
+                            <h2 class="text-lg font-semibold text-surface-900 dark:text-white mb-4 sm:mb-6">Order Notes (Optional)</h2>
                             <textarea name="notes" rows="3" placeholder="Any special instructions..."
                                 class="w-full rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-900 px-4 py-3 text-surface-900 dark:text-white placeholder-surface-400 focus:border-primary-500 focus:ring-1 focus:ring-primary-500"></textarea>
                         </div>
@@ -245,7 +245,7 @@
 
                     <!-- Order Summary -->
                     <div class="lg:col-span-1">
-                        <div class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-6 sticky top-24">
+                        <div class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-4 sm:p-6 lg:sticky lg:top-24">
                             <h2 class="text-lg font-semibold text-surface-900 dark:text-white mb-6">Order Summary</h2>
 
                             <!-- Cart Items -->

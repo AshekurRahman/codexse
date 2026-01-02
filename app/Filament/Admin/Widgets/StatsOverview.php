@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Widgets;
 
+use App\Filament\Admin\Pages\DashboardSettings;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Seller;
@@ -12,6 +13,11 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 class StatsOverview extends BaseWidget
 {
     protected static ?int $sort = 1;
+
+    public static function canView(): bool
+    {
+        return DashboardSettings::isWidgetEnabled('stats_overview');
+    }
 
     protected function getStats(): array
     {

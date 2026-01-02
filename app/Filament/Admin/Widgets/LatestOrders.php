@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Widgets;
 
+use App\Filament\Admin\Pages\DashboardSettings;
 use App\Filament\Admin\Resources\OrderResource;
 use App\Models\Order;
 use Filament\Tables;
@@ -13,6 +14,11 @@ class LatestOrders extends BaseWidget
     protected static ?string $heading = 'Latest Orders';
 
     protected static ?int $sort = 5;
+
+    public static function canView(): bool
+    {
+        return DashboardSettings::isWidgetEnabled('latest_orders');
+    }
 
     protected int | string | array $columnSpan = 'full';
 

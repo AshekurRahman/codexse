@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Widgets;
 
+use App\Filament\Admin\Pages\DashboardSettings;
 use App\Models\Product;
 use Filament\Widgets\ChartWidget;
 
@@ -10,6 +11,11 @@ class TopProductsChart extends ChartWidget
     protected static ?string $heading = 'Top Selling Products';
 
     protected static ?int $sort = 4;
+
+    public static function canView(): bool
+    {
+        return DashboardSettings::isWidgetEnabled('top_products');
+    }
 
     protected int | string | array $columnSpan = 1;
 

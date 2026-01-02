@@ -14,8 +14,20 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Register global security middleware for all web requests
+        $middleware->web(append: [
+            \App\Http\Middleware\ForceHttps::class,
+            \App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\BlockMaliciousIps::class,
+            \App\Http\Middleware\InputSanitization::class,
+        ]);
+
+        // Register middleware aliases
         $middleware->alias([
             'seller' => \App\Http\Middleware\IsSeller::class,
+            'rate.limit' => \App\Http\Middleware\DynamicRateLimiter::class,
+            'honeypot' => \App\Http\Middleware\HoneypotProtection::class,
+            'two-factor' => \App\Http\Middleware\TwoFactorMiddleware::class,
         ]);
 
         // Exclude Stripe webhook from CSRF verification

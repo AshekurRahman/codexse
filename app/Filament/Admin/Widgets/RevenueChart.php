@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Widgets;
 
+use App\Filament\Admin\Pages\DashboardSettings;
 use App\Models\Order;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
@@ -11,6 +12,11 @@ class RevenueChart extends ChartWidget
     protected static ?string $heading = 'Revenue Overview';
 
     protected static ?int $sort = 2;
+
+    public static function canView(): bool
+    {
+        return DashboardSettings::isWidgetEnabled('revenue_chart');
+    }
 
     protected int | string | array $columnSpan = 'full';
 

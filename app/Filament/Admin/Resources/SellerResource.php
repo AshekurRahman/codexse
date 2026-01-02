@@ -4,11 +4,15 @@ namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\SellerResource\Pages;
 use App\Models\Seller;
+use App\Notifications\SellerApplicationApproved;
+use App\Notifications\SellerApplicationRejected;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class SellerResource extends Resource
@@ -179,8 +183,51 @@ class SellerResource extends Resource
                     ->icon('heroicon-o-check')
                     ->color('success')
                     ->requiresConfirmation()
+                    ->modalHeading('Approve Seller Application')
+                    ->modalDescription('Are you sure you want to approve this seller application?')
                     ->visible(fn ($record) => $record->status === 'pending')
-                    ->action(fn ($record) => $record->update(['status' => 'approved', 'approved_at' => now()])),
+                    ->action(function ($record) {
+                        $record->update(['status' => 'approved', 'approved_at' => now()]);
+
+                        // Send approval notification
+                        try {
+                            $record->user->notify(new SellerApplicationApproved($record));
+                        } catch (\Exception $e) {
+                            Log::warning('Failed to send seller approval notification: ' . $e->getMessage());
+                        }
+
+                        Notification::make()
+                            ->title('Seller application approved')
+                            ->success()
+                            ->send();
+                    }),
+                Tables\Actions\Action::make('reject')
+                    ->icon('heroicon-o-x-mark')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading('Reject Seller Application')
+                    ->form([
+                        Forms\Components\Textarea::make('rejection_reason')
+                            ->label('Reason for Rejection')
+                            ->helperText('This will be sent to the applicant')
+                            ->required(),
+                    ])
+                    ->visible(fn ($record) => $record->status === 'pending')
+                    ->action(function ($record, array $data) {
+                        $record->update(['status' => 'rejected']);
+
+                        // Send rejection notification
+                        try {
+                            $record->user->notify(new SellerApplicationRejected($record, $data['rejection_reason']));
+                        } catch (\Exception $e) {
+                            Log::warning('Failed to send seller rejection notification: ' . $e->getMessage());
+                        }
+
+                        Notification::make()
+                            ->title('Seller application rejected')
+                            ->warning()
+                            ->send();
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

@@ -8,7 +8,7 @@
     <!-- Session Status -->
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
-    <form method="POST" action="{{ route('login') }}" data-ajax-form>
+    <form method="POST" action="{{ route('login') }}" data-ajax-form novalidate>
         @csrf
 
         <!-- Email Address -->

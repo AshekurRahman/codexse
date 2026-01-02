@@ -32,6 +32,25 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\Section::make('Profile Picture')
+                    ->schema([
+                        Forms\Components\FileUpload::make('avatar')
+                            ->label('Upload Avatar')
+                            ->image()
+                            ->avatar()
+                            ->directory('avatars')
+                            ->visibility('public')
+                            ->imageEditor()
+                            ->circleCropper()
+                            ->maxSize(2048)
+                            ->helperText('Upload a profile picture (max 2MB)'),
+                        Forms\Components\TextInput::make('social_avatar')
+                            ->label('External Avatar URL')
+                            ->url()
+                            ->placeholder('https://example.com/avatar.jpg')
+                            ->helperText('Or use an external image URL (used if no uploaded avatar)'),
+                    ])->columns(2),
+
                 Forms\Components\Section::make('User Information')
                     ->schema([
                         Forms\Components\TextInput::make('name')
@@ -67,6 +86,10 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('avatar_url')
+                    ->label('Avatar')
+                    ->circular()
+                    ->defaultImageUrl(fn ($record) => 'https://ui-avatars.com/api/?name=' . urlencode($record->name) . '&background=6366f1&color=fff'),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),

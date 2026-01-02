@@ -4,8 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Seller;
 use App\Models\Setting;
+use App\Models\User;
+use App\Notifications\NewSellerApplicationNotification;
+use App\Notifications\SellerApplicationSubmitted;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
@@ -110,9 +114,27 @@ class SellerApplicationController extends Controller
                 Storage::disk('public')->delete($user->seller->logo);
             }
             $user->seller->update($sellerData);
+            $seller = $user->seller->fresh();
         } else {
             // Create new application (commission rate is determined by admin settings)
-            $user->seller()->create($sellerData);
+            $seller = $user->seller()->create($sellerData);
+        }
+
+        // Send notification to the applicant
+        try {
+            $user->notify(new SellerApplicationSubmitted($seller));
+        } catch (\Exception $e) {
+            Log::warning('Failed to send seller application notification: ' . $e->getMessage());
+        }
+
+        // Notify admins about new application
+        try {
+            $admins = User::where('is_admin', true)->get();
+            foreach ($admins as $admin) {
+                $admin->notify(new NewSellerApplicationNotification($seller, $user));
+            }
+        } catch (\Exception $e) {
+            Log::warning('Failed to send admin notification for seller application: ' . $e->getMessage());
         }
 
         return redirect()->route('seller.pending')->with('success', 'Your seller application has been submitted successfully!');

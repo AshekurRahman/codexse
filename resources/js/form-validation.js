@@ -10,7 +10,7 @@ class AjaxFormValidator {
         this.originalBtnText = this.submitBtn?.innerHTML || 'Submit';
         this.validators = {
             required: (value) => value.trim() !== '' ? null : 'This field is required',
-            email: (value) => !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? null : 'Please enter a valid email address',
+            email: (value) => !value || /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/.test(value) ? null : 'Please enter a valid email address',
             min: (value, param) => !value || value.length >= parseInt(param) ? null : `Must be at least ${param} characters`,
             max: (value, param) => !value || value.length <= parseInt(param) ? null : `Must be no more than ${param} characters`,
             numeric: (value) => !value || /^\d+$/.test(value) ? null : 'Must be a number',

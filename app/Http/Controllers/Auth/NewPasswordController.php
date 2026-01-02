@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\PasswordHistory;
+use App\Models\SecurityLog;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -42,10 +45,37 @@ class NewPasswordController extends Controller
         $status = Password::reset(
             $request->only('email', 'password', 'password_confirmation', 'token'),
             function (User $user) use ($request) {
+                // Check if new password was previously used
+                if (PasswordHistory::wasUsedBefore($user->id, $request->password)) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'password' => 'You cannot reuse a recent password. Please choose a different password.',
+                    ]);
+                }
+
+                // Save current password to history before updating
+                PasswordHistory::store($user->id, $user->password);
+
                 $user->forceFill([
                     'password' => Hash::make($request->password),
                     'remember_token' => Str::random(60),
+                    'locked_until' => null,
+                    'failed_login_attempts' => 0,
                 ])->save();
+
+                // Invalidate all sessions for this user
+                DB::table('sessions')
+                    ->where('user_id', $user->id)
+                    ->delete();
+
+                // Log the password reset
+                SecurityLog::log(
+                    'password_reset',
+                    'Password reset via email link',
+                    'medium',
+                    $request->ip(),
+                    $user->id,
+                    ['user_agent' => $request->userAgent()]
+                );
 
                 event(new PasswordReset($user));
             }

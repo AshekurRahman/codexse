@@ -10,7 +10,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 <!-- Sidebar -->
                 <aside class="lg:col-span-1">
-                    <nav class="rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 overflow-hidden sticky top-24">
+                    <nav class="rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 overflow-hidden lg:sticky lg:top-24">
                         <div class="px-4 py-3 bg-surface-50 dark:bg-surface-700/50 border-b border-surface-200 dark:border-surface-700">
                             <p class="text-xs font-semibold text-surface-400 uppercase tracking-wider">Overview</p>
                         </div>
@@ -203,14 +203,14 @@
                     <!-- Charts Section -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Activity Breakdown Donut Chart -->
-                        <div class="rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-5">
+                        <div class="rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-4 sm:p-5">
                             <h3 class="font-semibold text-surface-900 dark:text-white mb-4">Activity Overview</h3>
                             <div class="flex items-center justify-center">
-                                <div class="relative" style="width: 200px; height: 200px;">
+                                <div class="relative w-40 h-40 sm:w-48 sm:h-48">
                                     <canvas id="activityChart"></canvas>
                                     <div class="absolute inset-0 flex items-center justify-center">
                                         <div class="text-center">
-                                            <p class="text-2xl font-bold text-surface-900 dark:text-white">{{ ($totalOrders ?? 0) + ($serviceOrders ?? 0) + ($activeContracts ?? 0) + ($jobPosts ?? 0) }}</p>
+                                            <p class="text-xl sm:text-2xl font-bold text-surface-900 dark:text-white">{{ ($totalOrders ?? 0) + ($serviceOrders ?? 0) + ($activeContracts ?? 0) + ($jobPosts ?? 0) }}</p>
                                             <p class="text-xs text-surface-500 dark:text-surface-400">Total</p>
                                         </div>
                                     </div>
@@ -237,11 +237,11 @@
                         </div>
 
                         <!-- Order Status Pie Chart -->
-                        <div class="rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-5">
+                        <div class="rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-4 sm:p-5">
                             <h3 class="font-semibold text-surface-900 dark:text-white mb-4">Order Status</h3>
                             @if(!empty($orderStatusData))
                                 <div class="flex items-center justify-center">
-                                    <div style="width: 200px; height: 200px;">
+                                    <div class="w-40 h-40 sm:w-48 sm:h-48">
                                         <canvas id="orderStatusChart"></canvas>
                                     </div>
                                 </div>
@@ -270,11 +270,11 @@
                         </div>
 
                         <!-- Service Status Pie Chart -->
-                        <div class="rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-5">
+                        <div class="rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-4 sm:p-5">
                             <h3 class="font-semibold text-surface-900 dark:text-white mb-4">Service Orders Status</h3>
                             @if(!empty($serviceStatusData))
                                 <div class="flex items-center justify-center">
-                                    <div style="width: 200px; height: 200px;">
+                                    <div class="w-40 h-40 sm:w-48 sm:h-48">
                                         <canvas id="serviceStatusChart"></canvas>
                                     </div>
                                 </div>
@@ -303,11 +303,11 @@
                         </div>
 
                         <!-- Contract Status Pie Chart -->
-                        <div class="rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-5">
+                        <div class="rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-4 sm:p-5">
                             <h3 class="font-semibold text-surface-900 dark:text-white mb-4">Contract Status</h3>
                             @if(!empty($contractStatusData))
                                 <div class="flex items-center justify-center">
-                                    <div style="width: 200px; height: 200px;">
+                                    <div class="w-40 h-40 sm:w-48 sm:h-48">
                                         <canvas id="contractStatusChart"></canvas>
                                     </div>
                                 </div>

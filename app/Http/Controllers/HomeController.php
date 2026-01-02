@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\Seller;
 use App\Models\Service;
 use App\Models\JobPosting;
 use Illuminate\View\View;
@@ -51,13 +52,23 @@ class HomeController extends Controller
         // Recently viewed products
         $recentlyViewed = RecentlyViewedController::getProducts(8);
 
+        // Featured sellers
+        $featuredSellers = Seller::with('user')
+            ->withCount('products')
+            ->where('status', 'approved')
+            ->where('is_verified', true)
+            ->orderByDesc('total_sales')
+            ->take(6)
+            ->get();
+
         return view('pages.home', compact(
             'featuredProducts',
             'categories',
             'trendingProducts',
             'featuredServices',
             'recentJobs',
-            'recentlyViewed'
+            'recentlyViewed',
+            'featuredSellers'
         ));
     }
 }

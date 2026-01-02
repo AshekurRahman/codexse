@@ -63,11 +63,26 @@
 
             <!-- Right Side -->
             <div class="flex items-center gap-1 sm:gap-2">
-                <!-- Search -->
-                <x-search-box class="hidden sm:block w-64 lg:w-80" />
+                <!-- Mobile Search Button -->
+                <button
+                    type="button"
+                    class="sm:hidden flex items-center justify-center h-10 w-10 rounded-xl text-surface-600 dark:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+                    x-data
+                    @click="$dispatch('open-mobile-search')"
+                    aria-label="Search"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </button>
 
-                <!-- Currency Selector -->
-                <x-currency-selector />
+                <!-- Desktop Search -->
+                <x-search-box class="hidden sm:block w-48 md:w-64 lg:w-80" />
+
+                <!-- Currency Selector (hidden on mobile/tablet) -->
+                <div class="hidden xl:block">
+                    <x-currency-selector />
+                </div>
 
                 <!-- Theme Toggle -->
                 <x-theme-toggle />
@@ -111,7 +126,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                             </svg>
                         </button>
-                        <div x-show="open" @click.away="open = false" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="absolute right-0 mt-2 w-64 rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 shadow-xl py-2 max-h-[80vh] overflow-y-auto" style="display: none;">
+                        <div x-show="open" @click.away="open = false" x-transition:enter="transition ease-out duration-100" x-transition:enter-start="transform opacity-0 scale-95" x-transition:enter-end="transform opacity-100 scale-100" x-transition:leave="transition ease-in duration-75" x-transition:leave-start="transform opacity-100 scale-100" x-transition:leave-end="transform opacity-0 scale-95" class="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-64 max-w-64 rounded-xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 shadow-xl py-2 max-h-[calc(100vh-5rem)] overflow-y-auto" style="display: none;">
                             <div class="px-4 py-2 border-b border-surface-200 dark:border-surface-700">
                                 <p class="text-sm font-semibold text-surface-900 dark:text-white">{{ auth()->user()->name }}</p>
                                 <p class="text-xs text-surface-500 dark:text-surface-400">{{ auth()->user()->email }}</p>
@@ -267,14 +282,121 @@
         </div>
     </div>
 
+    <!-- Mobile Search Modal -->
+    <div
+        x-data="{ open: false }"
+        @open-mobile-search.window="open = true"
+        @keydown.escape.window="open = false"
+        x-show="open"
+        x-cloak
+        class="fixed inset-0 z-[60] sm:hidden"
+    >
+        <!-- Backdrop -->
+        <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            @click="open = false"
+            class="absolute inset-0 bg-surface-900/50 backdrop-blur-sm"
+        ></div>
+
+        <!-- Search Panel -->
+        <div
+            x-show="open"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="-translate-y-full opacity-0"
+            x-transition:enter-end="translate-y-0 opacity-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="translate-y-0 opacity-100"
+            x-transition:leave-end="-translate-y-full opacity-0"
+            class="absolute top-0 left-0 right-0 bg-white dark:bg-surface-900 shadow-xl"
+        >
+            <div class="p-4">
+                <form action="{{ route('products.index') }}" method="GET" class="flex items-center gap-3">
+                    <div class="flex-1 relative">
+                        <input
+                            type="search"
+                            name="q"
+                            placeholder="Search products..."
+                            class="w-full pl-10 pr-4 py-3 rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 text-surface-900 dark:text-white placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            autofocus
+                            x-ref="mobileSearchInput"
+                            x-init="$watch('open', value => { if (value) setTimeout(() => $refs.mobileSearchInput.focus(), 100) })"
+                        >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <button
+                        type="button"
+                        @click="open = false"
+                        class="p-3 rounded-xl text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Mobile Menu -->
     <div id="mobile-menu" x-data="{ open: false }" @toggle-mobile-menu.window="open = !open" x-show="open" x-cloak class="lg:hidden border-t border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900" role="navigation" aria-label="Mobile navigation">
         <div class="px-4 py-4 space-y-1">
+            <!-- Mobile Search in Menu -->
+            <form action="{{ route('products.index') }}" method="GET" class="mb-4 sm:hidden">
+                <div class="relative">
+                    <input
+                        type="search"
+                        name="q"
+                        placeholder="Search..."
+                        class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 text-surface-900 dark:text-white placeholder-surface-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+            </form>
+
             <a href="{{ route('products.index') }}" class="block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('products.*') ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : 'text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-surface-100 dark:hover:bg-surface-800' }}">Products</a>
             <a href="{{ route('services.index') }}" class="block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('services.*') ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : 'text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-surface-100 dark:hover:bg-surface-800' }}">Services</a>
             <a href="{{ route('jobs.index') }}" class="block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('jobs.*') ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : 'text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-surface-100 dark:hover:bg-surface-800' }}">Jobs</a>
             <a href="{{ route('categories.index') }}" class="block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('categories.*') ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : 'text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-surface-100 dark:hover:bg-surface-800' }}">Categories</a>
             <a href="{{ route('sellers.index') }}" class="block px-4 py-2.5 text-sm font-medium rounded-lg transition-colors {{ request()->routeIs('sellers.*') ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20' : 'text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-surface-100 dark:hover:bg-surface-800' }}">Sellers</a>
+
+            <!-- Mobile Currency Selector -->
+            @php
+                $showSelector = \App\Filament\Admin\Pages\CurrencySettings::shouldShowCurrencySelector();
+                $currencies = \App\Models\Currency::getActive();
+                $currentCurrency = current_currency();
+            @endphp
+            @if($showSelector && $currencies->count() > 1)
+                <hr class="my-2 border-surface-200 dark:border-surface-700">
+                <div class="px-4 py-2">
+                    <p class="text-xs font-semibold text-surface-400 uppercase tracking-wider mb-2">Currency</p>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($currencies as $currency)
+                            <form action="{{ route('currency.switch') }}" method="POST" class="inline">
+                                @csrf
+                                <input type="hidden" name="currency" value="{{ $currency->code }}">
+                                <button
+                                    type="submit"
+                                    class="flex items-center gap-1 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors {{ $currency->code === $currentCurrency->code ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 border border-primary-300 dark:border-primary-700' : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-surface-700 border border-surface-200 dark:border-surface-700' }}"
+                                >
+                                    <span>{{ $currency->symbol }}</span>
+                                    <span>{{ $currency->code }}</span>
+                                </button>
+                            </form>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
             @guest
                 <hr class="my-2 border-surface-200 dark:border-surface-700">
                 <a href="{{ route('login') }}" class="block px-4 py-2.5 text-sm font-medium text-surface-600 dark:text-surface-300 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800">Sign In</a>

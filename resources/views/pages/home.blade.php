@@ -110,10 +110,13 @@
         </div>
     </section>
 
+    <!-- Trust Badges -->
+    <x-trust-badges />
+
     <!-- Categories Section - Redesigned -->
     <section class="bg-white dark:bg-surface-900 py-20">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12">
+            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12" x-scroll-animate>
                 <div>
                     <span class="inline-block px-3 py-1 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-xs font-semibold uppercase tracking-wider mb-3">Explore</span>
                     <h2 class="text-3xl md:text-4xl font-bold text-surface-900 dark:text-white">Browse by Category</h2>
@@ -128,8 +131,8 @@
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                @forelse($categories as $category)
-                    <a href="{{ route('categories.show', $category) }}" class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-surface-50 to-surface-100 dark:from-surface-800 dark:to-surface-700 p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-2 border border-surface-200 dark:border-surface-700 hover:border-primary-300 dark:hover:border-primary-700">
+                @forelse($categories as $index => $category)
+                    <a href="{{ route('categories.show', $category) }}" class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-surface-50 to-surface-100 dark:from-surface-800 dark:to-surface-700 p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-2 border border-surface-200 dark:border-surface-700 hover:border-primary-300 dark:hover:border-primary-700" x-scroll-animate.delay="{{ $index * 50 }}">
                         <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-primary-500/10 to-accent-500/10 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500"></div>
                         <div class="relative">
                             <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center mb-4 shadow-lg shadow-primary-500/20 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
@@ -160,7 +163,7 @@
         <div class="absolute bottom-0 right-0 w-96 h-96 bg-accent-500/5 rounded-full blur-3xl"></div>
 
         <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12">
+            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12" x-scroll-animate>
                 <div>
                     <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gradient-to-r from-amber-100 to-yellow-100 dark:from-amber-900/30 dark:to-yellow-900/30 mb-3">
                         <svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 20 20">
@@ -191,8 +194,47 @@
         </div>
     </section>
 
+    <!-- Featured Sellers Section -->
+    <section class="bg-white dark:bg-surface-900 py-20 border-t border-surface-100 dark:border-surface-800">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12" x-scroll-animate>
+                <div>
+                    <span class="inline-block px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs font-semibold uppercase tracking-wider mb-3">Top Creators</span>
+                    <h2 class="text-3xl md:text-4xl font-bold text-surface-900 dark:text-white">Featured Sellers</h2>
+                    <p class="mt-2 text-surface-600 dark:text-surface-400 max-w-xl">Meet our top-rated sellers creating amazing digital products</p>
+                </div>
+                <a href="{{ route('sellers.index') }}" class="inline-flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-semibold hover:gap-3 transition-all">
+                    View All Sellers
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                </a>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                @forelse($featuredSellers ?? [] as $index => $seller)
+                    <div x-scroll-animate.delay="{{ $index * 100 }}">
+                        <x-seller-card-compact :seller="$seller" />
+                    </div>
+                @empty
+                    @for($i = 0; $i < 6; $i++)
+                        <div class="card p-4 text-center" x-scroll-animate.delay="{{ $i * 100 }}">
+                            <div class="w-16 h-16 rounded-full skeleton-shimmer mx-auto mb-3"></div>
+                            <div class="h-4 skeleton-shimmer w-24 mx-auto rounded mb-2"></div>
+                            <div class="h-3 skeleton-shimmer w-16 mx-auto rounded mb-3"></div>
+                            <div class="flex justify-center gap-4">
+                                <div class="h-3 skeleton-shimmer w-12 rounded"></div>
+                                <div class="h-3 skeleton-shimmer w-12 rounded"></div>
+                            </div>
+                        </div>
+                    @endfor
+                @endforelse
+            </div>
+        </div>
+    </section>
+
     <!-- Services Section - Redesigned with Bento Grid -->
-    <section class="bg-white dark:bg-surface-900 py-20">
+    <section class="bg-surface-50 dark:bg-surface-800 py-20">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="grid lg:grid-cols-3 gap-8">
                 <!-- Left Column - Header -->
@@ -402,6 +444,9 @@
     @if(isset($recentlyViewed) && $recentlyViewed->count() > 0)
         <x-recently-viewed :products="$recentlyViewed" title="Continue Browsing" />
     @endif
+
+    <!-- Testimonials Section -->
+    <x-testimonials-carousel />
 
     <!-- CTA Section - Redesigned -->
     <section class="bg-surface-50 dark:bg-surface-800 py-20">

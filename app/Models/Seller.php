@@ -223,6 +223,16 @@ class Seller extends Model
             return asset('storage/' . $this->logo);
         }
 
+        // Fall back to user's avatar if available
+        if ($this->user) {
+            if ($this->user->avatar) {
+                return asset('storage/' . $this->user->avatar);
+            }
+            if ($this->user->social_avatar) {
+                return $this->user->social_avatar;
+            }
+        }
+
         return 'https://ui-avatars.com/api/?name=' . urlencode($this->store_name) . '&background=6366f1&color=fff';
     }
 

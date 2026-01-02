@@ -5,7 +5,7 @@
         <p class="mt-2 text-surface-600 dark:text-surface-400">Join Codexse and start exploring</p>
     </div>
 
-    <form method="POST" action="{{ route('register') }}" data-ajax-form>
+    <form method="POST" action="{{ route('register') }}" data-ajax-form novalidate>
         @csrf
 
         <!-- Name -->

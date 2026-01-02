@@ -49,6 +49,8 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
         'privacy_policy_accepted_at',
         'privacy_policy_version',
         'gdpr_deletion_requested_at',
+        'locked_until',
+        'failed_login_attempts',
     ];
 
     /**
@@ -78,6 +80,8 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
             'third_party_consent' => 'boolean',
             'privacy_policy_accepted_at' => 'datetime',
             'gdpr_deletion_requested_at' => 'datetime',
+            'locked_until' => 'datetime',
+            'failed_login_attempts' => 'integer',
         ];
     }
 

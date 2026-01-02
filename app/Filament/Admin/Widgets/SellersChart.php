@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Widgets;
 
+use App\Filament\Admin\Pages\DashboardSettings;
 use App\Models\Seller;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
@@ -11,6 +12,11 @@ class SellersChart extends ChartWidget
     protected static ?string $heading = 'New Sellers';
 
     protected static ?int $sort = 6;
+
+    public static function canView(): bool
+    {
+        return DashboardSettings::isWidgetEnabled('sellers_chart');
+    }
 
     protected int | string | array $columnSpan = 1;
 
