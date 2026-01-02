@@ -66,7 +66,21 @@
                         </div>
 
                         <!-- Payment Method -->
-                        <div class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-6" x-data="{ selectedMethod: '{{ isset($canPayWithWallet) && $canPayWithWallet ? 'wallet' : 'stripe' }}' }">
+                        @php
+                            $defaultPayment = 'wallet';
+                            if (!($canPayWithWallet ?? false)) {
+                                if (($stripeConfigured ?? false) && \App\Models\Setting::get('stripe_enabled', true)) {
+                                    $defaultPayment = 'stripe';
+                                } elseif (($paypalConfigured ?? false) && \App\Models\Setting::get('paypal_enabled', false)) {
+                                    $defaultPayment = 'paypal';
+                                } elseif (($payoneerConfigured ?? false) && \App\Models\Setting::get('payoneer_enabled', false)) {
+                                    $defaultPayment = 'payoneer';
+                                } else {
+                                    $defaultPayment = '';
+                                }
+                            }
+                        @endphp
+                        <div class="rounded-2xl border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 p-6" x-data="{ selectedMethod: '{{ $defaultPayment }}' }">
                             <h2 class="text-lg font-semibold text-surface-900 dark:text-white mb-6">Payment Method</h2>
                             <div class="space-y-3">
                                 {{-- Wallet Payment Option --}}
@@ -104,7 +118,7 @@
                                     @endif
                                 @endauth
 
-                                @if(\App\Models\Setting::get('stripe_enabled', true))
+                                @if(\App\Models\Setting::get('stripe_enabled', true) && ($stripeConfigured ?? false))
                                 <label class="flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors"
                                     :class="selectedMethod === 'stripe' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-surface-200 dark:border-surface-700 hover:border-primary-300 dark:hover:border-primary-700'">
                                     <input type="radio" name="payment_method" value="stripe" x-model="selectedMethod" class="h-5 w-5 text-primary-600 focus:ring-primary-500">
@@ -142,7 +156,7 @@
                                 </div>
                                 @endif
 
-                                @if(\App\Models\Setting::get('paypal_enabled', false))
+                                @if(\App\Models\Setting::get('paypal_enabled', false) && ($paypalConfigured ?? false))
                                 <label class="flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors"
                                     :class="selectedMethod === 'paypal' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-surface-200 dark:border-surface-700 hover:border-primary-300 dark:hover:border-primary-700'">
                                     <input type="radio" name="payment_method" value="paypal" x-model="selectedMethod" class="h-5 w-5 text-primary-600 focus:ring-primary-500">
@@ -173,7 +187,7 @@
                                 </div>
                                 @endif
 
-                                @if(\App\Models\Setting::get('payoneer_enabled', false))
+                                @if(\App\Models\Setting::get('payoneer_enabled', false) && ($payoneerConfigured ?? false))
                                 <label class="flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-colors"
                                     :class="selectedMethod === 'payoneer' ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-surface-200 dark:border-surface-700 hover:border-primary-300 dark:hover:border-primary-700'">
                                     <input type="radio" name="payment_method" value="payoneer" x-model="selectedMethod" class="h-5 w-5 text-primary-600 focus:ring-primary-500">
@@ -199,6 +213,21 @@
                                             <p class="mt-1 text-sm text-surface-600 dark:text-surface-400">
                                                 Pay using local payment methods, credit cards, or bank transfers worldwide.
                                             </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                @endif
+
+                                {{-- No Payment Methods Warning --}}
+                                @if(empty($defaultPayment) && !($canPayWithWallet ?? false))
+                                <div class="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
+                                    <div class="flex items-center gap-3">
+                                        <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                        </svg>
+                                        <div>
+                                            <p class="font-medium text-red-700 dark:text-red-300">No payment methods available</p>
+                                            <p class="text-sm text-red-600 dark:text-red-400 mt-1">Please contact support or try again later.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -347,7 +376,7 @@
             // Validation rules
             const validators = {
                 required: (value) => value.trim() !== '' ? null : 'This field is required',
-                email: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? null : 'Please enter a valid email address',
+                email: (value) => /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/.test(value) ? null : 'Please enter a valid email address',
             };
 
             // Clear field error

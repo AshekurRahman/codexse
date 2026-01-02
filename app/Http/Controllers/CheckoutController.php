@@ -50,11 +50,6 @@ class CheckoutController extends Controller
 
     public function index()
     {
-        // Check if Stripe is configured
-        if (!$this->stripeService->isConfigured()) {
-            return redirect()->route('cart.index')->with('error', 'Payment system is not configured. Please contact support.');
-        }
-
         $cart = session()->get('cart', []);
 
         if (empty($cart)) {
@@ -102,6 +97,11 @@ class CheckoutController extends Controller
             $taxData = $this->taxService->calculateTotals($total, 0, $savedState);
         }
 
+        // Check if payment gateways are configured
+        $stripeConfigured = $this->stripeService->isConfigured();
+        $paypalConfigured = $this->paypalService->isConfigured();
+        $payoneerConfigured = $this->payoneerService->isConfigured();
+
         return view('pages.checkout', compact(
             'products',
             'cart',
@@ -114,7 +114,10 @@ class CheckoutController extends Controller
             'taxEnabled',
             'usStates',
             'savedState',
-            'taxData'
+            'taxData',
+            'stripeConfigured',
+            'paypalConfigured',
+            'payoneerConfigured'
         ));
     }
 
