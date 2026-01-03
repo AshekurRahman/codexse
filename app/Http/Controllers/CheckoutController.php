@@ -630,7 +630,31 @@ class CheckoutController extends Controller
     public function success(Request $request)
     {
         $sessionId = $request->query('session_id');
+        $orderId = $request->query('order');
 
+        // Handle wallet/direct payment success (order ID provided)
+        if ($orderId && !$sessionId) {
+            $order = Order::where('id', $orderId)
+                ->where('status', 'completed')
+                ->first();
+
+            if (!$order) {
+                return redirect()->route('products.index')->with('error', 'Order not found.');
+            }
+
+            // Verify ownership if user is logged in
+            if (auth()->check() && $order->user_id && $order->user_id !== auth()->id()) {
+                return redirect()->route('products.index')->with('error', 'Unauthorized access.');
+            }
+
+            // Clear cart
+            session()->forget('cart');
+            session()->forget('pending_order_items');
+
+            return view('pages.checkout-success', compact('order'));
+        }
+
+        // Handle Stripe payment success (session_id provided)
         if (!$sessionId) {
             return redirect()->route('products.index');
         }
