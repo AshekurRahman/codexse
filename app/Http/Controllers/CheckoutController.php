@@ -912,19 +912,12 @@ class CheckoutController extends Controller
 
     public function success(Request $request)
     {
-        // Debug: Log all request parameters (using error level because LOG_LEVEL=error in .env)
-        Log::error('DEBUG Checkout: Success page accessed', [
-            'all_query' => $request->query(),
-            'url' => $request->fullUrl(),
-            'user_id' => auth()->id(),
-        ]);
-
         $sessionId = $request->query('session_id');
         $orderId = $request->query('order');
 
         // Handle wallet/direct payment success (order ID provided)
         if ($orderId && !$sessionId) {
-            Log::error('DEBUG Checkout: Success page - wallet/direct payment', [
+            Log::info('Checkout: Success page - wallet/direct payment', [
                 'order_id' => $orderId,
                 'user_id' => auth()->id(),
             ]);
@@ -934,18 +927,14 @@ class CheckoutController extends Controller
                 ->first();
 
             if (!$order) {
-                // Check if order exists but with different status
-                $anyOrder = Order::find($orderId);
-                Log::error('DEBUG Checkout: Success page - order not found or wrong status', [
+                Log::warning('Checkout: Success page - order not found or not completed', [
                     'order_id' => $orderId,
-                    'order_exists' => $anyOrder ? 'yes' : 'no',
-                    'actual_status' => $anyOrder?->status ?? 'N/A',
                 ]);
                 return redirect()->route('products.index')->with('error', 'Order not found.');
             }
 
             // Verify ownership if user is logged in
-            if (auth()->check() && $order->user_id && $order->user_id !== auth()->id()) {
+            if (auth()->check() && $order->user_id && (int) $order->user_id !== auth()->id()) {
                 Log::warning('Checkout: Success page - unauthorized access', [
                     'order_id' => $orderId,
                     'order_user_id' => $order->user_id,
@@ -963,7 +952,6 @@ class CheckoutController extends Controller
 
         // Handle Stripe payment success (session_id provided)
         if (!$sessionId) {
-            Log::error('DEBUG Checkout: Success page - no session_id or order_id, redirecting to products');
             return redirect()->route('products.index');
         }
 
