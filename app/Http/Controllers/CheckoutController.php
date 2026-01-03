@@ -357,8 +357,18 @@ class CheckoutController extends Controller
     {
         $isAjax = $request->expectsJson() || $request->ajax();
 
+        Log::info('Checkout: Processing wallet payment', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'amount' => $total,
+            'user_id' => Auth::id(),
+        ]);
+
         if (!Auth::check()) {
             $order->update(['status' => 'failed']);
+            Log::warning('Checkout: Wallet payment failed - user not authenticated', [
+                'order_id' => $order->id,
+            ]);
             if ($isAjax) {
                 return response()->json(['message' => 'Please log in to use wallet payment.'], 401);
             }
@@ -371,6 +381,11 @@ class CheckoutController extends Controller
         // Verify wallet can make this purchase
         if (!$wallet->canPurchase($total)) {
             $order->update(['status' => 'failed']);
+            Log::warning('Checkout: Wallet payment failed - insufficient balance', [
+                'order_id' => $order->id,
+                'wallet_balance' => $wallet->balance,
+                'required' => $total,
+            ]);
             if ($isAjax) {
                 return response()->json(['message' => 'Insufficient wallet balance. Please add funds or choose another payment method.'], 422);
             }
@@ -395,6 +410,12 @@ class CheckoutController extends Controller
 
             DB::commit();
 
+            Log::info('Checkout: Wallet payment successful', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'transaction_ref' => $transaction->reference,
+            ]);
+
             // Clear cart
             session()->forget('cart');
             session()->forget('pending_order_items');
@@ -406,7 +427,10 @@ class CheckoutController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Wallet checkout error: ' . $e->getMessage());
+            Log::error('Checkout: Wallet payment error', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
             $order->update(['status' => 'failed']);
             if ($isAjax) {
                 return response()->json(['message' => 'Payment failed. Please try again.'], 422);
@@ -422,8 +446,16 @@ class CheckoutController extends Controller
     {
         $isAjax = $request->expectsJson() || $request->ajax();
 
+        Log::info('Checkout: Processing PayPal payment', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'amount' => $order->total,
+            'user_id' => Auth::id(),
+        ]);
+
         if (!$this->paypalService->isConfigured()) {
             $order->update(['status' => 'failed']);
+            Log::warning('Checkout: PayPal not configured', ['order_id' => $order->id]);
             if ($isAjax) {
                 return response()->json(['message' => 'PayPal is not configured. Please contact support.'], 422);
             }
@@ -450,8 +482,12 @@ class CheckoutController extends Controller
             'cancel_url' => route('checkout.cancel'),
         ]);
 
-        if (!$paypalOrder || !$paypalOrder['approval_url']) {
+        if (!$paypalOrder || !isset($paypalOrder['approval_url'])) {
             $order->update(['status' => 'failed']);
+            Log::error('Checkout: Failed to create PayPal order', [
+                'order_id' => $order->id,
+                'paypal_response' => $paypalOrder,
+            ]);
             if ($isAjax) {
                 return response()->json(['message' => 'Failed to create PayPal order. Please try again.'], 422);
             }
@@ -465,6 +501,11 @@ class CheckoutController extends Controller
 
         // Store order items in session
         session()->put('pending_order_items', $orderItems);
+
+        Log::info('Checkout: PayPal order created, redirecting', [
+            'order_id' => $order->id,
+            'paypal_order_id' => $paypalOrder['id'],
+        ]);
 
         // Redirect to PayPal
         if ($isAjax) {
@@ -634,16 +675,27 @@ class CheckoutController extends Controller
 
         // Handle wallet/direct payment success (order ID provided)
         if ($orderId && !$sessionId) {
+            Log::info('Checkout: Success page - wallet/direct payment', [
+                'order_id' => $orderId,
+                'user_id' => auth()->id(),
+            ]);
+
             $order = Order::where('id', $orderId)
                 ->where('status', 'completed')
                 ->first();
 
             if (!$order) {
+                Log::warning('Checkout: Success page - order not found', ['order_id' => $orderId]);
                 return redirect()->route('products.index')->with('error', 'Order not found.');
             }
 
             // Verify ownership if user is logged in
             if (auth()->check() && $order->user_id && $order->user_id !== auth()->id()) {
+                Log::warning('Checkout: Success page - unauthorized access', [
+                    'order_id' => $orderId,
+                    'order_user_id' => $order->user_id,
+                    'current_user_id' => auth()->id(),
+                ]);
                 return redirect()->route('products.index')->with('error', 'Unauthorized access.');
             }
 
@@ -656,14 +708,24 @@ class CheckoutController extends Controller
 
         // Handle Stripe payment success (session_id provided)
         if (!$sessionId) {
+            Log::warning('Checkout: Success page - no session_id or order_id');
             return redirect()->route('products.index');
         }
+
+        Log::info('Checkout: Success page - Stripe payment', [
+            'session_id' => $sessionId,
+            'user_id' => auth()->id(),
+        ]);
 
         try {
             // Retrieve the session from Stripe
             $session = StripeSession::retrieve($sessionId);
 
             if ($session->payment_status !== 'paid') {
+                Log::warning('Checkout: Stripe payment not completed', [
+                    'session_id' => $sessionId,
+                    'payment_status' => $session->payment_status,
+                ]);
                 return redirect()->route('checkout')->with('error', 'Payment was not completed.');
             }
 
@@ -671,6 +733,7 @@ class CheckoutController extends Controller
             $order = Order::where('stripe_session_id', $sessionId)->first();
 
             if (!$order) {
+                Log::warning('Checkout: Order not found for Stripe session', ['session_id' => $sessionId]);
                 return redirect()->route('products.index')->with('error', 'Order not found.');
             }
 
@@ -679,6 +742,12 @@ class CheckoutController extends Controller
                 $this->completeOrder($order, $session->payment_intent);
             }
 
+            Log::info('Checkout: Stripe payment successful', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'payment_intent' => $session->payment_intent,
+            ]);
+
             // Clear cart
             session()->forget('cart');
             session()->forget('pending_order_items');
@@ -686,7 +755,10 @@ class CheckoutController extends Controller
             return view('pages.checkout-success', compact('order'));
 
         } catch (\Exception $e) {
-            Log::error('Stripe success error: ' . $e->getMessage());
+            Log::error('Checkout: Stripe success error', [
+                'session_id' => $sessionId,
+                'error' => $e->getMessage(),
+            ]);
             return redirect()->route('products.index')->with('error', 'Error processing payment confirmation.');
         }
     }
@@ -701,14 +773,27 @@ class CheckoutController extends Controller
      */
     public function paypalSuccess(Request $request, Order $order)
     {
+        Log::info('Checkout: PayPal success callback', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'user_id' => auth()->id(),
+            'token' => $request->query('token'),
+        ]);
+
         // Verify the order belongs to the current user (if logged in)
         if (auth()->check() && $order->user_id && $order->user_id !== auth()->id()) {
+            Log::warning('Checkout: PayPal success - unauthorized access', [
+                'order_id' => $order->id,
+                'order_user_id' => $order->user_id,
+                'current_user_id' => auth()->id(),
+            ]);
             return redirect()->route('products.index')->with('error', 'Unauthorized access.');
         }
 
         $paypalOrderId = $request->query('token') ?? $order->paypal_order_id;
 
         if (!$paypalOrderId) {
+            Log::warning('Checkout: PayPal success - no order ID', ['order_id' => $order->id]);
             return redirect()->route('checkout')->with('error', 'Invalid PayPal order.');
         }
 
@@ -722,6 +807,12 @@ class CheckoutController extends Controller
                     $this->completeOrder($order, 'paypal_' . ($captureResult['capture_id'] ?? $paypalOrderId));
                 }
 
+                Log::info('Checkout: PayPal payment successful', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'capture_id' => $captureResult['capture_id'] ?? null,
+                ]);
+
                 // Clear cart
                 session()->forget('cart');
                 session()->forget('pending_order_items');
@@ -730,10 +821,17 @@ class CheckoutController extends Controller
             }
 
             // Payment not completed
+            Log::warning('Checkout: PayPal payment not completed', [
+                'order_id' => $order->id,
+                'capture_status' => $captureResult['status'] ?? 'unknown',
+            ]);
             return redirect()->route('checkout')->with('error', 'Payment was not completed. Please try again.');
 
         } catch (\Exception $e) {
-            Log::error('PayPal success callback error: ' . $e->getMessage());
+            Log::error('Checkout: PayPal success callback error', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
             return redirect()->route('products.index')->with('error', 'Error processing payment confirmation.');
         }
     }
@@ -743,8 +841,20 @@ class CheckoutController extends Controller
      */
     public function payoneerSuccess(Request $request, Order $order)
     {
-        // Verify the order belongs to the current user
-        if ($order->user_id !== auth()->id()) {
+        Log::info('Checkout: Payoneer success callback', [
+            'order_id' => $order->id,
+            'order_number' => $order->order_number,
+            'user_id' => auth()->id(),
+        ]);
+
+        // Verify the order belongs to the current user (if logged in)
+        // Handle case where session expired during payment
+        if (auth()->check() && $order->user_id && $order->user_id !== auth()->id()) {
+            Log::warning('Checkout: Payoneer success - unauthorized access', [
+                'order_id' => $order->id,
+                'order_user_id' => $order->user_id,
+                'current_user_id' => auth()->id(),
+            ]);
             return redirect()->route('products.index')->with('error', 'Unauthorized access.');
         }
 
@@ -758,6 +868,12 @@ class CheckoutController extends Controller
                     $this->completeOrder($order, $status['transactionId'] ?? null);
                 }
 
+                Log::info('Checkout: Payoneer payment successful', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'transaction_id' => $status['transactionId'] ?? null,
+                ]);
+
                 // Clear cart
                 session()->forget('cart');
                 session()->forget('pending_order_items');
@@ -767,15 +883,26 @@ class CheckoutController extends Controller
 
             // Payment not confirmed yet - check if still processing
             if ($status && isset($status['status']) && in_array($status['status'], ['PENDING', 'PROCESSING'])) {
+                Log::info('Checkout: Payoneer payment processing', [
+                    'order_id' => $order->id,
+                    'status' => $status['status'],
+                ]);
                 return view('pages.checkout-success', compact('order'))
                     ->with('warning', 'Your payment is being processed. You will receive confirmation shortly.');
             }
 
             // Payment failed or was declined
+            Log::warning('Checkout: Payoneer payment not completed', [
+                'order_id' => $order->id,
+                'status' => $status['status'] ?? 'unknown',
+            ]);
             return redirect()->route('checkout')->with('error', 'Payment was not completed. Please try again.');
 
         } catch (\Exception $e) {
-            Log::error('Payoneer success callback error: ' . $e->getMessage());
+            Log::error('Checkout: Payoneer success callback error', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
             return redirect()->route('products.index')->with('error', 'Error processing payment confirmation.');
         }
     }
