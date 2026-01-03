@@ -221,11 +221,23 @@ class InputSanitization
             }
         }
 
-        // Headers (selected)
-        $sensitiveHeaders = ['referer', 'user-agent', 'x-forwarded-for'];
+        // Headers (selected) - skip referer from same domain to avoid false positives
+        $sensitiveHeaders = ['user-agent', 'x-forwarded-for'];
         foreach ($sensitiveHeaders as $header) {
             if ($request->hasHeader($header)) {
                 $inputs["header.{$header}"] = $request->header($header);
+            }
+        }
+
+        // Only scan referer if it's from external domain (not same-site)
+        if ($request->hasHeader('referer')) {
+            $referer = $request->header('referer');
+            $refererHost = parse_url($referer, PHP_URL_HOST);
+            $currentHost = $request->getHost();
+
+            // Only scan external referers for attacks
+            if ($refererHost && $refererHost !== $currentHost && !str_ends_with($refererHost, '.' . $currentHost)) {
+                $inputs["header.referer"] = $referer;
             }
         }
 
