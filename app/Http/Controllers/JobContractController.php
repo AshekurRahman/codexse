@@ -7,6 +7,7 @@ use App\Models\JobMilestone;
 use App\Services\EscrowService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class JobContractController extends Controller
 {
@@ -101,12 +102,29 @@ class JobContractController extends Controller
         $contract = $milestone->contract;
 
         if ($contract->client_id !== auth()->id()) {
-            abort(403);
+            Log::warning('JobContract: Unauthorized milestone approval attempt', [
+                'milestone_id' => $milestone->id,
+                'contract_id' => $contract->id,
+                'user_id' => auth()->id(),
+                'client_id' => $contract->client_id,
+            ]);
+            abort(403, 'You are not authorized to approve this milestone.');
         }
 
         if (!$milestone->canApprove()) {
+            Log::warning('JobContract: Cannot approve milestone - invalid state', [
+                'milestone_id' => $milestone->id,
+                'status' => $milestone->status,
+            ]);
             return redirect()->back()->with('error', 'This milestone cannot be approved.');
         }
+
+        Log::info('JobContract: Approving milestone', [
+            'milestone_id' => $milestone->id,
+            'contract_id' => $contract->id,
+            'user_id' => auth()->id(),
+            'amount' => $milestone->amount,
+        ]);
 
         try {
             DB::beginTransaction();
@@ -118,7 +136,13 @@ class JobContractController extends Controller
 
             // Release escrow
             if ($milestone->escrowTransaction) {
-                $escrowService->releaseFunds($milestone->escrowTransaction, 'Milestone approved by client');
+                $released = $escrowService->releaseFunds($milestone->escrowTransaction, 'Milestone approved by client');
+                if (!$released) {
+                    Log::warning('JobContract: Escrow release failed but milestone approved', [
+                        'milestone_id' => $milestone->id,
+                        'transaction_id' => $milestone->escrowTransaction->id,
+                    ]);
+                }
             }
 
             // Check if all milestones are completed
@@ -133,15 +157,31 @@ class JobContractController extends Controller
                 ]);
 
                 // Update job posting status
-                $contract->jobPosting->update(['status' => 'completed']);
+                if ($contract->jobPosting) {
+                    $contract->jobPosting->update(['status' => 'completed']);
+                }
+
+                Log::info('JobContract: Contract completed - all milestones done', [
+                    'contract_id' => $contract->id,
+                ]);
             }
 
             DB::commit();
+
+            Log::info('JobContract: Milestone approved successfully', [
+                'milestone_id' => $milestone->id,
+                'contract_id' => $contract->id,
+                'seller_id' => $contract->seller_id,
+            ]);
 
             return redirect()->back()->with('success', 'Milestone approved! Payment released to freelancer.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('JobContract: Failed to approve milestone', [
+                'milestone_id' => $milestone->id,
+                'error' => $e->getMessage(),
+            ]);
             return redirect()->back()->with('error', 'Failed to approve milestone. Please try again.');
         }
     }
@@ -182,10 +222,20 @@ class JobContractController extends Controller
 
         if ($contract->client_id !== $user->id &&
             (!$user->seller || $user->seller->id !== $contract->seller_id)) {
-            abort(403);
+            Log::warning('JobContract: Unauthorized cancel attempt', [
+                'contract_id' => $contract->id,
+                'user_id' => $user->id,
+                'client_id' => $contract->client_id,
+                'seller_id' => $contract->seller_id,
+            ]);
+            abort(403, 'You are not authorized to cancel this contract.');
         }
 
         if (!$contract->canCancel()) {
+            Log::warning('JobContract: Cannot cancel - invalid state', [
+                'contract_id' => $contract->id,
+                'status' => $contract->status,
+            ]);
             return redirect()->back()->with('error', 'This contract cannot be cancelled.');
         }
 
@@ -193,13 +243,28 @@ class JobContractController extends Controller
             'reason' => 'required|string|max:500',
         ]);
 
+        Log::info('JobContract: Cancelling contract', [
+            'contract_id' => $contract->id,
+            'user_id' => $user->id,
+            'reason' => $request->input('reason'),
+        ]);
+
         try {
             DB::beginTransaction();
 
             // Refund any held escrow for unfulfilled milestones
+            $refundedCount = 0;
             foreach ($contract->milestones as $milestone) {
                 if ($milestone->escrowTransaction && $milestone->escrowTransaction->canRefund()) {
-                    $escrowService->refundFunds($milestone->escrowTransaction, 'Contract cancelled');
+                    $refunded = $escrowService->refundFunds($milestone->escrowTransaction, 'Contract cancelled');
+                    if ($refunded) {
+                        $refundedCount++;
+                        Log::info('JobContract: Milestone escrow refunded', [
+                            'contract_id' => $contract->id,
+                            'milestone_id' => $milestone->id,
+                            'transaction_id' => $milestone->escrowTransaction->id,
+                        ]);
+                    }
                 }
                 if (!in_array($milestone->status, ['completed', 'cancelled'])) {
                     $milestone->update(['status' => 'cancelled']);
@@ -213,15 +278,26 @@ class JobContractController extends Controller
             ]);
 
             // Update job posting
-            $contract->jobPosting->update(['status' => 'cancelled']);
+            if ($contract->jobPosting) {
+                $contract->jobPosting->update(['status' => 'cancelled']);
+            }
 
             DB::commit();
+
+            Log::info('JobContract: Cancelled successfully', [
+                'contract_id' => $contract->id,
+                'refunded_milestones' => $refundedCount,
+            ]);
 
             return redirect()->route('contracts.index')
                 ->with('success', 'Contract cancelled. Any held funds have been refunded.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('JobContract: Failed to cancel contract', [
+                'contract_id' => $contract->id,
+                'error' => $e->getMessage(),
+            ]);
             return redirect()->back()->with('error', 'Failed to cancel contract. Please try again.');
         }
     }

@@ -7,6 +7,7 @@ use App\Models\ServiceOrder;
 use App\Services\EscrowService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ServiceOrderController extends Controller
 {
@@ -122,12 +123,27 @@ class ServiceOrderController extends Controller
     public function approveDelivery(Request $request, ServiceOrder $serviceOrder, EscrowService $escrowService)
     {
         if ($serviceOrder->buyer_id !== auth()->id()) {
-            abort(403);
+            Log::warning('ServiceOrder: Unauthorized approval attempt', [
+                'service_order_id' => $serviceOrder->id,
+                'user_id' => auth()->id(),
+                'buyer_id' => $serviceOrder->buyer_id,
+            ]);
+            abort(403, 'You are not authorized to approve this order.');
         }
 
         if (!$serviceOrder->canApprove()) {
+            Log::warning('ServiceOrder: Cannot approve - invalid state', [
+                'service_order_id' => $serviceOrder->id,
+                'status' => $serviceOrder->status,
+            ]);
             return redirect()->back()->with('error', 'This order cannot be approved.');
         }
+
+        Log::info('ServiceOrder: Approving delivery', [
+            'service_order_id' => $serviceOrder->id,
+            'user_id' => auth()->id(),
+            'order_number' => $serviceOrder->order_number ?? null,
+        ]);
 
         try {
             DB::beginTransaction();
@@ -150,16 +166,31 @@ class ServiceOrderController extends Controller
 
             // Release escrow funds
             if ($serviceOrder->escrowTransaction) {
-                $escrowService->releaseFunds($serviceOrder->escrowTransaction, 'Buyer approved delivery');
+                $released = $escrowService->releaseFunds($serviceOrder->escrowTransaction, 'Buyer approved delivery');
+                if (!$released) {
+                    Log::warning('ServiceOrder: Escrow release failed but order completed', [
+                        'service_order_id' => $serviceOrder->id,
+                        'transaction_id' => $serviceOrder->escrowTransaction->id,
+                    ]);
+                }
             }
 
             DB::commit();
+
+            Log::info('ServiceOrder: Delivery approved successfully', [
+                'service_order_id' => $serviceOrder->id,
+                'seller_id' => $serviceOrder->seller_id,
+            ]);
 
             return redirect()->route('service-orders.show', $serviceOrder)
                 ->with('success', 'Order completed! Payment has been released to the seller.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('ServiceOrder: Failed to approve delivery', [
+                'service_order_id' => $serviceOrder->id,
+                'error' => $e->getMessage(),
+            ]);
             return redirect()->back()->with('error', 'Failed to complete order. Please try again.');
         }
     }
@@ -217,15 +248,30 @@ class ServiceOrderController extends Controller
     public function cancel(Request $request, ServiceOrder $serviceOrder, EscrowService $escrowService)
     {
         if ($serviceOrder->buyer_id !== auth()->id()) {
-            abort(403);
+            Log::warning('ServiceOrder: Unauthorized cancel attempt', [
+                'service_order_id' => $serviceOrder->id,
+                'user_id' => auth()->id(),
+                'buyer_id' => $serviceOrder->buyer_id,
+            ]);
+            abort(403, 'You are not authorized to cancel this order.');
         }
 
         if (!$serviceOrder->canCancel()) {
+            Log::warning('ServiceOrder: Cannot cancel - invalid state', [
+                'service_order_id' => $serviceOrder->id,
+                'status' => $serviceOrder->status,
+            ]);
             return redirect()->back()->with('error', 'This order cannot be cancelled.');
         }
 
         $request->validate([
             'cancellation_reason' => 'required|string|max:500',
+        ]);
+
+        Log::info('ServiceOrder: Cancelling order', [
+            'service_order_id' => $serviceOrder->id,
+            'user_id' => auth()->id(),
+            'reason' => $request->input('cancellation_reason'),
         ]);
 
         try {
@@ -239,16 +285,35 @@ class ServiceOrderController extends Controller
 
             // Refund escrow if exists
             if ($serviceOrder->escrowTransaction) {
-                $escrowService->refundFunds($serviceOrder->escrowTransaction, 'Order cancelled by buyer');
+                $refunded = $escrowService->refundFunds($serviceOrder->escrowTransaction, 'Order cancelled by buyer');
+                if ($refunded) {
+                    Log::info('ServiceOrder: Escrow refunded successfully', [
+                        'service_order_id' => $serviceOrder->id,
+                        'transaction_id' => $serviceOrder->escrowTransaction->id,
+                    ]);
+                } else {
+                    Log::warning('ServiceOrder: Escrow refund failed', [
+                        'service_order_id' => $serviceOrder->id,
+                        'transaction_id' => $serviceOrder->escrowTransaction->id,
+                    ]);
+                }
             }
 
             DB::commit();
+
+            Log::info('ServiceOrder: Cancelled successfully', [
+                'service_order_id' => $serviceOrder->id,
+            ]);
 
             return redirect()->route('service-orders.index')
                 ->with('success', 'Order cancelled and refund has been processed.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('ServiceOrder: Failed to cancel order', [
+                'service_order_id' => $serviceOrder->id,
+                'error' => $e->getMessage(),
+            ]);
             return redirect()->back()->with('error', 'Failed to cancel order. Please try again.');
         }
     }

@@ -28,6 +28,19 @@ class EscrowService
         // Use service commission rate from admin settings (default 20%)
         $this->platformFeeRate = CommissionSettings::getServiceCommissionRate();
         $this->autoReleaseAfterDays = (int) Setting::get('escrow_auto_release_days', 3);
+
+        // Set Stripe API key if configured
+        if ($this->stripeService->isConfigured()) {
+            Stripe::setApiKey($this->stripeService->getSecretKey());
+        }
+    }
+
+    /**
+     * Check if escrow payments are properly configured.
+     */
+    public function isConfigured(): bool
+    {
+        return $this->stripeService->isConfigured();
     }
 
     /**
@@ -40,12 +53,37 @@ class EscrowService
         float $amount,
         string $description = null
     ): array {
-        if (!$this->stripeService->isConfigured()) {
-            throw new \Exception('Stripe is not configured.');
+        if (!$this->isConfigured()) {
+            Log::warning('Escrow: Stripe not configured', [
+                'payer_id' => $payer->id,
+                'seller_id' => $seller->id,
+                'amount' => $amount,
+            ]);
+            throw new \Exception('Payment gateway is not configured.');
+        }
+
+        // Validate seller has a user account
+        if (!$seller->user) {
+            Log::error('Escrow: Seller has no user account', [
+                'seller_id' => $seller->id,
+                'payer_id' => $payer->id,
+            ]);
+            throw new \Exception('Seller account is not properly configured.');
         }
 
         $platformFee = round($amount * $this->platformFeeRate, 2);
         $sellerAmount = round($amount - $platformFee, 2);
+
+        Log::info('Escrow: Creating PaymentIntent', [
+            'payer_id' => $payer->id,
+            'seller_id' => $seller->id,
+            'amount' => $amount,
+            'platform_fee' => $platformFee,
+            'seller_amount' => $sellerAmount,
+            'currency' => $this->stripeService->getCurrency(),
+            'escrowable_type' => class_basename($escrowable),
+            'escrowable_id' => $escrowable->id,
+        ]);
 
         try {
             $paymentIntent = PaymentIntent::create([
@@ -76,13 +114,23 @@ class EscrowService
                 'stripe_payment_intent_id' => $paymentIntent->id,
             ]);
 
+            Log::info('Escrow: PaymentIntent created', [
+                'transaction_id' => $escrowTransaction->id,
+                'payment_intent_id' => $paymentIntent->id,
+            ]);
+
             return [
                 'payment_intent' => $paymentIntent,
                 'escrow_transaction' => $escrowTransaction,
                 'client_secret' => $paymentIntent->client_secret,
             ];
         } catch (\Exception $e) {
-            Log::error('Escrow PaymentIntent creation failed: ' . $e->getMessage());
+            Log::error('Escrow: PaymentIntent creation failed', [
+                'payer_id' => $payer->id,
+                'seller_id' => $seller->id,
+                'amount' => $amount,
+                'error' => $e->getMessage(),
+            ]);
             throw $e;
         }
     }
@@ -92,11 +140,21 @@ class EscrowService
      */
     public function holdFunds(EscrowTransaction $transaction): bool
     {
+        Log::info('Escrow: Attempting to hold funds', [
+            'transaction_id' => $transaction->id,
+            'transaction_number' => $transaction->transaction_number ?? null,
+            'amount' => $transaction->amount,
+        ]);
+
         try {
             $paymentIntent = PaymentIntent::retrieve($transaction->stripe_payment_intent_id);
 
             if ($paymentIntent->status !== 'requires_capture') {
-                Log::warning('PaymentIntent not ready for capture: ' . $paymentIntent->status);
+                Log::warning('Escrow: PaymentIntent not ready for capture', [
+                    'transaction_id' => $transaction->id,
+                    'payment_intent_status' => $paymentIntent->status,
+                    'expected_status' => 'requires_capture',
+                ]);
                 return false;
             }
 
@@ -106,9 +164,17 @@ class EscrowService
                 'auto_release_at' => now()->addDays($this->autoReleaseAfterDays),
             ]);
 
+            Log::info('Escrow: Funds held successfully', [
+                'transaction_id' => $transaction->id,
+                'auto_release_at' => now()->addDays($this->autoReleaseAfterDays)->toDateTimeString(),
+            ]);
+
             return true;
         } catch (\Exception $e) {
-            Log::error('Escrow hold funds failed: ' . $e->getMessage());
+            Log::error('Escrow: Hold funds failed', [
+                'transaction_id' => $transaction->id,
+                'error' => $e->getMessage(),
+            ]);
             return false;
         }
     }
@@ -119,9 +185,31 @@ class EscrowService
     public function releaseFunds(EscrowTransaction $transaction, string $notes = null): bool
     {
         if (!$transaction->canRelease()) {
-            Log::warning('Cannot release escrow: ' . $transaction->transaction_number);
+            Log::warning('Escrow: Cannot release - invalid state', [
+                'transaction_id' => $transaction->id,
+                'transaction_number' => $transaction->transaction_number ?? null,
+                'status' => $transaction->status,
+            ]);
             return false;
         }
+
+        // Null safety: Ensure seller exists
+        $seller = $transaction->seller;
+        if (!$seller) {
+            Log::error('Escrow: Cannot release - seller not found', [
+                'transaction_id' => $transaction->id,
+                'seller_id' => $transaction->seller_id,
+            ]);
+            return false;
+        }
+
+        Log::info('Escrow: Attempting to release funds', [
+            'transaction_id' => $transaction->id,
+            'transaction_number' => $transaction->transaction_number ?? null,
+            'amount' => $transaction->amount,
+            'seller_amount' => $transaction->seller_amount,
+            'seller_id' => $seller->id,
+        ]);
 
         try {
             DB::beginTransaction();
@@ -132,31 +220,47 @@ class EscrowService
 
             // Transfer to seller's connected Stripe account (if available)
             $stripeTransferId = null;
-            if ($transaction->seller->stripe_account_id && $transaction->seller->stripe_onboarding_complete) {
+            if ($seller->stripe_account_id && $seller->stripe_onboarding_complete) {
                 $transfer = Transfer::create([
                     'amount' => (int) ($transaction->seller_amount * 100),
                     'currency' => $transaction->currency,
-                    'destination' => $transaction->seller->stripe_account_id,
+                    'destination' => $seller->stripe_account_id,
                     'transfer_group' => $transaction->transaction_number,
                     'metadata' => [
                         'escrow_transaction_id' => $transaction->id,
                     ],
                 ]);
                 $stripeTransferId = $transfer->id;
+
+                Log::info('Escrow: Stripe Connect transfer created', [
+                    'transaction_id' => $transaction->id,
+                    'transfer_id' => $stripeTransferId,
+                ]);
             } else {
                 // If no Stripe Connect, add to seller's wallet
-                $sellerUser = $transaction->seller->user;
+                $sellerUser = $seller->user;
+                if (!$sellerUser) {
+                    throw new \Exception('Seller user account not found');
+                }
+
                 $wallet = $sellerUser->getOrCreateWallet();
                 $wallet->deposit(
                     amount: $transaction->seller_amount,
-                    description: 'Escrow release: ' . $transaction->transaction_number,
+                    description: 'Escrow release: ' . ($transaction->transaction_number ?? $transaction->id),
                     paymentMethod: 'escrow',
-                    paymentId: $transaction->transaction_number,
+                    paymentId: $transaction->transaction_number ?? (string) $transaction->id,
                     transactionable: $transaction
                 );
 
                 // Also update seller's total earnings for analytics
-                $transaction->seller->increment('total_earnings', $transaction->seller_amount);
+                $seller->increment('total_earnings', $transaction->seller_amount);
+
+                Log::info('Escrow: Funds deposited to seller wallet', [
+                    'transaction_id' => $transaction->id,
+                    'seller_id' => $seller->id,
+                    'wallet_id' => $wallet->id,
+                    'amount' => $transaction->seller_amount,
+                ]);
             }
 
             $transaction->update([
@@ -168,11 +272,18 @@ class EscrowService
 
             DB::commit();
 
-            Log::info('Escrow released: ' . $transaction->transaction_number);
+            Log::info('Escrow: Released successfully', [
+                'transaction_id' => $transaction->id,
+                'transaction_number' => $transaction->transaction_number ?? null,
+                'seller_amount' => $transaction->seller_amount,
+            ]);
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Escrow release failed: ' . $e->getMessage());
+            Log::error('Escrow: Release failed', [
+                'transaction_id' => $transaction->id,
+                'error' => $e->getMessage(),
+            ]);
             return false;
         }
     }
@@ -183,9 +294,20 @@ class EscrowService
     public function refundFunds(EscrowTransaction $transaction, string $reason = null): bool
     {
         if (!$transaction->canRefund()) {
-            Log::warning('Cannot refund escrow: ' . $transaction->transaction_number);
+            Log::warning('Escrow: Cannot refund - invalid state', [
+                'transaction_id' => $transaction->id,
+                'transaction_number' => $transaction->transaction_number ?? null,
+                'status' => $transaction->status,
+            ]);
             return false;
         }
+
+        Log::info('Escrow: Attempting refund', [
+            'transaction_id' => $transaction->id,
+            'transaction_number' => $transaction->transaction_number ?? null,
+            'amount' => $transaction->amount,
+            'reason' => $reason,
+        ]);
 
         try {
             DB::beginTransaction();
@@ -195,10 +317,16 @@ class EscrowService
             if ($paymentIntent->status === 'requires_capture') {
                 // Cancel the authorization (no capture needed)
                 $paymentIntent->cancel();
+                Log::info('Escrow: Authorization cancelled', [
+                    'transaction_id' => $transaction->id,
+                ]);
             } elseif ($paymentIntent->status === 'succeeded') {
                 // Already captured, need to refund
                 \Stripe\Refund::create([
                     'payment_intent' => $transaction->stripe_payment_intent_id,
+                ]);
+                Log::info('Escrow: Refund created for captured payment', [
+                    'transaction_id' => $transaction->id,
                 ]);
             }
 
@@ -210,11 +338,18 @@ class EscrowService
 
             DB::commit();
 
-            Log::info('Escrow refunded: ' . $transaction->transaction_number);
+            Log::info('Escrow: Refunded successfully', [
+                'transaction_id' => $transaction->id,
+                'transaction_number' => $transaction->transaction_number ?? null,
+                'amount' => $transaction->amount,
+            ]);
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Escrow refund failed: ' . $e->getMessage());
+            Log::error('Escrow: Refund failed', [
+                'transaction_id' => $transaction->id,
+                'error' => $e->getMessage(),
+            ]);
             return false;
         }
     }

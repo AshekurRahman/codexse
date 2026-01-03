@@ -106,6 +106,8 @@ class InputSanitization
         'checkout/payoneer/success',
         'wallet/deposit/success',
         'wallet/deposit',
+        'escrow/confirm',
+        'escrow/cancel',
     ];
 
     /**

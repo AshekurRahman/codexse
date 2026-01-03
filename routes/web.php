@@ -409,6 +409,10 @@ Route::get('/checkout/paypal/success/{order}', [CheckoutController::class, 'payp
 Route::get('/wallet/deposit/success', [App\Http\Controllers\WalletController::class, 'depositSuccess'])->name('wallet.deposit.success');
 Route::get('/wallet/deposit/cancel', [App\Http\Controllers\WalletController::class, 'depositCancel'])->name('wallet.deposit.cancel');
 
+// Escrow payment success/cancel routes - outside auth to handle session expiry during payment
+Route::get('/escrow/confirm', [EscrowController::class, 'confirmPayment'])->name('escrow.confirm');
+Route::get('/escrow/cancel', [EscrowController::class, 'cancelPayment'])->name('escrow.cancel');
+
 // Static Pages
 Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/contact', [PageController::class, 'contact'])->name('contact');
@@ -687,12 +691,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/disputes/{dispute}/evidence', [App\Http\Controllers\DisputeController::class, 'addEvidence'])->name('disputes.add-evidence');
     Route::post('/disputes/{dispute}/cancel', [App\Http\Controllers\DisputeController::class, 'cancel'])->name('disputes.cancel');
 
-    // Escrow Payments
+    // Escrow Payments (auth required for checkout and management)
     Route::get('/escrow/service-order/{serviceOrder}', [EscrowController::class, 'checkoutServiceOrder'])->name('escrow.checkout.service-order');
     Route::get('/escrow/milestone/{milestone}', [EscrowController::class, 'checkoutMilestone'])->name('escrow.checkout.milestone');
     Route::post('/escrow/create-payment-intent', [EscrowController::class, 'createPaymentIntent'])->name('escrow.create-payment-intent');
-    Route::get('/escrow/confirm', [EscrowController::class, 'confirmPayment'])->name('escrow.confirm');
-    Route::get('/escrow/cancel', [EscrowController::class, 'cancelPayment'])->name('escrow.cancel');
     Route::get('/escrow/{transaction}', [EscrowController::class, 'show'])->name('escrow.show');
     Route::post('/escrow/{transaction}/release', [EscrowController::class, 'release'])->name('escrow.release');
     Route::post('/escrow/{transaction}/refund', [EscrowController::class, 'requestRefund'])->name('escrow.refund');
