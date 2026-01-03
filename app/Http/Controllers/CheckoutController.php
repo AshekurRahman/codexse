@@ -668,7 +668,7 @@ class CheckoutController extends Controller
 
     public function cancel()
     {
-        return redirect()->route('checkout.index')->with('error', 'Payment was cancelled. Please try again.');
+        return redirect()->route('checkout')->with('error', 'Payment was cancelled. Please try again.');
     }
 
     /**
