@@ -62,7 +62,7 @@ class PayPalService
 
     public function getCurrency(): string
     {
-        return strtoupper(Setting::get('stripe_currency', 'usd'));
+        return strtoupper(Setting::get('paypal_currency', 'usd'));
     }
 
     /**

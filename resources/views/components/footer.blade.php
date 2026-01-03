@@ -67,6 +67,7 @@
                         <li><a href="{{ route('wallet.index') }}" class="text-surface-400 hover:text-white transition-colors">My Wallet</a></li>
                         <li><a href="{{ route('license') }}" class="text-surface-400 hover:text-white transition-colors">License Info</a></li>
                         <li><a href="{{ route('refund') }}" class="text-surface-400 hover:text-white transition-colors">Refund Policy</a></li>
+                        <li><a href="{{ route('guidelines') }}" class="text-surface-400 hover:text-white transition-colors">Guidelines</a></li>
                     </ul>
                 </div>
             </div>

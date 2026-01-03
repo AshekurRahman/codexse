@@ -3,27 +3,18 @@
 namespace App\Notifications;
 
 use Illuminate\Auth\Notifications\VerifyEmail;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 
-class VerifyEmailNotification extends VerifyEmail implements ShouldQueue
+class VerifyEmailNotification extends VerifyEmail
 {
-    use Queueable;
-
     /**
      * The number of times the job may be attempted.
      */
     public $tries = 3;
-
-    /**
-     * The number of seconds to wait before retrying.
-     */
-    public $backoff = 60;
 
     /**
      * Get the mail representation of the notification.

@@ -127,8 +127,8 @@
                                         <p class="text-sm text-surface-500 dark:text-surface-400">Pay securely with Stripe</p>
                                     </div>
                                     <div class="flex gap-1.5">
-                                        <img src="{{ asset('images/cards/visa.svg') }}" alt="Visa" class="h-6 w-auto">
-                                        <img src="{{ asset('images/cards/mastercard.svg') }}" alt="Mastercard" class="h-6 w-auto">
+                                        <img src="{{ asset('images/cards/Visa.svg') }}" alt="Visa" class="h-6 w-auto">
+                                        <img src="{{ asset('images/cards/Mastercard.svg') }}" alt="Mastercard" class="h-6 w-auto">
                                     </div>
                                 </label>
 
@@ -146,10 +146,10 @@
                                                 You'll be redirected to Stripe's secure payment page to enter your card details.
                                             </p>
                                             <div class="mt-3 flex items-center gap-2 flex-wrap">
-                                                <img src="{{ asset('images/cards/visa.svg') }}" alt="Visa" class="h-8 w-auto">
-                                                <img src="{{ asset('images/cards/mastercard.svg') }}" alt="Mastercard" class="h-8 w-auto">
-                                                <img src="{{ asset('images/cards/amex.svg') }}" alt="American Express" class="h-8 w-auto">
-                                                <img src="{{ asset('images/cards/discover.svg') }}" alt="Discover" class="h-8 w-auto">
+                                                <img src="{{ asset('images/cards/Visa.svg') }}" alt="Visa" class="h-8 w-auto">
+                                                <img src="{{ asset('images/cards/Mastercard.svg') }}" alt="Mastercard" class="h-8 w-auto">
+                                                <img src="{{ asset('images/cards/Amex.svg') }}" alt="American Express" class="h-8 w-auto">
+                                                <img src="{{ asset('images/cards/Discover.svg') }}" alt="Discover" class="h-8 w-auto">
                                             </div>
                                         </div>
                                     </div>

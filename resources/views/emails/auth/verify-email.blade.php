@@ -8,14 +8,12 @@ Please verify your email address to complete your {{ config('app.name') }} regis
 
 @section('hero')
 <div style="background: #ffffff; padding: 40px; text-align: center;">
-    <!-- Verify Icon -->
+    <!-- Verify Icon - Using HTML/CSS for email compatibility -->
     <div style="width: 96px; height: 96px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border-radius: 24px; margin: 0 auto 24px; box-shadow: 0 16px 32px -8px rgba(99, 102, 241, 0.4);">
         <table role="presentation" width="100%" height="100%">
             <tr>
                 <td align="center" valign="middle">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M3 8L10.89 13.26C11.2187 13.4793 11.6049 13.5963 12 13.5963C12.3951 13.5963 12.7813 13.4793 13.11 13.26L21 8M5 19H19C19.5304 19 20.0391 18.7893 20.4142 18.4142C20.7893 18.0391 21 17.5304 21 17V7C21 6.46957 20.7893 5.96086 20.4142 5.58579C20.0391 5.21071 19.5304 5 19 5H5C4.46957 5 3.96086 5.21071 3.58579 5.58579C3.21071 5.96086 3 6.46957 3 7V17C3 17.5304 3.21071 18.0391 3.58579 18.4142C3.96086 18.7893 4.46957 19 5 19Z" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                    <span style="font-size: 48px; line-height: 1;">&#9993;</span>
                 </td>
             </tr>
         </table>
@@ -43,11 +41,10 @@ Please verify your email address to complete your {{ config('app.name') }} regis
             <td style="padding: 20px;">
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                     <tr>
-                        <td style="width: 24px; vertical-align: top; padding-right: 12px;">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M12 16V12M12 8H12.01" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
+                        <td style="width: 32px; vertical-align: top; padding-right: 12px;">
+                            <div style="width: 28px; height: 28px; background: #3b82f6; border-radius: 50%; text-align: center; line-height: 28px;">
+                                <span style="color: #ffffff; font-size: 14px; font-weight: bold;">i</span>
+                            </div>
                         </td>
                         <td>
                             <p style="color: #1e40af; margin: 0; font-size: 14px; line-height: 1.6;">
@@ -64,9 +61,17 @@ Please verify your email address to complete your {{ config('app.name') }} regis
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
         <tr>
             <td align="center" style="padding: 16px 0 32px;">
+                <!--[if mso]>
+                <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="{{ $verificationUrl }}" style="height:54px;v-text-anchor:middle;width:280px;" arcsize="19%" strokecolor="#4f46e5" fillcolor="#6366f1">
+                <w:anchorlock/>
+                <center style="color:#ffffff;font-family:sans-serif;font-size:16px;font-weight:bold;">Verify Email Address</center>
+                </v:roundrect>
+                <![endif]-->
+                <!--[if !mso]><!-->
                 <a href="{{ $verificationUrl }}" style="display: inline-block; padding: 18px 48px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 10px; box-shadow: 0 4px 14px -3px rgba(99, 102, 241, 0.5);">
-                    Verify Email Address
+                    &#10003; Verify Email Address
                 </a>
+                <!--<![endif]-->
             </td>
         </tr>
     </table>
@@ -95,16 +100,8 @@ Please verify your email address to complete your {{ config('app.name') }} regis
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                     <tr>
                         <td style="width: 28px; vertical-align: top;">
-                            <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 50%;">
-                                <table role="presentation" width="100%" height="100%">
-                                    <tr>
-                                        <td align="center" valign="middle">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M20 6L9 17L4 12" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                                            </svg>
-                                        </td>
-                                    </tr>
-                                </table>
+                            <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 50%; text-align: center; line-height: 20px;">
+                                <span style="color: #ffffff; font-size: 12px;">&#10003;</span>
                             </div>
                         </td>
                         <td style="padding-left: 12px;">
@@ -119,16 +116,8 @@ Please verify your email address to complete your {{ config('app.name') }} regis
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                     <tr>
                         <td style="width: 28px; vertical-align: top;">
-                            <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 50%;">
-                                <table role="presentation" width="100%" height="100%">
-                                    <tr>
-                                        <td align="center" valign="middle">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M20 6L9 17L4 12" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                                            </svg>
-                                        </td>
-                                    </tr>
-                                </table>
+                            <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 50%; text-align: center; line-height: 20px;">
+                                <span style="color: #ffffff; font-size: 12px;">&#10003;</span>
                             </div>
                         </td>
                         <td style="padding-left: 12px;">
@@ -143,16 +132,8 @@ Please verify your email address to complete your {{ config('app.name') }} regis
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                     <tr>
                         <td style="width: 28px; vertical-align: top;">
-                            <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 50%;">
-                                <table role="presentation" width="100%" height="100%">
-                                    <tr>
-                                        <td align="center" valign="middle">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M20 6L9 17L4 12" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                                            </svg>
-                                        </td>
-                                    </tr>
-                                </table>
+                            <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 50%; text-align: center; line-height: 20px;">
+                                <span style="color: #ffffff; font-size: 12px;">&#10003;</span>
                             </div>
                         </td>
                         <td style="padding-left: 12px;">
@@ -165,11 +146,11 @@ Please verify your email address to complete your {{ config('app.name') }} regis
     </table>
 
     <!-- Support -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
         <tr>
-            <td style="text-align: center;">
+            <td style="padding: 20px; text-align: center;">
                 <p style="color: #64748b; font-size: 14px; margin: 0 0 8px;">Need help? We're here for you!</p>
-                <a href="{{ url('/support') }}" style="color: #6366f1; font-size: 14px; text-decoration: none; font-weight: 500;">Contact Support</a>
+                <a href="{{ url('/support') }}" style="color: #6366f1; font-size: 14px; text-decoration: none; font-weight: 500;">&#128172; Contact Support</a>
             </td>
         </tr>
     </table>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class ProductController extends Controller
@@ -117,14 +118,20 @@ class ProductController extends Controller
         }
 
         $products = $query->paginate(12)->withQueryString();
-        $categories = Category::withCount(['products' => function ($q) {
-            $q->where('status', 'published');
-        }])->whereNull('parent_id')->orderBy('name')->get();
 
-        // Get price range for filter
-        $priceStats = Product::where('status', 'published')
-            ->selectRaw('MIN(COALESCE(sale_price, price)) as min_price, MAX(COALESCE(sale_price, price)) as max_price')
-            ->first();
+        // Cache categories for 1 hour
+        $categories = Cache::remember('product_categories', 3600, function () {
+            return Category::withCount(['products' => function ($q) {
+                $q->where('status', 'published');
+            }])->whereNull('parent_id')->orderBy('name')->get();
+        });
+
+        // Cache price stats for 15 minutes
+        $priceStats = Cache::remember('product_price_stats', 900, function () {
+            return Product::where('status', 'published')
+                ->selectRaw('MIN(COALESCE(sale_price, price)) as min_price, MAX(COALESCE(sale_price, price)) as max_price')
+                ->first();
+        });
 
         // Active filters count
         $activeFiltersCount = collect([
@@ -136,11 +143,17 @@ class ProductController extends Controller
             $request->boolean('featured'),
         ])->filter()->count();
 
+        // Pre-load wishlist IDs for authenticated users (single query)
+        $wishlistIds = auth()->check()
+            ? auth()->user()->wishlists()->pluck('product_id')
+            : collect();
+
         return view('pages.products.index', compact(
             'products',
             'categories',
             'priceStats',
-            'activeFiltersCount'
+            'activeFiltersCount',
+            'wishlistIds'
         ));
     }
 

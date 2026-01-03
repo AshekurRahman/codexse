@@ -6,10 +6,31 @@ use App\Models\BlogCategory;
 use App\Models\BlogComment;
 use App\Models\BlogPost;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class BlogController extends Controller
 {
+    /**
+     * Get cached blog categories (cached for 1 hour)
+     */
+    protected function getCachedCategories()
+    {
+        return Cache::remember('blog_categories', 3600, function () {
+            return BlogCategory::active()->ordered()->withCount('publishedPosts')->get();
+        });
+    }
+
+    /**
+     * Get cached popular tags (cached for 1 hour)
+     */
+    protected function getCachedPopularTags(int $limit = 10): array
+    {
+        return Cache::remember('blog_popular_tags', 3600, function () use ($limit) {
+            return $this->getPopularTags($limit);
+        });
+    }
+
     public function index(Request $request): View
     {
         $query = BlogPost::published()
@@ -38,8 +59,8 @@ class BlogController extends Controller
 
         $posts = $query->paginate(12);
         $featuredPosts = BlogPost::published()->featured()->limit(3)->get();
-        $categories = BlogCategory::active()->ordered()->withCount('publishedPosts')->get();
-        $popularTags = $this->getPopularTags();
+        $categories = $this->getCachedCategories();
+        $popularTags = $this->getCachedPopularTags();
 
         return view('pages.blog.index', compact('posts', 'featuredPosts', 'categories', 'popularTags'));
     }
@@ -54,7 +75,7 @@ class BlogController extends Controller
         $post->incrementViews();
 
         $relatedPosts = $post->getRelatedPosts(3);
-        $categories = BlogCategory::active()->ordered()->withCount('publishedPosts')->get();
+        $categories = $this->getCachedCategories();
 
         return view('pages.blog.show', compact('post', 'relatedPosts', 'categories'));
     }
@@ -67,8 +88,8 @@ class BlogController extends Controller
             ->orderByDesc('published_at')
             ->paginate(12);
 
-        $categories = BlogCategory::active()->ordered()->withCount('publishedPosts')->get();
-        $popularTags = $this->getPopularTags();
+        $categories = $this->getCachedCategories();
+        $popularTags = $this->getCachedPopularTags();
 
         return view('pages.blog.category', compact('category', 'posts', 'categories', 'popularTags'));
     }
@@ -81,8 +102,8 @@ class BlogController extends Controller
             ->orderByDesc('published_at')
             ->paginate(12);
 
-        $categories = BlogCategory::active()->ordered()->withCount('publishedPosts')->get();
-        $popularTags = $this->getPopularTags();
+        $categories = $this->getCachedCategories();
+        $popularTags = $this->getCachedPopularTags();
 
         return view('pages.blog.tag', compact('tag', 'posts', 'categories', 'popularTags'));
     }

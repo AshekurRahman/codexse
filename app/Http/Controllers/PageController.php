@@ -96,4 +96,12 @@ class PageController extends Controller
     {
         return view('pages.legal.cookies');
     }
+
+    /**
+     * Display the Guidelines page.
+     */
+    public function guidelines(): View
+    {
+        return view('pages.guidelines');
+    }
 }

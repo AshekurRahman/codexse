@@ -94,11 +94,31 @@ class InputSanitization
     ];
 
     /**
+     * Routes to exclude from sanitization (webhooks and payment callbacks).
+     */
+    protected array $excludedRoutes = [
+        'stripe/webhook',
+        'payoneer/webhook',
+        'escrow/webhook',
+        'subscriptions/webhook',
+        'checkout/success',
+        'checkout/paypal/success',
+        'checkout/payoneer/success',
+        'wallet/deposit/success',
+        'wallet/deposit',
+    ];
+
+    /**
      * Handle an incoming request.
      */
     public function handle(Request $request, Closure $next): Response
     {
         if (!Setting::get('input_sanitization_enabled', true)) {
+            return $next($request);
+        }
+
+        // Skip sanitization for excluded routes (webhooks, payment callbacks)
+        if ($this->isExcludedRoute($request)) {
             return $next($request);
         }
 
@@ -276,5 +296,21 @@ class InputSanitization
     protected function truncateValue(string $value): string
     {
         return strlen($value) > 200 ? substr($value, 0, 200) . '...' : $value;
+    }
+
+    /**
+     * Check if the current route should be excluded from sanitization.
+     */
+    protected function isExcludedRoute(Request $request): bool
+    {
+        $path = $request->path();
+
+        foreach ($this->excludedRoutes as $route) {
+            if ($path === $route || str_starts_with($path, $route . '/')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

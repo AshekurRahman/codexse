@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\Seller;
 use App\Models\SeoSetting;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 
 class SitemapController extends Controller
 {
@@ -19,7 +20,10 @@ class SitemapController extends Controller
             abort(404);
         }
 
-        $content = $this->generateSitemap();
+        // Cache sitemap for 24 hours (86400 seconds)
+        $content = Cache::remember('sitemap_xml', 86400, function () {
+            return $this->generateSitemap();
+        });
 
         return response($content, 200, [
             'Content-Type' => 'application/xml',

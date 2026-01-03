@@ -32,6 +32,19 @@
         class="w-96 max-w-[calc(100vw-2rem)] bg-white dark:bg-surface-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
         style="height: 500px; max-height: calc(100vh - 8rem);"
     >
+        <!-- Error Message -->
+        <div
+            x-show="error"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0 -translate-y-2"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100 translate-y-0"
+            x-transition:leave-end="opacity-0 -translate-y-2"
+            class="absolute top-0 left-0 right-0 z-10 bg-red-500 text-white text-sm px-4 py-2 text-center"
+            x-text="error"
+        ></div>
+
         <!-- Header -->
         <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-4 flex items-center justify-between">
             <div class="flex items-center space-x-3">
@@ -289,6 +302,7 @@ function liveChatWidget() {
         rating: 0,
         pollingInterval: null,
         baseUrl: '{{ url('/') }}',
+        error: null,
         form: {
             name: '',
             email: '',
@@ -300,9 +314,15 @@ function liveChatWidget() {
             this.checkActiveChat();
         },
 
+        showError(message) {
+            this.error = message;
+            setTimeout(() => this.error = null, 5000);
+        },
+
         async checkActiveChat() {
             try {
                 const response = await fetch(this.baseUrl + '/live-chat/active');
+                if (!response.ok) throw new Error('Network error');
                 const data = await response.json();
 
                 if (data.has_active_chat) {
@@ -333,6 +353,7 @@ function liveChatWidget() {
 
         async startChat() {
             this.starting = true;
+            this.error = null;
 
             try {
                 const response = await fetch(this.baseUrl + '/live-chat/start', {
@@ -344,6 +365,7 @@ function liveChatWidget() {
                     body: JSON.stringify(this.form)
                 });
 
+                if (!response.ok) throw new Error('Failed to start chat');
                 const data = await response.json();
 
                 if (data.status === 'success') {
@@ -351,9 +373,12 @@ function liveChatWidget() {
                     this.messages = data.chat.messages || [];
                     this.startPolling();
                     this.$nextTick(() => this.scrollToBottom());
+                } else {
+                    this.showError(data.message || 'Failed to start chat. Please try again.');
                 }
             } catch (error) {
                 console.error('Error starting chat:', error);
+                this.showError('Unable to connect. Please check your connection and try again.');
             } finally {
                 this.starting = false;
             }
@@ -376,15 +401,20 @@ function liveChatWidget() {
                     body: JSON.stringify({ message })
                 });
 
+                if (!response.ok) throw new Error('Failed to send message');
                 const data = await response.json();
 
                 if (data.status === 'success') {
                     this.messages.push(data.message);
                     this.$nextTick(() => this.scrollToBottom());
+                } else {
+                    this.newMessage = message;
+                    this.showError('Failed to send message. Please try again.');
                 }
             } catch (error) {
                 console.error('Error sending message:', error);
                 this.newMessage = message;
+                this.showError('Failed to send message. Please check your connection.');
             } finally {
                 this.sending = false;
             }

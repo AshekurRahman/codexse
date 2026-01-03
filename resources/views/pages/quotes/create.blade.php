@@ -43,7 +43,7 @@
                 </div>
 
                 <!-- Form -->
-                <form action="{{ route('quotes.store', $service) }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-6" data-ajax-form>
+                <form action="{{ route('quotes.store', $service) }}" method="POST" enctype="multipart/form-data" class="p-6 space-y-6" data-ajax-form x-data="{ isSubmitting: false }" @submit="isSubmitting = true">
                     @csrf
 
                     <!-- Title -->
@@ -120,12 +120,18 @@
                     </div>
 
                     <!-- Attachments -->
-                    <div>
+                    <div x-data="fileUpload()">
                         <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
                             Attachments (optional)
                         </label>
-                        <div class="border-2 border-dashed border-surface-200 dark:border-surface-700 rounded-lg p-6 text-center hover:border-primary-500 transition-colors">
-                            <input type="file" name="attachments[]" id="attachments" multiple class="hidden" accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip">
+                        <div
+                            class="border-2 border-dashed rounded-lg p-6 text-center transition-colors"
+                            :class="isDragging ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20' : 'border-surface-200 dark:border-surface-700 hover:border-primary-500'"
+                            @dragover.prevent="isDragging = true"
+                            @dragleave.prevent="isDragging = false"
+                            @drop.prevent="handleDrop($event)"
+                        >
+                            <input type="file" name="attachments[]" id="attachments" multiple class="hidden" accept=".jpg,.jpeg,.png,.gif,.pdf,.doc,.docx,.zip" @change="handleFiles($event)">
                             <label for="attachments" class="cursor-pointer">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -138,18 +144,132 @@
                                 </p>
                             </label>
                         </div>
+
+                        <!-- File List -->
+                        <div x-show="files.length > 0" x-cloak class="mt-4 space-y-2">
+                            <p class="text-sm font-medium text-surface-700 dark:text-surface-300">
+                                Selected files (<span x-text="files.length"></span>):
+                            </p>
+                            <template x-for="(file, index) in files" :key="index">
+                                <div class="flex items-center justify-between p-3 bg-surface-50 dark:bg-surface-700/50 rounded-lg">
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <div class="shrink-0">
+                                            <template x-if="file.type.startsWith('image/')">
+                                                <img :src="file.preview" class="w-10 h-10 rounded object-cover" alt="">
+                                            </template>
+                                            <template x-if="!file.type.startsWith('image/')">
+                                                <div class="w-10 h-10 rounded bg-surface-200 dark:bg-surface-600 flex items-center justify-center">
+                                                    <svg class="w-5 h-5 text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                    </svg>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-medium text-surface-900 dark:text-white truncate" x-text="file.name"></p>
+                                            <p class="text-xs text-surface-500" x-text="formatSize(file.size)"></p>
+                                        </div>
+                                    </div>
+                                    <button type="button" @click="removeFile(index)" class="shrink-0 p-1 text-surface-400 hover:text-danger-500 transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </template>
+                        </div>
+
                         @error('attachments.*')
                             <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
 
+                    <script>
+                        function fileUpload() {
+                            return {
+                                files: [],
+                                isDragging: false,
+
+                                handleFiles(event) {
+                                    this.addFiles(event.target.files);
+                                },
+
+                                handleDrop(event) {
+                                    this.isDragging = false;
+                                    this.addFiles(event.dataTransfer.files);
+                                },
+
+                                addFiles(fileList) {
+                                    for (let i = 0; i < fileList.length; i++) {
+                                        const file = fileList[i];
+                                        if (file.size > 10 * 1024 * 1024) {
+                                            alert(`File "${file.name}" is too large. Maximum size is 10MB.`);
+                                            continue;
+                                        }
+
+                                        const fileObj = {
+                                            name: file.name,
+                                            size: file.size,
+                                            type: file.type,
+                                            preview: null,
+                                            file: file
+                                        };
+
+                                        if (file.type.startsWith('image/')) {
+                                            const reader = new FileReader();
+                                            reader.onload = (e) => {
+                                                fileObj.preview = e.target.result;
+                                            };
+                                            reader.readAsDataURL(file);
+                                        }
+
+                                        this.files.push(fileObj);
+                                    }
+
+                                    this.updateInput();
+                                },
+
+                                removeFile(index) {
+                                    this.files.splice(index, 1);
+                                    this.updateInput();
+                                },
+
+                                updateInput() {
+                                    const input = document.getElementById('attachments');
+                                    const dt = new DataTransfer();
+                                    this.files.forEach(f => dt.items.add(f.file));
+                                    input.files = dt.files;
+                                },
+
+                                formatSize(bytes) {
+                                    if (bytes === 0) return '0 Bytes';
+                                    const k = 1024;
+                                    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                                    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                                }
+                            };
+                        }
+                    </script>
+
                     <!-- Submit -->
                     <div class="flex items-center justify-end gap-4 pt-4 border-t border-surface-200 dark:border-surface-700">
-                        <a href="{{ route('services.show', $service) }}" class="px-6 py-2.5 text-sm font-medium text-surface-700 dark:text-surface-300 hover:text-surface-900 dark:hover:text-white transition-colors">
+                        <a href="{{ route('services.show', $service) }}" class="px-6 py-2.5 text-sm font-medium text-surface-700 dark:text-surface-300 hover:text-surface-900 dark:hover:text-white transition-colors" x-show="!isSubmitting">
                             Cancel
                         </a>
-                        <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-primary-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 hover:bg-primary-700 transition-all">
-                            Submit Quote Request
+                        <button type="submit" class="inline-flex items-center justify-center rounded-xl bg-primary-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/30 hover:bg-primary-700 transition-all disabled:opacity-70 disabled:cursor-not-allowed" :disabled="isSubmitting">
+                            <template x-if="!isSubmitting">
+                                <span>Submit Quote Request</span>
+                            </template>
+                            <template x-if="isSubmitting">
+                                <span class="inline-flex items-center gap-2">
+                                    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Uploading...
+                                </span>
+                            </template>
                         </button>
                     </div>
                 </form>

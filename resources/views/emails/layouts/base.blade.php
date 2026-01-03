@@ -386,7 +386,22 @@
                         <!-- Header -->
                         <div class="email-header" style="background-color: #ffffff; padding: 32px 40px; text-align: center; border-bottom: 1px solid #e2e8f0;">
                             <a href="{{ $siteUrl }}" style="text-decoration: none;">
-                                <span style="font-size: 28px; font-weight: 700; color: #6366f1;">{{ $siteName }}</span>
+                                @if($organizationLogo)
+                                    <img src="{{ $logoUrl }}" alt="{{ $siteName }}" style="max-height: 48px; width: auto;">
+                                @else
+                                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center">
+                                        <tr>
+                                            <td style="vertical-align: middle; padding-right: 10px;">
+                                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border-radius: 10px; text-align: center; line-height: 40px;">
+                                                    <span style="color: #ffffff; font-size: 20px; font-weight: 700;">{{ substr($siteName, 0, 1) }}</span>
+                                                </div>
+                                            </td>
+                                            <td style="vertical-align: middle;">
+                                                <span style="font-size: 24px; font-weight: 700; color: #0f172a;">{{ $siteName }}</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                @endif
                             </a>
                         </div>
 

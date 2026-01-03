@@ -82,17 +82,20 @@ class SecurityHeaders
                 "https://www.google-analytics.com",
                 "https://connect.facebook.net",
                 "https://js.stripe.com",
+                "https://static.cloudflareinsights.com",
             ],
             "style-src" => [
                 "'self'",
                 "'unsafe-inline'", // Required for Tailwind/inline styles
                 "https://fonts.googleapis.com",
+                "https://fonts.bunny.net",
                 "https://cdn.jsdelivr.net",
                 "https://cdnjs.cloudflare.com",
             ],
             "font-src" => [
                 "'self'",
                 "https://fonts.gstatic.com",
+                "https://fonts.bunny.net",
                 "https://cdn.jsdelivr.net",
                 "data:",
             ],
@@ -124,7 +127,7 @@ class SecurityHeaders
                 "https://meet.jit.si", // Video calls
             ],
             "frame-ancestors" => ["'self'"],
-            "form-action" => ["'self'"],
+            "form-action" => ["'self'", "https://checkout.stripe.com"],
             "base-uri" => ["'self'"],
             "object-src" => ["'none'"],
             "upgrade-insecure-requests" => [],

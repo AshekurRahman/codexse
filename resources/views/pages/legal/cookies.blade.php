@@ -4,7 +4,7 @@
         <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
             <div class="text-center">
                 <h1 class="text-4xl font-bold text-surface-900 dark:text-white">Cookie Policy</h1>
-                <p class="mt-4 text-lg text-surface-600 dark:text-surface-400">Last updated: {{ date('F d, Y') }}</p>
+                <p class="mt-4 text-lg text-surface-600 dark:text-surface-400">Last updated: January 1, 2026</p>
             </div>
         </div>
     </section>

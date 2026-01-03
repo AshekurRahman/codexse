@@ -14,14 +14,20 @@ class SeoSetting extends Model
     public static function get(string $key, mixed $default = null): mixed
     {
         if (isset(static::$cache[$key])) {
-            return static::$cache[$key];
+            $cached = static::$cache[$key];
+            return ($cached === null || $cached === '') ? $default : $cached;
         }
 
         $value = Cache::remember("seo_setting_{$key}", 3600, function () use ($key) {
             return static::where('key', $key)->value('value');
         });
 
-        static::$cache[$key] = $value ?? $default;
+        // Treat empty strings as null so defaults are used
+        if ($value === null || $value === '') {
+            static::$cache[$key] = $default;
+        } else {
+            static::$cache[$key] = $value;
+        }
 
         return static::$cache[$key];
     }

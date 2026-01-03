@@ -180,8 +180,15 @@
         x-cloak
     >
         <svg class="w-12 h-12 text-surface-300 dark:text-surface-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
-        <p class="text-surface-600 dark:text-surface-400">No results found for "<span x-text="query" class="font-medium"></span>"</p>
+        <p class="text-surface-700 dark:text-surface-300 font-medium mb-1">No results found</p>
+        <p class="text-sm text-surface-500 dark:text-surface-400 mb-3">We couldn't find anything matching "<span x-text="query" class="font-medium text-surface-700 dark:text-surface-300"></span>"</p>
+        <a :href="'{{ route('products.index') }}?search=' + encodeURIComponent(query)" class="inline-flex items-center gap-1 text-sm text-primary-600 dark:text-primary-400 hover:underline">
+            Search all products
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+            </svg>
+        </a>
     </div>
 </div>

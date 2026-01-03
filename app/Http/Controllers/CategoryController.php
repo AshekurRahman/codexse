@@ -9,9 +9,19 @@ class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::withCount('products')
+        $categories = Category::withCount([
+                'products' => function ($query) {
+                    $query->where('status', 'published');
+                }
+            ])
             ->whereNull('parent_id')
-            ->with('children')
+            ->with(['children' => function ($query) {
+                $query->withCount([
+                    'products' => function ($q) {
+                        $q->where('status', 'published');
+                    }
+                ]);
+            }])
             ->get();
 
         return view('pages.categories', compact('categories'));

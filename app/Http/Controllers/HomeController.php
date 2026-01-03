@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Models\Seller;
 use App\Models\Service;
 use App\Models\JobPosting;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 class HomeController extends Controller
@@ -23,10 +24,17 @@ class HomeController extends Controller
             ->take(8)
             ->get();
 
-        $categories = Category::withCount('products')
-            ->whereNull('parent_id')
-            ->orderBy('name')
-            ->get();
+        // Cache categories for 1 hour
+        $categories = Cache::remember('home_categories', 3600, function () {
+            return Category::withCount([
+                    'products' => function ($query) {
+                        $query->where('status', 'published');
+                    }
+                ])
+                ->whereNull('parent_id')
+                ->orderBy('name')
+                ->get();
+        });
 
         $trendingProducts = Product::with(['seller', 'category'])
             ->where('status', 'published')
@@ -54,12 +62,24 @@ class HomeController extends Controller
 
         // Featured sellers
         $featuredSellers = Seller::with('user')
-            ->withCount('products')
+            ->withCount([
+                'products' => function ($query) {
+                    $query->where('status', 'published');
+                },
+                'services' => function ($query) {
+                    $query->where('status', 'published');
+                }
+            ])
             ->where('status', 'approved')
             ->where('is_verified', true)
             ->orderByDesc('total_sales')
             ->take(6)
             ->get();
+
+        // Pre-load wishlist IDs for authenticated users (single query)
+        $wishlistIds = auth()->check()
+            ? auth()->user()->wishlists()->pluck('product_id')
+            : collect();
 
         return view('pages.home', compact(
             'featuredProducts',
@@ -68,7 +88,8 @@ class HomeController extends Controller
             'featuredServices',
             'recentJobs',
             'recentlyViewed',
-            'featuredSellers'
+            'featuredSellers',
+            'wishlistIds'
         ));
     }
 }

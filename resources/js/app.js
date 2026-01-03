@@ -5,6 +5,12 @@ import Alpine from 'alpinejs';
 import persist from '@alpinejs/persist';
 import collapse from '@alpinejs/collapse';
 
+// Lazy load html2canvas only when needed (saves ~147KB on initial load)
+window.html2canvas = async function(...args) {
+    const { default: html2canvas } = await import('html2canvas');
+    return html2canvas(...args);
+};
+
 Alpine.plugin(persist);
 Alpine.plugin(collapse);
 

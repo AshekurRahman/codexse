@@ -13,7 +13,7 @@ class SellerController extends Controller
         $sellers = Seller::where('status', 'approved')
             ->withCount([
                 'products' => function ($query) {
-                    $query->where('status', 'approved');
+                    $query->where('status', 'published');
                 },
                 'services' => function ($query) {
                     $query->where('status', 'published');

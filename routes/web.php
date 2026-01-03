@@ -399,11 +399,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
     Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
     Route::post('/checkout/calculate-tax', [CheckoutController::class, 'calculateTax'])->name('checkout.calculate-tax');
-    Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
-    Route::get('/checkout/cancel', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
-    Route::get('/checkout/payoneer/success/{order}', [CheckoutController::class, 'payoneerSuccess'])->name('checkout.payoneer.success');
-    Route::get('/checkout/paypal/success/{order}', [CheckoutController::class, 'paypalSuccess'])->name('checkout.paypal.success');
 });
+
+// Payment success/cancel routes - outside auth to handle session expiry during payment
+Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
+Route::get('/checkout/cancel', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
+Route::get('/checkout/payoneer/success/{order}', [CheckoutController::class, 'payoneerSuccess'])->name('checkout.payoneer.success');
+Route::get('/checkout/paypal/success/{order}', [CheckoutController::class, 'paypalSuccess'])->name('checkout.paypal.success');
+Route::get('/wallet/deposit/success', [App\Http\Controllers\WalletController::class, 'depositSuccess'])->name('wallet.deposit.success');
+Route::get('/wallet/deposit/cancel', [App\Http\Controllers\WalletController::class, 'depositCancel'])->name('wallet.deposit.cancel');
 
 // Static Pages
 Route::get('/about', [PageController::class, 'about'])->name('about');
@@ -420,6 +424,7 @@ Route::get('/terms', [PageController::class, 'terms'])->name('terms');
 Route::get('/cookies', [PageController::class, 'cookies'])->name('cookies');
 Route::get('/license', [PageController::class, 'license'])->name('license');
 Route::get('/refund-policy', [PageController::class, 'refund'])->name('refund');
+Route::get('/guidelines', [PageController::class, 'guidelines'])->name('guidelines');
 
 // Become a Seller (public landing page)
 Route::get('/become-a-seller', [SellerApplicationController::class, 'index'])->name('become-seller');
@@ -516,16 +521,9 @@ Route::middleware(['auth'])->prefix('admin/live-chat')->name('admin.live-chat.')
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    // Dashboard
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    // Profile (from Breeze)
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    // Purchases
+// Routes that require auth but NOT email verification (for users who purchased before verifying)
+Route::middleware(['auth'])->group(function () {
+    // Purchases (must be accessible even if email not verified, since checkout doesn't require verification)
     Route::get('/purchases', [DashboardController::class, 'purchases'])->name('purchases');
 
     // Downloads
@@ -534,6 +532,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Invoices
     Route::get('/invoices/{order}/download', [App\Http\Controllers\InvoiceController::class, 'download'])->name('invoice.download');
     Route::get('/invoices/{order}/view', [App\Http\Controllers\InvoiceController::class, 'view'])->name('invoice.view');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Profile (from Breeze)
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Wishlist
     Route::get('/wishlist', [DashboardController::class, 'wishlist'])->name('wishlist');
@@ -563,13 +571,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
     Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])->name('reviews.vote');
 
-    // Wallet
+    // Wallet (auth required)
     Route::prefix('wallet')->name('wallet.')->group(function () {
         Route::get('/', [App\Http\Controllers\WalletController::class, 'index'])->name('index');
         Route::get('/deposit', [App\Http\Controllers\WalletController::class, 'showDeposit'])->name('deposit');
         Route::post('/deposit', [App\Http\Controllers\WalletController::class, 'deposit'])->name('deposit.process');
-        Route::get('/deposit/success', [App\Http\Controllers\WalletController::class, 'depositSuccess'])->name('deposit.success');
-        Route::get('/deposit/cancel', [App\Http\Controllers\WalletController::class, 'depositCancel'])->name('deposit.cancel');
         Route::get('/transactions', [App\Http\Controllers\WalletController::class, 'transactions'])->name('transactions');
         Route::get('/transactions/{transaction}', [App\Http\Controllers\WalletController::class, 'showTransaction'])->name('transactions.show');
         Route::get('/balance', [App\Http\Controllers\WalletController::class, 'balance'])->name('balance');

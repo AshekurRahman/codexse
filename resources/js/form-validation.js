@@ -28,9 +28,26 @@ class AjaxFormValidator {
         // Create error container if not exists
         this.createGlobalErrorContainer();
 
+        // Track if user is navigating away (clicking a link)
+        this.isNavigating = false;
+        document.addEventListener('mousedown', (e) => {
+            // Check if clicking on a link that navigates away
+            const link = e.target.closest('a[href]');
+            if (link && !link.href.startsWith('javascript:') && !link.href.startsWith('#')) {
+                this.isNavigating = true;
+                // Reset after a short delay in case navigation doesn't happen
+                setTimeout(() => { this.isNavigating = false; }, 100);
+            }
+        });
+
         // Add validation listeners to fields
         this.form.querySelectorAll('[data-validate]').forEach(field => {
-            field.addEventListener('blur', () => this.validateField(field));
+            field.addEventListener('blur', () => {
+                // Don't validate if user is clicking a navigation link
+                if (!this.isNavigating) {
+                    this.validateField(field);
+                }
+            });
             field.addEventListener('input', () => {
                 if (field.classList.contains('border-red-500')) {
                     this.validateField(field);

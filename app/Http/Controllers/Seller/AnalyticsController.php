@@ -53,6 +53,7 @@ class AnalyticsController extends Controller
 
     /**
      * Get overview statistics.
+     * Optimized: Combines multiple queries into single aggregate queries
      */
     private function getOverviewStats($seller, $period): array
     {
@@ -60,31 +61,33 @@ class AnalyticsController extends Controller
         $previousStart = Carbon::now()->subDays($period * 2);
         $previousEnd = Carbon::now()->subDays($period);
 
-        // Current period stats
-        $currentRevenue = $seller->orderItems()
-            ->whereHas('order', fn($q) => $q->where('status', 'completed'))
-            ->where('created_at', '>=', $startDate)
-            ->sum('seller_amount');
+        // Optimized: Single query for current AND previous period stats
+        $periodStats = $seller->orderItems()
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->where('orders.status', 'completed')
+            ->selectRaw("
+                SUM(CASE WHEN order_items.created_at >= ? THEN seller_amount ELSE 0 END) as current_revenue,
+                SUM(CASE WHEN order_items.created_at >= ? THEN 1 ELSE 0 END) as current_orders,
+                SUM(CASE WHEN order_items.created_at >= ? AND order_items.created_at < ? THEN seller_amount ELSE 0 END) as previous_revenue,
+                SUM(CASE WHEN order_items.created_at >= ? AND order_items.created_at < ? THEN 1 ELSE 0 END) as previous_orders
+            ", [$startDate, $startDate, $previousStart, $previousEnd, $previousStart, $previousEnd])
+            ->first();
 
-        $currentOrders = $seller->orderItems()
-            ->whereHas('order', fn($q) => $q->where('status', 'completed'))
-            ->where('created_at', '>=', $startDate)
-            ->count();
+        $currentRevenue = (float) ($periodStats->current_revenue ?? 0);
+        $currentOrders = (int) ($periodStats->current_orders ?? 0);
+        $previousRevenue = (float) ($periodStats->previous_revenue ?? 0);
+        $previousOrders = (int) ($periodStats->previous_orders ?? 0);
 
-        $currentViews = $seller->products()
-            ->where('updated_at', '>=', $startDate)
-            ->sum('views_count');
+        // Optimized: Single query for views and product count
+        $productStats = $seller->products()
+            ->selectRaw("
+                SUM(views_count) as total_views,
+                SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) as published_count
+            ")
+            ->first();
 
-        // Previous period stats for comparison
-        $previousRevenue = $seller->orderItems()
-            ->whereHas('order', fn($q) => $q->where('status', 'completed'))
-            ->whereBetween('created_at', [$previousStart, $previousEnd])
-            ->sum('seller_amount');
-
-        $previousOrders = $seller->orderItems()
-            ->whereHas('order', fn($q) => $q->where('status', 'completed'))
-            ->whereBetween('created_at', [$previousStart, $previousEnd])
-            ->count();
+        $currentViews = (int) ($productStats->total_views ?? 0);
+        $publishedCount = (int) ($productStats->published_count ?? 0);
 
         // Calculate percentage changes
         $revenueChange = $previousRevenue > 0
@@ -113,7 +116,7 @@ class AnalyticsController extends Controller
             'views' => $currentViews,
             'conversion_rate' => round($conversionRate, 2),
             'avg_order_value' => round($avgOrderValue, 2),
-            'total_products' => $seller->products()->where('status', 'published')->count(),
+            'total_products' => $publishedCount,
             'total_earnings' => $seller->total_earnings ?? 0,
             'wallet_balance' => auth()->user()->getOrCreateWallet()->balance,
         ];

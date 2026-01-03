@@ -11,24 +11,45 @@ use Minishlink\WebPush\WebPush;
 
 class PushNotificationService
 {
-    protected WebPush $webPush;
+    protected ?WebPush $webPush = null;
+    protected bool $isConfigured = false;
 
     public function __construct()
     {
-        $auth = [
-            'VAPID' => [
-                'subject' => config('app.url'),
-                'publicKey' => config('services.webpush.public_key'),
-                'privateKey' => config('services.webpush.private_key'),
-            ],
-        ];
+        $publicKey = config('services.webpush.public_key');
+        $privateKey = config('services.webpush.private_key');
 
-        $this->webPush = new WebPush($auth);
-        $this->webPush->setReuseVAPIDHeaders(true);
+        // Only initialize WebPush if VAPID keys are configured
+        if (!empty($publicKey) && !empty($privateKey)) {
+            $auth = [
+                'VAPID' => [
+                    'subject' => config('app.url'),
+                    'publicKey' => $publicKey,
+                    'privateKey' => $privateKey,
+                ],
+            ];
+
+            $this->webPush = new WebPush($auth);
+            $this->webPush->setReuseVAPIDHeaders(true);
+            $this->isConfigured = true;
+        }
+    }
+
+    /**
+     * Check if push notifications are properly configured
+     */
+    public function isConfigured(): bool
+    {
+        return $this->isConfigured;
     }
 
     public function sendToUser(User $user, string $type, array $payload): int
     {
+        // Check if push notifications are configured
+        if (!$this->isConfigured) {
+            return 0;
+        }
+
         // Check user preferences
         $preferences = NotificationPreference::getOrCreate($user->id);
 

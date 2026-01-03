@@ -33,13 +33,11 @@
     <div class="relative px-5 -mt-8">
         <div class="relative inline-block">
             <div class="w-16 h-16 rounded-2xl overflow-hidden bg-white dark:bg-surface-700 ring-4 ring-white dark:ring-surface-800 shadow-lg">
-                @if($seller->logo)
-                    <img src="{{ $seller->logo_url }}" alt="{{ $seller->store_name }}" class="w-full h-full object-cover" loading="lazy">
-                @else
-                    <div class="w-full h-full bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center">
-                        <span class="text-xl font-bold text-white">{{ strtoupper(substr($seller->store_name, 0, 2)) }}</span>
-                    </div>
-                @endif
+                <img src="{{ $seller->logo_url }}"
+                     alt="{{ $seller->store_name }}"
+                     class="w-full h-full object-cover"
+                     loading="lazy"
+                     onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full bg-gradient-to-br from-primary-500 to-indigo-600 flex items-center justify-center\'><span class=\'text-xl font-bold text-white\'>{{ strtoupper(substr($seller->store_name, 0, 2)) }}</span></div>';">
             </div>
 
             <!-- Verified Badge -->

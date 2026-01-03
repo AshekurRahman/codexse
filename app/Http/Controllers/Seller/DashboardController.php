@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
 use App\Models\CustomQuoteRequest;
+use App\Models\License;
 use App\Models\ServiceOrder;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -16,13 +18,34 @@ class DashboardController extends Controller
 
         $wallet = auth()->user()->getOrCreateWallet();
 
+        // Optimized: Single query for product/service counts using withCount
+        $seller->loadCount([
+            'products',
+            'services',
+            'orderItems',
+            'jobContracts as active_contracts_count' => function ($query) {
+                $query->where('status', 'active');
+            }
+        ]);
+
+        // Optimized: Single query for order items aggregates
+        $orderStats = $seller->orderItems()
+            ->selectRaw('COALESCE(SUM(price), 0) as total_sales')
+            ->first();
+
+        // Optimized: Get product IDs once, use for license count
+        $productIds = $seller->products()->pluck('id');
+        $activeLicenses = $productIds->isNotEmpty()
+            ? License::whereIn('product_id', $productIds)->where('status', 'active')->count()
+            : 0;
+
         $stats = [
-            'total_products' => $seller->products()->count(),
-            'total_services' => $seller->services()->count(),
-            'total_sales' => $seller->orderItems()->sum('price'),
-            'total_orders' => $seller->orderItems()->count(),
-            'active_licenses' => \App\Models\License::whereIn('product_id', $seller->products()->pluck('id'))->where('status', 'active')->count(),
-            'active_contracts' => $seller->jobContracts()->where('status', 'active')->count(),
+            'total_products' => $seller->products_count,
+            'total_services' => $seller->services_count,
+            'total_sales' => $orderStats->total_sales ?? 0,
+            'total_orders' => $seller->order_items_count,
+            'active_licenses' => $activeLicenses,
+            'active_contracts' => $seller->active_contracts_count,
             'pending_payouts' => $wallet->balance,
             'average_rating' => $seller->rating ?? 0,
         ];

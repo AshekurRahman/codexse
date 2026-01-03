@@ -9,9 +9,9 @@ class DownloadController extends Controller
 {
     public function download(OrderItem $orderItem)
     {
-        // Check if user owns this order item
-        if ($orderItem->order->user_id !== auth()->id()) {
-            abort(403, 'Unauthorized');
+        // Check if user owns this order item (admins can bypass)
+        if ($orderItem->order->user_id !== auth()->id() && !auth()->user()->is_admin) {
+            abort(403, 'This download belongs to a different account. Please log in with the account you used to make the purchase.');
         }
 
         // Check download limit

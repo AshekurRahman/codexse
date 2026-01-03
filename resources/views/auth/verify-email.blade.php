@@ -44,7 +44,7 @@
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
-            <span id="resend-text">{{ __('Resend Verification Email') }}</span>
+            <span id="resend-text">{{ session('status') == 'verification-link-sent' ? __('Resend Verification Email') : __('Send Verification Email') }}</span>
         </button>
 
         <form method="POST" action="{{ route('logout') }}" class="w-full sm:w-auto">
@@ -65,11 +65,17 @@
             const statusIcon = document.getElementById('status-icon');
             const statusText = document.getElementById('status-text');
 
+            let hasSentOnce = {{ session('status') == 'verification-link-sent' ? 'true' : 'false' }};
+
             function setLoading(loading) {
                 resendBtn.disabled = loading;
                 resendIcon.classList.toggle('hidden', loading);
                 resendSpinner.classList.toggle('hidden', !loading);
-                resendText.textContent = loading ? 'Sending...' : '{{ __("Resend Verification Email") }}';
+                if (loading) {
+                    resendText.textContent = 'Sending...';
+                } else {
+                    resendText.textContent = hasSentOnce ? '{{ __("Resend Verification Email") }}' : '{{ __("Send Verification Email") }}';
+                }
             }
 
             function showStatus(message, isSuccess) {
@@ -113,6 +119,7 @@
                     }
 
                     if (data.success) {
+                        hasSentOnce = true;
                         showStatus(data.message, true);
                     } else {
                         showStatus(data.message || 'An error occurred. Please try again.', false);

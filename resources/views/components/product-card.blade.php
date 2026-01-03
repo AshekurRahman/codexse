@@ -1,8 +1,27 @@
-@props(['product' => null])
+@props(['product' => null, 'wishlistIds' => null])
+
+@php
+    // Use pre-loaded wishlist IDs if available, otherwise check (fallback for backward compatibility)
+    $isInWishlist = false;
+    if ($product && auth()->check()) {
+        if ($wishlistIds !== null) {
+            // Use pre-loaded IDs (no query)
+            $isInWishlist = $wishlistIds->contains($product->id);
+        } else {
+            // Fallback: check from cache or session (avoid query in loop)
+            $cachedWishlist = session('user_wishlist_ids');
+            if ($cachedWishlist === null) {
+                $cachedWishlist = auth()->user()->wishlists()->pluck('product_id');
+                session(['user_wishlist_ids' => $cachedWishlist]);
+            }
+            $isInWishlist = $cachedWishlist->contains($product->id);
+        }
+    }
+@endphp
 
 <article
     x-data="{
-        inWishlist: {{ $product && auth()->check() && auth()->user()->wishlists()->where('product_id', $product->id)->exists() ? 'true' : 'false' }},
+        inWishlist: {{ $isInWishlist ? 'true' : 'false' }},
         inCompare: false,
         inCart: false,
         loading: false,
@@ -144,6 +163,7 @@
                 alt="{{ $product->name }}"
                 class="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
                 loading="lazy"
+                onerror="this.onerror=null; this.src='{{ asset('images/placeholder-product.svg') }}'; this.classList.remove('object-cover'); this.classList.add('object-contain', 'p-8');"
             >
         @else
             <div class="h-full flex items-center justify-center">

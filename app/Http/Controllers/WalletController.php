@@ -4,14 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use App\Services\StripeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Stripe\Stripe;
+use Illuminate\Support\Facades\Log;
 use Stripe\Checkout\Session as StripeSession;
-use Stripe\PaymentIntent;
 
 class WalletController extends Controller
 {
+    protected StripeService $stripeService;
+
+    public function __construct(StripeService $stripeService)
+    {
+        $this->stripeService = $stripeService;
+    }
+
     /**
      * Display wallet dashboard.
      */
@@ -56,6 +63,14 @@ class WalletController extends Controller
      */
     public function deposit(Request $request)
     {
+        // Debug: Check if method is called
+        file_put_contents(storage_path('logs/wallet-debug.log'), date('Y-m-d H:i:s') . " - Deposit called\n", FILE_APPEND);
+
+        Log::info('Wallet deposit method called', [
+            'amount' => $request->input('amount'),
+            'user_id' => Auth::id(),
+        ]);
+
         $request->validate([
             'amount' => 'required|numeric|min:5|max:10000',
         ]);
@@ -69,15 +84,27 @@ class WalletController extends Controller
 
         $amount = (float) $request->amount;
 
-        // Create Stripe checkout session
-        Stripe::setApiKey(config('services.stripe.secret'));
+        // Check if Stripe is configured
+        if (!$this->stripeService->isConfigured()) {
+            Log::warning('Wallet deposit: Stripe not configured', [
+                'has_secret' => !empty($this->stripeService->getSecretKey()),
+                'has_public' => !empty($this->stripeService->getPublicKey()),
+            ]);
+            return back()->with('error', 'Payment gateway is not configured.');
+        }
+
+        Log::info('Wallet deposit: Creating Stripe session', [
+            'user_id' => $user->id,
+            'amount' => $amount,
+            'currency' => $this->stripeService->getCurrency(),
+        ]);
 
         try {
             $session = StripeSession::create([
                 'payment_method_types' => ['card'],
                 'line_items' => [[
                     'price_data' => [
-                        'currency' => 'usd',
+                        'currency' => $this->stripeService->getCurrency(),
                         'product_data' => [
                             'name' => 'Wallet Deposit',
                             'description' => 'Add funds to your Codexse wallet',
@@ -100,6 +127,11 @@ class WalletController extends Controller
 
             return redirect($session->url);
         } catch (\Exception $e) {
+            Log::error('Wallet deposit error', [
+                'user_id' => $user->id,
+                'amount' => $amount,
+                'error' => $e->getMessage(),
+            ]);
             return back()->with('error', 'Unable to process payment. Please try again.');
         }
     }
@@ -114,8 +146,6 @@ class WalletController extends Controller
         if (!$sessionId) {
             return redirect()->route('wallet.index')->with('error', 'Invalid session.');
         }
-
-        Stripe::setApiKey(config('services.stripe.secret'));
 
         try {
             $session = StripeSession::retrieve($sessionId);

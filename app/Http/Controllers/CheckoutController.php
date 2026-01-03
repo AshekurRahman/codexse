@@ -252,7 +252,7 @@ class CheckoutController extends Controller
                     'currency' => $this->stripeService->getCurrency(),
                     'product_data' => [
                         'name' => $productName,
-                        'description' => $product->category->name ?? 'Digital Product',
+                        'description' => $product->category?->name ?? 'Digital Product',
                         'images' => $product->thumbnail_url ? [$product->thumbnail_url] : [],
                         'metadata' => [
                             'product_id' => $product->id,
@@ -933,7 +933,8 @@ class CheckoutController extends Controller
                     $product = Product::find($item['product_id']);
                     if (!$product) continue;
 
-                    $commissionRate = CommissionSettings::getCommissionRateForSeller($product->seller);
+                    $seller = $product->seller;
+                    $commissionRate = CommissionSettings::getCommissionRateForSeller($seller);
                     $platformFee = $item['price'] * $commissionRate;
                     $sellerAmount = $item['price'] - $platformFee;
 
@@ -952,17 +953,19 @@ class CheckoutController extends Controller
                     // Create License record for tracking activations
                     $licenseService->createForOrderItem($orderItem);
 
-                    // Credit seller's wallet
-                    $sellerWallet = $product->seller->user->getOrCreateWallet();
-                    $sellerWallet->deposit(
-                        amount: $sellerAmount,
-                        description: 'Sale: ' . $product->name,
-                        paymentMethod: 'product_sale',
-                        paymentId: $order->order_number,
-                        transactionable: $orderItem
-                    );
-                    $product->seller->increment('total_earnings', $sellerAmount);
-                    $product->seller->increment('total_sales', $item['price']);
+                    // Credit seller's wallet (only if seller and user exist)
+                    if ($seller && $seller->user) {
+                        $sellerWallet = $seller->user->getOrCreateWallet();
+                        $sellerWallet->deposit(
+                            amount: $sellerAmount,
+                            description: 'Sale: ' . $product->name,
+                            paymentMethod: 'product_sale',
+                            paymentId: $order->order_number,
+                            transactionable: $orderItem
+                        );
+                        $seller->increment('total_earnings', $sellerAmount);
+                        $seller->increment('total_sales', $item['price']);
+                    }
 
                     // Increment product downloads count
                     $product->increment('downloads_count');
