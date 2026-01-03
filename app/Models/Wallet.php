@@ -17,6 +17,7 @@ class Wallet extends Model
         'user_id',
         'balance',
         'pending_balance',
+        'held_balance',
         'currency',
         'is_active',
         'is_frozen',
@@ -26,6 +27,7 @@ class Wallet extends Model
     protected $casts = [
         'balance' => 'decimal:2',
         'pending_balance' => 'decimal:2',
+        'held_balance' => 'decimal:2',
         'is_active' => 'boolean',
         'is_frozen' => 'boolean',
         'last_transaction_at' => 'datetime',
@@ -40,6 +42,21 @@ class Wallet extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(WalletTransaction::class);
+    }
+
+    public function holds(): HasMany
+    {
+        return $this->hasMany(WalletHold::class);
+    }
+
+    public function activeHolds(): HasMany
+    {
+        return $this->hasMany(WalletHold::class)->where('status', WalletHold::STATUS_PENDING);
+    }
+
+    public function idempotencyKeys(): HasMany
+    {
+        return $this->hasMany(WalletIdempotencyKey::class);
     }
 
     // Accessors
@@ -63,20 +80,50 @@ class Wallet extends Model
         return format_price($this->total_balance);
     }
 
+    public function getAvailableBalanceAttribute(): float
+    {
+        return max(0, $this->balance - ($this->held_balance ?? 0));
+    }
+
+    public function getFormattedAvailableBalanceAttribute(): string
+    {
+        return format_price($this->available_balance);
+    }
+
+    public function getFormattedHeldBalanceAttribute(): string
+    {
+        return format_price($this->held_balance ?? 0);
+    }
+
     // Helper Methods
     public function canWithdraw(float $amount): bool
     {
-        return $this->is_active && !$this->is_frozen && $this->balance >= $amount;
+        return $this->is_active && !$this->is_frozen && $this->available_balance >= $amount;
     }
 
     public function canPurchase(float $amount): bool
     {
-        return $this->is_active && !$this->is_frozen && $this->balance >= $amount;
+        return $this->is_active && !$this->is_frozen && $this->available_balance >= $amount;
+    }
+
+    public function canHold(float $amount): bool
+    {
+        return $this->is_active && !$this->is_frozen && $this->available_balance >= $amount;
     }
 
     public function hasSufficientBalance(float $amount): bool
     {
         return $this->balance >= $amount;
+    }
+
+    public function hasSufficientAvailableBalance(float $amount): bool
+    {
+        return $this->available_balance >= $amount;
+    }
+
+    public function isAvailable(): bool
+    {
+        return $this->is_active && !$this->is_frozen;
     }
 
     // Transaction Methods
@@ -309,6 +356,7 @@ class Wallet extends Model
             [
                 'balance' => 0,
                 'pending_balance' => 0,
+                'held_balance' => 0,
                 'currency' => 'USD',
                 'is_active' => true,
             ]

@@ -26,3 +26,14 @@ Schedule::command('escrow:auto-release')
     ->daily()
     ->at('00:00')
     ->withoutOverlapping();
+
+// Expire old wallet holds every minute
+Schedule::command('wallet:expire-holds')
+    ->everyMinute()
+    ->withoutOverlapping();
+
+// Clean up expired wallet idempotency keys daily
+Schedule::command('wallet:cleanup-idempotency')
+    ->daily()
+    ->at('01:00')
+    ->withoutOverlapping();

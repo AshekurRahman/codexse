@@ -114,6 +114,38 @@
                                             <span class="text-sm text-amber-700 dark:text-amber-400">Need more funds?</span>
                                             <a href="{{ route('wallet.deposit') }}" class="text-sm font-medium text-amber-700 dark:text-amber-400 hover:underline">Add funds to wallet</a>
                                         </div>
+
+                                        {{-- Partial Wallet Payment Option --}}
+                                        @if($wallet->balance > 0)
+                                        <div class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800" x-data="{ usePartialWallet: false }">
+                                            <div class="flex items-start gap-3">
+                                                <input type="checkbox" name="use_partial_wallet" id="use_partial_wallet"
+                                                       x-model="usePartialWallet"
+                                                       class="mt-1 h-5 w-5 text-primary-600 rounded focus:ring-primary-500">
+                                                <div class="flex-1">
+                                                    <label for="use_partial_wallet" class="font-medium text-blue-800 dark:text-blue-200 cursor-pointer">
+                                                        Use wallet balance ({{ $wallet->formatted_balance }}) toward this purchase
+                                                    </label>
+                                                    <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                                                        Remaining {{ format_price($total - $wallet->balance) }} will be charged to your selected payment method below
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div x-show="usePartialWallet" x-transition class="mt-4 pl-8">
+                                                <input type="hidden" name="allow_partial_wallet" value="1" x-bind:disabled="!usePartialWallet">
+                                                <label class="block text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">Pay remaining with:</label>
+                                                <select name="secondary_payment_method" class="w-full rounded-xl border-blue-300 dark:border-blue-700 bg-white dark:bg-surface-800 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-primary-500">
+                                                    @if(\App\Models\Setting::get('stripe_enabled', true) && ($stripeConfigured ?? false))
+                                                    <option value="stripe">Credit Card (Stripe)</option>
+                                                    @endif
+                                                    @if(\App\Models\Setting::get('paypal_enabled', false) && ($paypalConfigured ?? false))
+                                                    <option value="paypal">PayPal</option>
+                                                    @endif
+                                                </select>
+                                            </div>
+                                        </div>
+                                        @endif
                                     @endif
                                     @endif
                                 @endauth
@@ -499,6 +531,8 @@
 
                 try {
                     const formData = new FormData(form);
+                    console.log('Checkout: Submitting form via AJAX...');
+
                     const response = await fetch(form.action, {
                         method: 'POST',
                         headers: {
@@ -508,19 +542,35 @@
                         body: formData
                     });
 
-                    const data = await response.json();
+                    console.log('Checkout: Response status:', response.status, response.ok);
+
+                    // Clone response to read text if JSON parsing fails
+                    const responseClone = response.clone();
+                    let data;
+                    try {
+                        data = await response.json();
+                        console.log('Checkout: Response data:', data);
+                    } catch (jsonError) {
+                        const text = await responseClone.text();
+                        console.error('Checkout: Failed to parse JSON, raw response:', text.substring(0, 500));
+                        throw jsonError;
+                    }
 
                     if (response.ok) {
                         // Success - redirect
                         if (data.redirect) {
+                            console.log('Checkout: Redirecting to:', data.redirect);
                             window.location.href = data.redirect;
                         } else if (data.url) {
+                            console.log('Checkout: Redirecting to url:', data.url);
                             window.location.href = data.url;
                         } else {
+                            console.log('Checkout: No redirect URL, submitting form');
                             // Fallback to form submission
                             form.submit();
                         }
                     } else {
+                        console.log('Checkout: Response not OK, handling errors');
                         // Server validation errors
                         if (data.errors) {
                             const serverErrors = [];
@@ -541,6 +591,7 @@
                     }
                 } catch (error) {
                     console.error('Checkout error:', error);
+                    console.log('Checkout: Falling back to form.submit()');
                     // If AJAX fails, submit form normally
                     form.submit();
                 }

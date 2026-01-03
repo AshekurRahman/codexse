@@ -8,6 +8,11 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Models\Wallet;
 use App\Models\Currency;
+use App\Exceptions\Wallet\DuplicateTransactionException;
+use App\Exceptions\Wallet\InsufficientBalanceException;
+use App\Exceptions\Wallet\WalletException;
+use App\Exceptions\Wallet\WalletFrozenException;
+use App\Exceptions\Wallet\WalletInactiveException;
 use App\Services\CurrencyService;
 use App\Services\FraudDetectionService;
 use App\Services\LicenseService;
@@ -16,6 +21,7 @@ use App\Services\PayPalService;
 use App\Services\PushNotificationService;
 use App\Services\StripeService;
 use App\Services\TaxService;
+use App\Services\WalletService;
 use App\Notifications\ProductPurchaseConfirmation;
 use App\Notifications\NewSaleNotification;
 use Illuminate\Http\Request;
@@ -33,19 +39,22 @@ class CheckoutController extends Controller
     protected PayPalService $paypalService;
     protected TaxService $taxService;
     protected FraudDetectionService $fraudService;
+    protected WalletService $walletService;
 
     public function __construct(
         StripeService $stripeService,
         PayoneerService $payoneerService,
         PayPalService $paypalService,
         TaxService $taxService,
-        FraudDetectionService $fraudService
+        FraudDetectionService $fraudService,
+        WalletService $walletService
     ) {
         $this->stripeService = $stripeService;
         $this->payoneerService = $payoneerService;
         $this->paypalService = $paypalService;
         $this->taxService = $taxService;
         $this->fraudService = $fraudService;
+        $this->walletService = $walletService;
     }
 
     public function index()
@@ -351,92 +360,325 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Process Wallet checkout
+     * Process Wallet checkout using WalletService with hold/capture pattern.
      */
     protected function processWalletCheckout(Request $request, Order $order, array $orderItems, float $total)
     {
         $isAjax = $request->expectsJson() || $request->ajax();
+
+        // Generate idempotency key to prevent duplicate transactions
+        $idempotencyKey = $this->walletService->generateCheckoutIdempotencyKey(
+            $order,
+            Auth::id() ?? 0,
+            $total
+        );
 
         Log::info('Checkout: Processing wallet payment', [
             'order_id' => $order->id,
             'order_number' => $order->order_number,
             'amount' => $total,
             'user_id' => Auth::id(),
+            'idempotency_key' => $idempotencyKey,
         ]);
 
+        // Authentication check
         if (!Auth::check()) {
-            $order->update(['status' => 'failed']);
-            Log::warning('Checkout: Wallet payment failed - user not authenticated', [
-                'order_id' => $order->id,
-            ]);
-            if ($isAjax) {
-                return response()->json(['message' => 'Please log in to use wallet payment.'], 401);
-            }
-            return redirect()->route('login')->with('error', 'Please log in to use wallet payment.');
+            return $this->walletCheckoutError(
+                $order,
+                'Please log in to use wallet payment.',
+                401,
+                $isAjax
+            );
         }
 
         $user = Auth::user();
         $wallet = $user->getOrCreateWallet();
 
-        // Verify wallet can make this purchase
-        if (!$wallet->canPurchase($total)) {
-            $order->update(['status' => 'failed']);
-            Log::warning('Checkout: Wallet payment failed - insufficient balance', [
-                'order_id' => $order->id,
-                'wallet_balance' => $wallet->balance,
-                'required' => $total,
-            ]);
-            if ($isAjax) {
-                return response()->json(['message' => 'Insufficient wallet balance. Please add funds or choose another payment method.'], 422);
-            }
-            return redirect()->route('checkout')->with('error', 'Insufficient wallet balance. Please add funds or choose another payment method.');
-        }
-
         try {
-            DB::beginTransaction();
+            // Validate wallet state
+            $this->walletService->validateWallet($wallet);
 
-            // Deduct from wallet
-            $transaction = $wallet->purchase(
+            // Check if full wallet payment is possible
+            if (!$this->walletService->canPurchase($wallet, $total)) {
+                // Check for partial payment option
+                if ($request->boolean('allow_partial_wallet')) {
+                    return $this->processPartialWalletCheckout(
+                        $request,
+                        $order,
+                        $orderItems,
+                        $total,
+                        $wallet
+                    );
+                }
+
+                throw new InsufficientBalanceException(
+                    $total,
+                    $this->walletService->getAvailableBalance($wallet),
+                    ['wallet_id' => $wallet->id]
+                );
+            }
+
+            // Use hold/capture pattern for full wallet payment
+            $hold = $this->walletService->holdFunds(
+                wallet: $wallet,
                 amount: $total,
+                idempotencyKey: $idempotencyKey,
+                description: 'Purchase: Order #' . $order->order_number,
+                holdable: $order,
+                metadata: ['order_items' => count($orderItems)]
+            );
+
+            // Store hold reference on order
+            $order->update(['wallet_hold_id' => $hold->id]);
+
+            // Capture immediately for direct checkout
+            $transaction = $this->walletService->captureFunds(
+                hold: $hold,
                 description: 'Purchase: Order #' . $order->order_number,
                 transactionable: $order
             );
 
+            // Update order with transaction reference
+            $order->update(['wallet_transaction_id' => $transaction->id]);
+
             // Store order items in session for completeOrder
             session()->put('pending_order_items', $orderItems);
 
-            // Complete the order immediately
+            // Complete the order
             $this->completeOrder($order, 'wallet_' . $transaction->reference);
-
-            DB::commit();
 
             Log::info('Checkout: Wallet payment successful', [
                 'order_id' => $order->id,
                 'order_number' => $order->order_number,
                 'transaction_ref' => $transaction->reference,
+                'hold_id' => $hold->id,
             ]);
 
             // Clear cart
-            session()->forget('cart');
-            session()->forget('pending_order_items');
+            session()->forget(['cart', 'pending_order_items']);
+
+            $redirectUrl = route('checkout.success') . '?order=' . $order->id;
 
             if ($isAjax) {
-                return response()->json(['redirect' => route('checkout.success') . '?order=' . $order->id]);
+                return response()->json(['redirect' => $redirectUrl]);
             }
             return view('pages.checkout-success', compact('order'));
 
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Checkout: Wallet payment error', [
+        } catch (InsufficientBalanceException $e) {
+            Log::warning('Checkout: Wallet payment failed - insufficient balance', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+                'context' => $e->getContext(),
+            ]);
+            return $this->walletCheckoutError(
+                $order,
+                'Insufficient wallet balance. Please add funds or choose another payment method.',
+                422,
+                $isAjax
+            );
+
+        } catch (WalletFrozenException $e) {
+            Log::warning('Checkout: Wallet payment failed - wallet frozen', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
             ]);
-            $order->update(['status' => 'failed']);
+            return $this->walletCheckoutError(
+                $order,
+                'Your wallet is frozen. Please contact support.',
+                403,
+                $isAjax
+            );
+
+        } catch (WalletInactiveException $e) {
+            Log::warning('Checkout: Wallet payment failed - wallet inactive', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+            return $this->walletCheckoutError(
+                $order,
+                'Your wallet is not active. Please contact support.',
+                403,
+                $isAjax
+            );
+
+        } catch (DuplicateTransactionException $e) {
+            Log::warning('Checkout: Duplicate transaction detected', [
+                'order_id' => $order->id,
+                'idempotency_key' => $idempotencyKey,
+            ]);
+            // Return success - transaction was already processed
+            $redirectUrl = route('checkout.success') . '?order=' . $order->id;
             if ($isAjax) {
-                return response()->json(['message' => 'Payment failed. Please try again.'], 422);
+                return response()->json(['redirect' => $redirectUrl]);
             }
-            return redirect()->route('checkout')->with('error', 'Payment failed. Please try again.');
+            return redirect($redirectUrl);
+
+        } catch (WalletException $e) {
+            Log::error('Checkout: Wallet payment error', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+                'error_code' => $e->getErrorCode(),
+                'context' => $e->getContext(),
+            ]);
+            return $this->walletCheckoutError(
+                $order,
+                'Payment failed. Please try again.',
+                422,
+                $isAjax
+            );
+
+        } catch (\Exception $e) {
+            Log::error('Checkout: Wallet payment unexpected error', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return $this->walletCheckoutError(
+                $order,
+                'Payment failed. Please try again.',
+                422,
+                $isAjax
+            );
         }
+    }
+
+    /**
+     * Process partial wallet checkout (wallet + secondary payment).
+     */
+    protected function processPartialWalletCheckout(
+        Request $request,
+        Order $order,
+        array $orderItems,
+        float $total,
+        Wallet $wallet
+    ) {
+        $isAjax = $request->expectsJson() || $request->ajax();
+        $secondaryMethod = $request->input('secondary_payment_method', 'stripe');
+
+        Log::info('Checkout: Processing partial wallet payment', [
+            'order_id' => $order->id,
+            'total' => $total,
+            'secondary_method' => $secondaryMethod,
+        ]);
+
+        // Calculate split
+        $split = $this->walletService->calculatePartialPayment($wallet, $total);
+
+        if ($split['wallet_amount'] <= 0) {
+            // No wallet balance, redirect to secondary payment
+            Log::info('Checkout: No wallet balance for partial payment, using full secondary', [
+                'order_id' => $order->id,
+            ]);
+            $order->update([
+                'payment_method' => $secondaryMethod,
+            ]);
+
+            // Store order items and redirect to secondary payment
+            session()->put('pending_order_items', $orderItems);
+
+            if ($secondaryMethod === 'paypal') {
+                return $this->processPayPalCheckout($request, $order, $orderItems, [
+                    'tax_amount' => $order->tax_amount ?? 0,
+                ]);
+            }
+            return $this->processStripeCheckout($request, $order, $orderItems, [
+                'tax_amount' => $order->tax_amount ?? 0,
+            ]);
+        }
+
+        $idempotencyKey = 'partial_hold_' . $order->order_number;
+
+        try {
+            // Hold wallet funds
+            $hold = $this->walletService->holdFunds(
+                wallet: $wallet,
+                amount: $split['wallet_amount'],
+                idempotencyKey: $idempotencyKey,
+                description: 'Partial payment: Order #' . $order->order_number,
+                holdable: $order,
+                metadata: [
+                    'total_amount' => $total,
+                    'remaining_amount' => $split['remaining_amount'],
+                    'secondary_method' => $secondaryMethod,
+                ],
+                expirationMinutes: 30
+            );
+
+            // Update order with partial payment info
+            $order->update([
+                'wallet_amount' => $split['wallet_amount'],
+                'wallet_hold_id' => $hold->id,
+                'payment_method' => 'wallet_' . $secondaryMethod,
+                'secondary_payment_method' => $secondaryMethod,
+            ]);
+
+            Log::info('Checkout: Wallet hold created for partial payment', [
+                'order_id' => $order->id,
+                'hold_id' => $hold->id,
+                'wallet_amount' => $split['wallet_amount'],
+                'remaining_amount' => $split['remaining_amount'],
+            ]);
+
+            // Store order items
+            session()->put('pending_order_items', $orderItems);
+
+            // Create modified order items for secondary payment (only remaining amount)
+            // For now, we'll pass the remaining amount in the tax data
+            $taxData = [
+                'tax_amount' => $order->tax_amount ?? 0,
+                'partial_wallet_amount' => $split['wallet_amount'],
+            ];
+
+            // Update order total to reflect only the remaining amount for secondary payment
+            $order->update([
+                'total' => $split['remaining_amount'] + ($order->tax_amount ?? 0),
+            ]);
+
+            // Redirect to secondary payment for remaining amount
+            if ($secondaryMethod === 'paypal') {
+                return $this->processPayPalCheckout($request, $order, $orderItems, $taxData);
+            }
+            return $this->processStripeCheckout($request, $order, $orderItems, $taxData);
+
+        } catch (WalletException $e) {
+            // If wallet hold fails, proceed with full secondary payment
+            Log::warning('Checkout: Partial wallet hold failed, using full secondary payment', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            $order->update([
+                'payment_method' => $secondaryMethod,
+                'wallet_amount' => null,
+                'wallet_hold_id' => null,
+            ]);
+
+            session()->put('pending_order_items', $orderItems);
+
+            if ($secondaryMethod === 'paypal') {
+                return $this->processPayPalCheckout($request, $order, $orderItems, [
+                    'tax_amount' => $order->tax_amount ?? 0,
+                ]);
+            }
+            return $this->processStripeCheckout($request, $order, $orderItems, [
+                'tax_amount' => $order->tax_amount ?? 0,
+            ]);
+        }
+    }
+
+    /**
+     * Helper to handle wallet checkout errors consistently.
+     */
+    protected function walletCheckoutError(Order $order, string $message, int $code, bool $isAjax)
+    {
+        $order->update(['status' => 'failed']);
+
+        if ($isAjax) {
+            return response()->json(['message' => $message], $code);
+        }
+
+        $route = $code === 401 ? 'login' : 'checkout';
+        return redirect()->route($route)->with('error', $message);
     }
 
     /**
@@ -670,12 +912,19 @@ class CheckoutController extends Controller
 
     public function success(Request $request)
     {
+        // Debug: Log all request parameters (using error level because LOG_LEVEL=error in .env)
+        Log::error('DEBUG Checkout: Success page accessed', [
+            'all_query' => $request->query(),
+            'url' => $request->fullUrl(),
+            'user_id' => auth()->id(),
+        ]);
+
         $sessionId = $request->query('session_id');
         $orderId = $request->query('order');
 
         // Handle wallet/direct payment success (order ID provided)
         if ($orderId && !$sessionId) {
-            Log::info('Checkout: Success page - wallet/direct payment', [
+            Log::error('DEBUG Checkout: Success page - wallet/direct payment', [
                 'order_id' => $orderId,
                 'user_id' => auth()->id(),
             ]);
@@ -685,7 +934,13 @@ class CheckoutController extends Controller
                 ->first();
 
             if (!$order) {
-                Log::warning('Checkout: Success page - order not found', ['order_id' => $orderId]);
+                // Check if order exists but with different status
+                $anyOrder = Order::find($orderId);
+                Log::error('DEBUG Checkout: Success page - order not found or wrong status', [
+                    'order_id' => $orderId,
+                    'order_exists' => $anyOrder ? 'yes' : 'no',
+                    'actual_status' => $anyOrder?->status ?? 'N/A',
+                ]);
                 return redirect()->route('products.index')->with('error', 'Order not found.');
             }
 
@@ -708,7 +963,7 @@ class CheckoutController extends Controller
 
         // Handle Stripe payment success (session_id provided)
         if (!$sessionId) {
-            Log::warning('Checkout: Success page - no session_id or order_id');
+            Log::error('DEBUG Checkout: Success page - no session_id or order_id, redirecting to products');
             return redirect()->route('products.index');
         }
 
@@ -802,6 +1057,37 @@ class CheckoutController extends Controller
             $captureResult = $this->paypalService->captureOrder($paypalOrderId);
 
             if ($captureResult && $captureResult['status'] === 'COMPLETED') {
+                // Handle partial wallet payment: capture wallet hold if exists
+                if ($order->wallet_hold_id) {
+                    try {
+                        $hold = $this->walletService->findHold($order->wallet_hold_id);
+                        if ($hold->canCapture()) {
+                            $walletTransaction = $this->walletService->captureFunds(
+                                hold: $hold,
+                                description: 'Partial payment captured: Order #' . $order->order_number,
+                                transactionable: $order
+                            );
+
+                            $order->update([
+                                'wallet_transaction_id' => $walletTransaction->id,
+                            ]);
+
+                            Log::info('Checkout: Wallet hold captured for PayPal partial payment', [
+                                'order_id' => $order->id,
+                                'hold_id' => $hold->id,
+                                'transaction_id' => $walletTransaction->id,
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Checkout: Failed to capture wallet hold for PayPal payment', [
+                            'order_id' => $order->id,
+                            'hold_id' => $order->wallet_hold_id,
+                            'error' => $e->getMessage(),
+                        ]);
+                        // Continue with order completion even if wallet capture fails
+                    }
+                }
+
                 // Payment successful
                 if ($order->status === 'pending') {
                     $this->completeOrder($order, 'paypal_' . ($captureResult['capture_id'] ?? $paypalOrderId));
@@ -820,7 +1106,23 @@ class CheckoutController extends Controller
                 return view('pages.checkout-success', compact('order'));
             }
 
-            // Payment not completed
+            // Payment not completed - release wallet hold if exists
+            if ($order->wallet_hold_id) {
+                try {
+                    $hold = $this->walletService->findHold($order->wallet_hold_id);
+                    $this->walletService->releaseFunds($hold, 'PayPal payment not completed');
+                    Log::info('Checkout: Wallet hold released - PayPal payment not completed', [
+                        'order_id' => $order->id,
+                        'hold_id' => $hold->id,
+                    ]);
+                } catch (\Exception $releaseError) {
+                    Log::error('Checkout: Failed to release wallet hold', [
+                        'order_id' => $order->id,
+                        'error' => $releaseError->getMessage(),
+                    ]);
+                }
+            }
+
             Log::warning('Checkout: PayPal payment not completed', [
                 'order_id' => $order->id,
                 'capture_status' => $captureResult['status'] ?? 'unknown',
@@ -828,6 +1130,19 @@ class CheckoutController extends Controller
             return redirect()->route('checkout')->with('error', 'Payment was not completed. Please try again.');
 
         } catch (\Exception $e) {
+            // Release wallet hold on error
+            if ($order->wallet_hold_id) {
+                try {
+                    $hold = $this->walletService->findHold($order->wallet_hold_id);
+                    $this->walletService->releaseFunds($hold, 'PayPal payment error');
+                } catch (\Exception $releaseError) {
+                    Log::error('Checkout: Failed to release wallet hold on PayPal error', [
+                        'order_id' => $order->id,
+                        'error' => $releaseError->getMessage(),
+                    ]);
+                }
+            }
+
             Log::error('Checkout: PayPal success callback error', [
                 'order_id' => $order->id,
                 'error' => $e->getMessage(),
@@ -1022,6 +1337,37 @@ class CheckoutController extends Controller
         }
 
         if ($order->status === 'pending') {
+            // Handle partial wallet payment: capture wallet hold if exists
+            if ($order->wallet_hold_id) {
+                try {
+                    $hold = $this->walletService->findHold($order->wallet_hold_id);
+                    if ($hold->canCapture()) {
+                        $walletTransaction = $this->walletService->captureFunds(
+                            hold: $hold,
+                            description: 'Partial payment captured: Order #' . $order->order_number,
+                            transactionable: $order
+                        );
+
+                        $order->update([
+                            'wallet_transaction_id' => $walletTransaction->id,
+                        ]);
+
+                        Log::info('Checkout: Wallet hold captured for partial payment', [
+                            'order_id' => $order->id,
+                            'hold_id' => $hold->id,
+                            'transaction_id' => $walletTransaction->id,
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    Log::error('Checkout: Failed to capture wallet hold', [
+                        'order_id' => $order->id,
+                        'hold_id' => $order->wallet_hold_id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    // Continue with order completion even if wallet capture fails
+                }
+            }
+
             $this->completeOrder($order, $session->payment_intent);
         }
     }
@@ -1033,6 +1379,25 @@ class CheckoutController extends Controller
         if ($orderId) {
             $order = Order::find($orderId);
             if ($order) {
+                // Release wallet hold if exists
+                if ($order->wallet_hold_id) {
+                    try {
+                        $hold = $this->walletService->findHold($order->wallet_hold_id);
+                        $this->walletService->releaseFunds($hold, 'Secondary payment failed');
+
+                        Log::info('Checkout: Wallet hold released due to secondary payment failure', [
+                            'order_id' => $order->id,
+                            'hold_id' => $hold->id,
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Checkout: Failed to release wallet hold', [
+                            'order_id' => $order->id,
+                            'hold_id' => $order->wallet_hold_id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+
                 $order->update(['status' => 'failed']);
                 Log::info('Order marked as failed: ' . $orderId);
             }
