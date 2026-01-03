@@ -382,7 +382,7 @@ class CheckoutController extends Controller
             if ($isAjax) {
                 return response()->json(['message' => 'Insufficient wallet balance. Please add funds or choose another payment method.'], 422);
             }
-            return redirect()->route('checkout.index')->with('error', 'Insufficient wallet balance. Please add funds or choose another payment method.');
+            return redirect()->route('checkout')->with('error', 'Insufficient wallet balance. Please add funds or choose another payment method.');
         }
 
         try {
@@ -419,7 +419,7 @@ class CheckoutController extends Controller
             if ($isAjax) {
                 return response()->json(['message' => 'Payment failed. Please try again.'], 422);
             }
-            return redirect()->route('checkout.index')->with('error', 'Payment failed. Please try again.');
+            return redirect()->route('checkout')->with('error', 'Payment failed. Please try again.');
         }
     }
 
@@ -639,7 +639,7 @@ class CheckoutController extends Controller
             $session = StripeSession::retrieve($sessionId);
 
             if ($session->payment_status !== 'paid') {
-                return redirect()->route('checkout.index')->with('error', 'Payment was not completed.');
+                return redirect()->route('checkout')->with('error', 'Payment was not completed.');
             }
 
             // Find the order
@@ -684,7 +684,7 @@ class CheckoutController extends Controller
         $paypalOrderId = $request->query('token') ?? $order->paypal_order_id;
 
         if (!$paypalOrderId) {
-            return redirect()->route('checkout.index')->with('error', 'Invalid PayPal order.');
+            return redirect()->route('checkout')->with('error', 'Invalid PayPal order.');
         }
 
         try {
@@ -705,7 +705,7 @@ class CheckoutController extends Controller
             }
 
             // Payment not completed
-            return redirect()->route('checkout.index')->with('error', 'Payment was not completed. Please try again.');
+            return redirect()->route('checkout')->with('error', 'Payment was not completed. Please try again.');
 
         } catch (\Exception $e) {
             Log::error('PayPal success callback error: ' . $e->getMessage());
@@ -747,7 +747,7 @@ class CheckoutController extends Controller
             }
 
             // Payment failed or was declined
-            return redirect()->route('checkout.index')->with('error', 'Payment was not completed. Please try again.');
+            return redirect()->route('checkout')->with('error', 'Payment was not completed. Please try again.');
 
         } catch (\Exception $e) {
             Log::error('Payoneer success callback error: ' . $e->getMessage());
