@@ -186,14 +186,6 @@ class CheckoutController extends Controller
     {
         $isAjax = $request->expectsJson() || $request->ajax();
 
-        // Check if Stripe is configured
-        if (!$this->stripeService->isConfigured()) {
-            if ($isAjax) {
-                return response()->json(['message' => 'Payment system is not configured. Please contact support.'], 422);
-            }
-            return redirect()->route('cart.index')->with('error', 'Payment system is not configured. Please contact support.');
-        }
-
         $validated = $request->validate([
             'email' => 'required|email',
             'name' => 'required|string|max:255',
@@ -487,6 +479,15 @@ class CheckoutController extends Controller
     protected function processStripeCheckout(Request $request, Order $order, array $lineItems, array $taxData)
     {
         $isAjax = $request->expectsJson() || $request->ajax();
+
+        // Check if Stripe is configured
+        if (!$this->stripeService->isConfigured()) {
+            $order->update(['status' => 'failed']);
+            if ($isAjax) {
+                return response()->json(['message' => 'Stripe is not configured. Please contact support.'], 422);
+            }
+            return redirect()->back()->with('error', 'Stripe is not configured. Please contact support.');
+        }
 
         // Add tax as a separate line item if applicable
         if ($taxData['tax_amount'] > 0) {
