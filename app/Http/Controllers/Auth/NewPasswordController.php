@@ -7,6 +7,7 @@ use App\Models\PasswordHistory;
 use App\Models\SecurityLog;
 use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +32,7 @@ class NewPasswordController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $request->validate([
             'token' => ['required'],
@@ -52,8 +53,10 @@ class NewPasswordController extends Controller
                     ]);
                 }
 
-                // Save current password to history before updating
-                PasswordHistory::store($user->id, $user->password);
+                // Save current password to history before updating (only if user has a password)
+                if ($user->password !== null) {
+                    PasswordHistory::store($user->id, $user->password);
+                }
 
                 $user->forceFill([
                     'password' => Hash::make($request->password),
@@ -81,12 +84,29 @@ class NewPasswordController extends Controller
             }
         );
 
+        $success = $status === Password::PASSWORD_RESET;
+
+        if ($request->expectsJson()) {
+            if ($success) {
+                return response()->json([
+                    'success' => true,
+                    'message' => __($status),
+                    'redirect' => route('login'),
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['email' => [__($status)]],
+            ], 422);
+        }
+
         // If the password was successfully reset, we will redirect the user back to
         // the application's home authenticated view. If there is an error we can
         // redirect them back to where they came from with their error message.
-        return $status == Password::PASSWORD_RESET
-                    ? redirect()->route('login')->with('status', __($status))
-                    : back()->withInput($request->only('email'))
-                        ->withErrors(['email' => __($status)]);
+        return $success
+            ? redirect()->route('login')->with('status', __($status))
+            : back()->withInput($request->only('email'))
+                ->withErrors(['email' => __($status)]);
     }
 }
