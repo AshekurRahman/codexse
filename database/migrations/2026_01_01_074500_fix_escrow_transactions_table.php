@@ -23,7 +23,10 @@ return new class extends Migration
 
         // Fix status enum to include all required values
         // MySQL doesn't support adding to enum directly via schema builder, so use raw SQL
-        DB::statement("ALTER TABLE escrow_transactions MODIFY COLUMN status ENUM('pending', 'held', 'partial_released', 'released', 'refunded', 'partially_refunded', 'disputed', 'cancelled') DEFAULT 'pending'");
+        // Skip for SQLite as it doesn't support ENUM (uses TEXT instead)
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE escrow_transactions MODIFY COLUMN status ENUM('pending', 'held', 'partial_released', 'released', 'refunded', 'partially_refunded', 'disputed', 'cancelled') DEFAULT 'pending'");
+        }
     }
 
     /**
@@ -39,7 +42,9 @@ return new class extends Migration
             $table->dropColumn(['notes', 'refunded_at']);
         });
 
-        // Revert status enum
-        DB::statement("ALTER TABLE escrow_transactions MODIFY COLUMN status ENUM('pending', 'held', 'partial_released', 'released', 'refunded', 'disputed') DEFAULT 'pending'");
+        // Revert status enum (MySQL only)
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE escrow_transactions MODIFY COLUMN status ENUM('pending', 'held', 'partial_released', 'released', 'refunded', 'disputed') DEFAULT 'pending'");
+        }
     }
 };

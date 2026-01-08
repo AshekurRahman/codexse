@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -22,7 +23,11 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index(['is_active', 'sort_order']);
-            $table->fullText(['question', 'keywords']);
+
+            // Fulltext indexes only supported on MySQL/MariaDB
+            if (DB::getDriverName() === 'mysql') {
+                $table->fullText(['question', 'keywords']);
+            }
         });
     }
 

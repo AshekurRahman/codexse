@@ -144,6 +144,14 @@ return new class extends Migration
      */
     private function indexExists(string $table, string $indexName): bool
     {
+        $driver = DB::getDriverName();
+
+        if ($driver === 'sqlite') {
+            $indexes = DB::select("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = ? AND name = ?", [$table, $indexName]);
+            return count($indexes) > 0;
+        }
+
+        // MySQL/MariaDB
         $indexes = DB::select("SHOW INDEX FROM {$table} WHERE Key_name = ?", [$indexName]);
         return count($indexes) > 0;
     }
