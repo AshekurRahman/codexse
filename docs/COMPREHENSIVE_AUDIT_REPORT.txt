@@ -1,0 +1,620 @@
+================================================================================
+                    COMPREHENSIVE WEBSITE AUDIT REPORT
+                           Codexse Digital Marketplace
+                              Date: January 8, 2026
+================================================================================
+
+EXECUTIVE SUMMARY
+================================================================================
+
+Total Issues Found: 236+
+
+Category                  | Critical | High | Medium | Low  | Total
+--------------------------|----------|------|--------|------|-------
+Frontend Controllers      |    5     |  10  |   7    |  3   |  25
+Admin Panel Resources     |    7     |  15  |   6    |  2   |  30
+Blade Views/Templates     |    3     |   6  |  10    |  5   |  24
+Models & Relationships    |    2     |  10  |  10    |  8   |  30
+Seller Controllers        |    2     |   8  |   6    |  4   |  20
+API Endpoints             |    2     |   6  |   6    |  6   |  20
+JavaScript/Frontend       |    3     |   7  |   8    |  5   |  23
+Email Templates           |    1     |   8  |  15+   |  5+  |  30+
+Middleware                |    4     |  11  |  16    |  5   |  36
+Config Files              |    2     |  11  |  12    |  3   |  28
+--------------------------|----------|------|--------|------|-------
+TOTAL                     |   31     |  92  |  96+   | 46+  | 236+
+
+
+================================================================================
+CRITICAL ISSUES (31 Total) - FIX IMMEDIATELY
+================================================================================
+
+SECURITY VULNERABILITIES
+--------------------------------------------------------------------------------
+
+#1  IDOR Vulnerability - Email Tracking
+    File: app/Http/Controllers/EmailTrackingController.php
+    Issue: Users can track any email without ownership verification
+    Risk: Privacy breach, unauthorized access to tracking data
+    Fix: Add user ownership verification before tracking
+
+#2  Missing Financial Method Call
+    File: app/Models/Payout.php
+    Line: 168
+    Issue: Missing credit() call should be refund() - causes financial loss
+    Risk: Money not properly refunded to wallets
+    Fix: Change method call to proper refund() implementation
+
+#3  Missing Seller Ownership Verification
+    File: app/Http/Controllers/Seller/PayoutController.php
+    Lines: 21-74
+    Issue: No verification that seller owns the payout being accessed
+    Risk: Sellers can access/modify other sellers' payouts
+    Fix: Add ownership check before any payout operation
+
+#4  API Key in Query Parameter
+    File: app/Http/Middleware/LicenseApiAuth.php
+    Line: 38
+    Issue: API key accepted from query parameter (gets logged in URLs)
+    Risk: API keys exposed in server logs, browser history, referrer headers
+    Fix: Only accept API key from Authorization header
+
+#5  Missing Session Ownership Validation
+    File: app/Http/Controllers/Api/ChatbotController.php
+    Lines: 22-77
+    Issue: No validation that user owns the chatbot session
+    Risk: Users can access other users' chat sessions
+    Fix: Validate session ownership before operations
+
+#6  XSS - Unescaped Campaign Content
+    File: resources/views/emails/campaign.blade.php
+    Line: 158
+    Issue: {!! $content !!} renders raw HTML without sanitization
+    Risk: Cross-site scripting attacks via email campaigns
+    Fix: Sanitize content with HTML Purifier before rendering
+
+#7  XSS - Unescaped Custom Code
+    File: resources/views/components/layouts/app.blade.php
+    Lines: 161, 210
+    Issue: {!! custom_head_code !!} and {!! custom_body_code !!} unescaped
+    Risk: Arbitrary JavaScript injection by malicious admins
+    Fix: Implement strict validation on admin-entered code
+
+#8  XSS - innerHTML with Dynamic Content
+    File: resources/views/pages/checkout.blade.php
+    Lines: 638, 644
+    Issue: innerHTML used with dynamic values that could contain user input
+    Risk: DOM-based XSS attacks
+    Fix: Use textContent or sanitize HTML before insertion
+
+
+RACE CONDITIONS
+--------------------------------------------------------------------------------
+
+#9  Non-Atomic Counter Increment
+    File: app/Http/Middleware/BlockMaliciousIps.php
+    Lines: 194-198
+    Issue: Counter increment and expiry set are not atomic operations
+    Risk: Counter can be reset by concurrent requests
+    Fix: Use Cache::remember() or atomic lock operations
+
+#10 Rate Limiter Expiry Race
+    File: app/Http/Middleware/DynamicRateLimiter.php
+    Lines: 98-101
+    Issue: Non-atomic check-then-set pattern for rate limit expiry
+    Risk: Rate limits can be bypassed with concurrent requests
+    Fix: Use atomic cache operations
+
+#11 Bot Counter Race Condition
+    File: app/Http/Middleware/HoneypotProtection.php
+    Lines: 146-149
+    Issue: Same non-atomic pattern as BlockMaliciousIps
+    Risk: Bot detection can be bypassed
+    Fix: Use atomic increment with built-in expiry
+
+#12 Webhook Replay Race
+    File: app/Http/Middleware/WebhookReplayProtection.php
+    Lines: 52-82
+    Issue: Gap between validation check and nonce registration
+    Risk: Duplicate webhook processing during race window
+    Fix: Use acquireLock() pattern with atomic registration
+
+#13 Review Purchase Check Race
+    File: app/Http/Controllers/ReviewController.php
+    Lines: 25-38
+    Issue: TOCTOU (time-of-check-time-of-use) race condition
+    Risk: Multiple reviews could be submitted for same purchase
+    Fix: Use database transaction with locking
+
+#14 Wallet Withdrawal Race
+    File: app/Http/Controllers/Seller/PayoutController.php
+    Lines: 34-41
+    Issue: Race condition between balance check and withdrawal
+    Risk: Double-spend possibility if concurrent requests
+    Fix: Use pessimistic locking on wallet balance
+
+#15 Proposals Count Race
+    File: app/Http/Controllers/Seller/JobProposalController.php
+    Lines: 144-157
+    Issue: Race condition on proposals_count update
+    Risk: Incorrect proposal counts
+    Fix: Use atomic increment or database trigger
+
+
+CONFIGURATION ISSUES
+--------------------------------------------------------------------------------
+
+#16 Admin IP Whitelist Disabled by Default
+    File: config/security.php
+    Line: 82
+    Issue: 'allowed_ips' defaults to empty string (disabled)
+    Risk: Admin panel accessible from any IP address
+    Fix: Require explicit configuration, warn if empty
+
+#17 Auto-Release Before Dispute Window
+    File: config/escrow.php
+    Lines: 37, 49
+    Issue: auto_release_days (3) < dispute_window_days (7)
+    Risk: Funds released before buyer can file dispute
+    Fix: Validate auto_release >= dispute_window
+
+#18 API Keys Exposed in Admin Table
+    File: app/Filament/Admin/Resources/ApiKeyResource.php
+    Lines: 93-97, 145-157
+    Issue: Full API keys displayed in table columns and notifications
+    Risk: API keys visible to all admin users, in screenshots
+    Fix: Mask API keys, only show last 4 characters
+
+
+DATA INTEGRITY ISSUES
+--------------------------------------------------------------------------------
+
+#19 Sensitive Fields Mass Assignable - Order
+    File: app/Models/Order.php
+    Lines: 36-40
+    Issue: Financial fields like total_amount in $fillable array
+    Risk: Mass assignment vulnerability for financial data
+    Fix: Move sensitive fields to $guarded, use explicit setting
+
+#20 Sensitive Fields Mass Assignable - Seller
+    File: app/Models/Seller.php
+    Lines: 49-68
+    Issue: commission_rate, balance fields are mass assignable
+    Risk: Sellers could manipulate their commission rates
+    Fix: Remove financial fields from $fillable
+
+#21 Missing $guarded for Escrow
+    File: app/Models/EscrowTransaction.php
+    Lines: 14-34
+    Issue: No $guarded array for critical financial fields
+    Risk: All fields can be mass assigned including amounts
+    Fix: Add proper $guarded array
+
+
+================================================================================
+HIGH PRIORITY ISSUES (92 Total)
+================================================================================
+
+AUTHORIZATION & ACCESS CONTROL
+--------------------------------------------------------------------------------
+
+#1  Missing Authorization on Conversations
+    File: app/Http/Controllers/ConversationController.php
+    Lines: 18-25
+    Issue: No authorization check on conversation index action
+    Fix: Add policy check or gate for conversation access
+
+#2  Admin Privilege Escalation Risk
+    File: app/Filament/Admin/Resources/UserResource.php
+    Lines: 86-88
+    Issue: Admins can modify other admin accounts
+    Fix: Prevent modification of super-admin accounts
+
+#3  Missing Authorization Trait
+    File: app/Filament/Admin/Resources/CategoryResource.php
+    Issue: Not using HasResourceAuthorization trait
+    Fix: Add the trait for consistent authorization
+
+#4  Session Authorization Bypass Risk
+    File: app/Http/Controllers/Api/ChatbotController.php
+    Lines: 110-116
+    Issue: Insufficient session authorization checks
+    Fix: Validate session belongs to authenticated user
+
+
+N+1 QUERY PERFORMANCE ISSUES
+--------------------------------------------------------------------------------
+
+#5  Blog Comments N+1
+    File: app/Http/Controllers/BlogController.php
+    Line: 74
+    Issue: N+1 query on approvedComments.replies
+    Fix: Add with('approvedComments.replies') eager loading
+
+#6  Dashboard Multiple N+1
+    File: app/Http/Controllers/DashboardController.php
+    Lines: 18-82
+    Issue: Multiple N+1 queries loading related user data
+    Fix: Eager load all needed relationships
+
+#7  Seller User N+1
+    File: app/Filament/Admin/Resources/SellerResource.php
+    Lines: 133-136
+    Issue: N+1 query on user.name in table column
+    Fix: Add ->with('user') to query
+
+#8  Review Stats N+1
+    File: app/Http/Controllers/Seller/ReviewController.php
+    Lines: 14, 43-50
+    Issue: N+1 in review statistics calculation
+    Fix: Use aggregate queries or eager loading
+
+#9  Products Categories N+1
+    File: app/Http/Controllers/ProductController.php
+    Issue: N+1 on categories relationship
+    Fix: Eager load categories in product queries
+
+
+MISSING VALIDATION
+--------------------------------------------------------------------------------
+
+#10 Weak Password Validation
+    File: app/Filament/Admin/Resources/UserResource.php
+    Lines: 76-82
+    Issue: Password rules don't require complexity
+    Fix: Add Password::defaults() with all rules
+
+#11 Missing Max Value Validation
+    File: app/Filament/Admin/Resources/PayoutResource.php
+    Lines: 76-81
+    Issue: No maximum limit on payout amounts
+    Fix: Add maxValue validation based on business rules
+
+#12 Direct Balance Editing
+    File: app/Filament/Admin/Resources/WalletResource.php
+    Lines: 47-51
+    Issue: Wallet balance can be edited without audit trail
+    Fix: Remove direct editing, require adjustment transactions
+
+#13 Weak Currency Validation
+    File: app/Http/Controllers/CurrencyController.php
+    Lines: 18-25
+    Issue: Currency codes not properly validated
+    Fix: Validate against ISO 4217 currency codes
+
+#14 CIDR Notation Validation Missing
+    File: app/Http/Middleware/AdminIpWhitelist.php
+    Line: 80
+    Issue: Malformed CIDR notation not handled
+    Fix: Add try-catch and validation for CIDR format
+
+
+ERROR HANDLING GAPS
+--------------------------------------------------------------------------------
+
+#15 Cart Operations Missing Error Handling
+    File: app/Http/Controllers/CartController.php
+    Lines: 56-111
+    Issue: No try-catch around cart operations
+    Fix: Add proper exception handling and user feedback
+
+#16 Security Log Creation No Try-Catch
+    File: app/Http/Middleware/InputSanitization.php
+    Lines: 283-295
+    Issue: SecurityLog::create() can throw exception
+    Fix: Wrap in try-catch to prevent middleware failure
+
+#17 Regex Compilation Error Not Handled
+    File: app/Http/Middleware/BlockMaliciousIps.php
+    Lines: 117-119
+    Issue: preg_match() errors not checked
+    Fix: Add error checking for regex operations
+
+#18 Fetch Without Catch Handler
+    File: resources/views/pages/wishlist.blade.php
+    Lines: 263-271
+    Issue: fetch() calls missing .catch() handler
+    Fix: Add error handling for all fetch operations
+
+
+SECURITY HEADERS & CSP
+--------------------------------------------------------------------------------
+
+#19 Unsafe-Inline in CSP
+    File: app/Http/Middleware/SecurityHeaders.php
+    Lines: 84-85
+    Issue: 'unsafe-inline' weakens XSS protection significantly
+    Fix: Implement CSP nonces for inline scripts
+
+#20 Multiple CDN Allowances
+    File: app/Http/Middleware/SecurityHeaders.php
+    Lines: 86-92
+    Issue: CDNs allowed without version/hash pinning
+    Fix: Use Subresource Integrity (SRI) hashes
+
+#21 Missing Rate Limiting for API Auth
+    File: app/Http/Middleware/LicenseApiAuth.php
+    Lines: 19-67
+    Issue: No throttling on invalid API key attempts
+    Fix: Add rate limiting for failed auth attempts
+
+
+MISSING AUDIT LOGGING
+--------------------------------------------------------------------------------
+
+#22 Service Delete Not Logged
+    File: app/Http/Controllers/Seller/ServiceController.php
+    Lines: 301-314
+    Issue: Service deletion not recorded in activity log
+    Fix: Add activity logging before delete
+
+#23 Service Order Operations Not Logged
+    File: app/Http/Controllers/Seller/ServiceOrderController.php
+    Lines: 64-175
+    Issue: Order status changes not logged
+    Fix: Add activity logging for all status changes
+
+#24 Backup Downloads Not Rate Limited
+    File: app/Filament/Admin/Pages/BackupManager.php
+    Lines: 239-317
+    Issue: No rate limiting on backup file downloads
+    Fix: Add download rate limiting and logging
+
+
+================================================================================
+MEDIUM PRIORITY ISSUES (96+ Total)
+================================================================================
+
+CODE QUALITY & MAINTAINABILITY
+--------------------------------------------------------------------------------
+
+Console.log Statements in Production Code (10+ occurrences):
+- resources/views/pages/checkout.blade.php: Lines 534, 545, 552, 555, 562, 565, 568, 573, 593, 594
+- resources/js/form-validation.js: Line 257
+
+Hardcoded Values (8+ occurrences):
+- Carousel autoplay: 5000ms (app.js:68)
+- Stripe theme color: #7c3aed (escrow/checkout.blade.php:229)
+- Various timeouts: 100ms, 2000ms scattered
+- Bot detection threshold: 2 seconds (HoneypotProtection.php:30)
+
+Inline JavaScript (5+ files):
+- wishlist.blade.php: Lines 16, 160, 183, 203, 217, 228-239
+- checkout.blade.php: 270+ lines of inline JS
+- seller/products/index.blade.php: onclick confirm() dialogs
+
+Magic Numbers (6+ occurrences):
+- app.js: Lines 24, 39, 68, 157, 222
+- Various setTimeout/setInterval calls without named constants
+
+Inconsistent URL Generation (10+ occurrences):
+- Mix of route() helper and url() helper
+- Some hardcoded URLs in templates
+
+
+PERFORMANCE ISSUES
+--------------------------------------------------------------------------------
+
+Missing Debouncing:
+- Resize event listeners fire hundreds of times during resize
+- File: resources/js/app.js, Line 50
+- Fix: Add debounce wrapper to updateSlidesPerView()
+
+Memory Leaks:
+- IntersectionObserver not cleaned up (app.js:21-37)
+- Window resize listener not removed (app.js:50)
+- Fix: Add cleanup in Alpine.js destroy hook
+
+Missing AbortController:
+- Tax calculation fetch has no abort mechanism
+- File: checkout.blade.php, Lines 608-663
+- Fix: Add AbortController for cancellable requests
+
+Circular Relationships:
+- User.php: Lines 641-652 (self-referential)
+- Category.php: Lines 57-64 (parent/children)
+- Risk: Infinite loops if not handled carefully
+
+
+EMAIL TEMPLATE ISSUES
+--------------------------------------------------------------------------------
+
+Missing Plain Text Variants:
+- All email templates only provide HTML
+- No text/plain alternative for accessibility
+- Fix: Add ->text() to all Mailable classes
+
+Generic Alt Text (5+ occurrences):
+- "File", "Service" instead of descriptive text
+- Fix: Use descriptive alt text for all images
+
+Missing Unsubscribe Links:
+- Newsletter confirmation email
+- Some transactional emails
+- Fix: Add unsubscribe link to base template
+
+Inconsistent Button Styling:
+- Some use 16x32px padding, others 16x40px
+- Fix: Standardize in base email template
+
+Missing Queue Configuration:
+- Several notifications without $tries, $timeout
+- Fix: Add retry configuration to all notifications
+
+
+CONFIG VALIDATION ISSUES
+--------------------------------------------------------------------------------
+
+Missing Validation Rules (12+ configs):
+- Fraud thresholds not validated (fraud.php)
+- Wallet limits not validated (wallet.php)
+- Escrow timing not validated (escrow.php)
+- Fix: Add validation in service provider boot()
+
+Insecure Defaults:
+- Rate limits default to 60/min (too high)
+- SQLite is default database driver
+- Debug mode relies on env variable
+- Fix: Set secure production defaults
+
+Hardcoded Fallbacks:
+- License API rate limit: 60 (services.php:86)
+- Password reset expiry: 60 (auth.php:97)
+- Fix: Use env() for all configurable values
+
+
+================================================================================
+LOW PRIORITY ISSUES (46+ Total)
+================================================================================
+
+Missing Optional Chaining:
+- form-validation.js: Lines 102, 106, 138, 165, 175, 195-196
+- Inconsistent use of ?. operator
+
+Deprecated APIs:
+- document.execCommand('copy') in wishlist.blade.php:318
+- Should use navigator.clipboard.writeText()
+
+Missing Feature Detection:
+- IntersectionObserver used without polyfill check
+- File: app.js:21
+
+Hardcoded Error Page URLs:
+- 404/500 templates use hardcoded URLs
+- Should use route() helpers
+
+Inconsistent Code Patterns:
+- Mix of async/await and .then() syntax
+- Mix of optional chaining and explicit null checks
+
+
+================================================================================
+TOP 20 FIXES TO PRIORITIZE
+================================================================================
+
+CRITICAL SECURITY (Do First)
+--------------------------------------------------------------------------------
+
+1. Fix IDOR in EmailTrackingController
+   - Add ownership verification before tracking
+
+2. Fix Payout.php line 168
+   - Change to proper refund() method call
+
+3. Add seller ownership check
+   - PayoutController.php lines 21-74
+
+4. Remove query param API key
+   - LicenseApiAuth.php line 38
+
+5. Sanitize campaign content
+   - campaign.blade.php line 158
+
+6. Escape custom head/body code
+   - app.blade.php lines 161, 210
+
+7. Fix webhook replay race
+   - WebhookReplayProtection.php lines 52-82
+
+8. Enable IP whitelist by default
+   - security.php line 82
+
+
+HIGH PRIORITY PERFORMANCE
+--------------------------------------------------------------------------------
+
+9. Add eager loading
+   - DashboardController.php, BlogController.php
+
+10. Fix N+1 queries
+    - SellerResource.php, ReviewController.php
+
+11. Add debouncing
+    - Resize listeners in app.js
+
+12. Add .catch() handlers
+    - All fetch() calls
+
+
+HIGH PRIORITY SECURITY
+--------------------------------------------------------------------------------
+
+13. Add rate limiting
+    - LicenseApiAuth.php, BackupManager.php
+
+14. Add authorization
+    - ConversationController.php, CategoryResource.php
+
+15. Remove API key exposure
+    - ApiKeyResource.php
+
+16. Fix atomic counters
+    - All race conditions in middleware
+
+17. Add validation
+    - PayoutResource.php, UserResource.php
+
+
+MEDIUM PRIORITY
+--------------------------------------------------------------------------------
+
+18. Remove console.log
+    - All JavaScript files
+
+19. Add CSP nonces
+    - Replace unsafe-inline in SecurityHeaders
+
+20. Fix escrow timing
+    - escrow.php auto-release vs dispute window
+
+
+================================================================================
+FILES REQUIRING MOST ATTENTION
+================================================================================
+
+File                                    | Issues | Priority
+----------------------------------------|--------|----------
+checkout.blade.php                      |   15+  | Critical
+SecurityHeaders.php                     |    5   | High
+BlockMaliciousIps.php                   |    5   | Critical
+DashboardController.php                 |    4   | High
+PayoutController.php (Seller)           |    4   | Critical
+app.js                                  |    8   | Medium
+security.php                            |    4   | Critical
+InputSanitization.php                   |    5   | High
+WebhookReplayProtection.php             |    4   | Critical
+LicenseApiAuth.php                      |    3   | Critical
+
+
+================================================================================
+RECOMMENDED ACTION PLAN
+================================================================================
+
+WEEK 1: Critical Security Fixes
+- Fix all IDOR vulnerabilities
+- Fix all race conditions in middleware
+- Fix XSS vulnerabilities in templates
+- Enable security defaults in config
+
+WEEK 2: High Priority Items
+- Fix N+1 query issues
+- Add missing authorization checks
+- Add rate limiting where needed
+- Fix missing validation
+
+WEEK 3: Medium Priority Items
+- Clean up JavaScript (console.log, error handling)
+- Improve email templates
+- Add config validation
+- Standardize code patterns
+
+WEEK 4: Low Priority & Polish
+- Code style consistency
+- Deprecated API replacements
+- Documentation updates
+- Performance optimization
+
+
+================================================================================
+                              END OF REPORT
+================================================================================

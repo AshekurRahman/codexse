@@ -1,68 +1,39 @@
 @props(['testimonials' => null])
 
 @php
-    // Default testimonials if none provided
-    $defaultTestimonials = [
-        [
-            'name' => 'Sarah Johnson',
-            'role' => 'E-commerce Business Owner',
-            'avatar' => 'https://ui-avatars.com/api/?name=Sarah+Johnson&background=6366f1&color=fff',
-            'content' => 'Codexse has transformed my online business. The digital products I purchased helped me launch faster than I ever imagined. Excellent quality and support!',
-            'rating' => 5,
-        ],
-        [
-            'name' => 'Michael Chen',
-            'role' => 'Web Developer',
-            'avatar' => 'https://ui-avatars.com/api/?name=Michael+Chen&background=06b6d4&color=fff',
-            'content' => 'As a developer, I appreciate the code quality of the themes and plugins here. Well-documented, clean code, and regular updates. Highly recommended!',
-            'rating' => 5,
-        ],
-        [
-            'name' => 'Emily Rodriguez',
-            'role' => 'Digital Marketing Agency',
-            'avatar' => 'https://ui-avatars.com/api/?name=Emily+Rodriguez&background=10b981&color=fff',
-            'content' => 'We use Codexse for all our client projects. The variety of templates and the quality of services from freelancers is outstanding. Great platform!',
-            'rating' => 5,
-        ],
-        [
-            'name' => 'David Kim',
-            'role' => 'Startup Founder',
-            'avatar' => 'https://ui-avatars.com/api/?name=David+Kim&background=f59e0b&color=fff',
-            'content' => 'Found amazing talent here for my startup. The service marketplace is filled with skilled professionals who deliver quality work on time.',
-            'rating' => 5,
-        ],
-        [
-            'name' => 'Lisa Thompson',
-            'role' => 'Freelance Designer',
-            'avatar' => 'https://ui-avatars.com/api/?name=Lisa+Thompson&background=ec4899&color=fff',
-            'content' => 'Selling my design templates on Codexse has been a game-changer. The platform is easy to use, and the customer support is exceptional.',
-            'rating' => 5,
-        ],
-        [
-            'name' => 'James Wilson',
-            'role' => 'Small Business Owner',
-            'avatar' => 'https://ui-avatars.com/api/?name=James+Wilson&background=8b5cf6&color=fff',
-            'content' => 'The best marketplace for digital products I have ever used. Quick downloads, lifetime updates, and responsive support. Worth every penny!',
-            'rating' => 5,
-        ],
-    ];
+    use App\Models\Testimonial;
+    use App\Models\HomepageSection;
 
-    $testimonials = $testimonials ?? $defaultTestimonials;
+    // Fetch testimonials from database
+    $testimonials = $testimonials ?? Testimonial::getForHomepage();
+
+    // Get section header from database
+    $section = HomepageSection::getSection('testimonials');
+
+    // Convert to array format for Alpine.js compatibility
+    $testimonialData = $testimonials->map(fn($t) => [
+        'name' => $t->name,
+        'role' => $t->role ?? $t->company ?? '',
+        'avatar' => $t->avatar_url,
+        'content' => $t->content,
+        'rating' => $t->rating,
+    ])->toArray();
 @endphp
 
+@if(count($testimonialData) > 0)
 <section class="section-lg bg-gradient-to-b from-white to-surface-50 dark:from-surface-900 dark:to-surface-950">
     <div class="mx-auto max-w-7xl container-padding">
         <!-- Header -->
         <div class="text-center mb-12" x-scroll-animate>
-            <span class="text-overline mb-3 block">Testimonials</span>
-            <h2 class="text-display-md text-surface-900 dark:text-white mb-4">What Our Customers Say</h2>
+            <span class="text-overline mb-3 block">{{ $section?->badge_text ?? 'Testimonials' }}</span>
+            <h2 class="text-display-md text-surface-900 dark:text-white mb-4">{{ $section?->title ?? 'What Our Customers Say' }}</h2>
             <p class="text-body-lg text-surface-600 dark:text-surface-400 max-w-2xl mx-auto">
-                Join thousands of satisfied customers who have found success with Codexse
+                {{ $section?->subtitle ?? 'Join thousands of satisfied customers who have found success with Codexse' }}
             </p>
         </div>
 
         <!-- Carousel -->
-        <div x-data="testimonialCarousel({{ json_encode($testimonials) }})"
+        <div x-data="testimonialCarousel({{ json_encode($testimonialData) }})"
              x-init="init()"
              @mouseenter="stopAutoplay()"
              @mouseleave="startAutoplay()"
@@ -79,7 +50,7 @@
                                 <div class="testimonial-card p-6 h-full flex flex-col">
                                     <!-- Rating -->
                                     <div class="flex gap-1 mb-4">
-                                        <template x-for="star in 5">
+                                        <template x-for="star in testimonial.rating">
                                             <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
                                             </svg>
@@ -130,3 +101,4 @@
         </div>
     </div>
 </section>
+@endif

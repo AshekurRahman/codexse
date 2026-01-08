@@ -17,6 +17,11 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Step 0: Drop index on payoneer_transaction_id if exists (can't have index on TEXT)
+        Schema::table('orders', function (Blueprint $table) {
+            $table->dropIndex(['payoneer_transaction_id']);
+        });
+
         // Step 1: Expand column sizes to TEXT for encrypted data
         Schema::table('orders', function (Blueprint $table) {
             $table->text('stripe_session_id')->nullable()->change();

@@ -10,19 +10,10 @@ use Symfony\Component\HttpFoundation\Response;
 class SecurityHeaders
 {
     /**
-     * CSP nonce for inline scripts.
-     */
-    protected string $nonce;
-
-    /**
      * Security headers to protect against common web vulnerabilities.
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // Generate a unique nonce for this request
-        $this->nonce = base64_encode(random_bytes(16));
-        $request->attributes->set('cspNonce', $this->nonce);
-
         $response = $next($request);
 
         // Only add headers if security is enabled
@@ -64,9 +55,11 @@ class SecurityHeaders
             $response->headers->set($headerName, $csp);
         }
 
-        // Cross-Origin policies
-        $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
-        $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
+        // Cross-Origin policies (production only - can cause issues with local dev tools)
+        if (config('app.env') === 'production') {
+            $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
+            $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
+        }
 
         return $response;
     }
@@ -74,18 +67,22 @@ class SecurityHeaders
     /**
      * Build Content Security Policy header.
      */
-    protected function getContentSecurityPolicy(Request $request): string
+    protected function getContentSecurityPolicy(Request $request): ?string
     {
-        $appUrl = parse_url(config('app.url'), PHP_URL_HOST) ?? 'localhost';
-        $nonce = $this->nonce;
+        // Skip CSP entirely for local development
+        if (config('app.env') === 'local') {
+            return null;
+        }
 
-        // Base CSP directives - using nonces instead of unsafe-inline/unsafe-eval
+        $appUrl = parse_url(config('app.url'), PHP_URL_HOST) ?? 'localhost';
+
+        // Production CSP - balances security with functionality
         $directives = [
             "default-src" => ["'self'"],
             "script-src" => [
                 "'self'",
-                "'nonce-{$nonce}'", // Nonce for inline scripts (Livewire/Alpine)
-                "'strict-dynamic'", // Allow scripts loaded by nonced scripts
+                "'unsafe-inline'", // Required for Alpine.js and inline scripts
+                "'unsafe-eval'", // Required for Alpine.js reactive expressions
                 "https://cdn.jsdelivr.net",
                 "https://cdnjs.cloudflare.com",
                 "https://www.googletagmanager.com",
@@ -96,8 +93,7 @@ class SecurityHeaders
             ],
             "style-src" => [
                 "'self'",
-                "'nonce-{$nonce}'", // Nonce for inline styles
-                "'unsafe-inline'", // Fallback for older browsers and Tailwind
+                "'unsafe-inline'", // Required for Tailwind and dynamic styles
                 "https://fonts.googleapis.com",
                 "https://fonts.bunny.net",
                 "https://cdn.jsdelivr.net",
@@ -174,12 +170,9 @@ class SecurityHeaders
     {
         $policies = [
             'accelerometer' => '()',
-            'ambient-light-sensor' => '()',
             'autoplay' => '(self)',
-            'battery' => '()',
             'camera' => '(self)', // Allow for video calls
             'display-capture' => '()',
-            'document-domain' => '()',
             'encrypted-media' => '(self)',
             'fullscreen' => '(self)',
             'geolocation' => '()',

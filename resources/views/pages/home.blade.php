@@ -1,3 +1,14 @@
+@php
+    use App\Models\HomepageSection;
+    use App\Models\HomepageStat;
+    use App\Models\HowItWorksStep;
+
+    $heroSection = HomepageSection::getSection('hero');
+    $ctaSection = HomepageSection::getSection('cta_seller');
+    $homepageStats = HomepageStat::getForHomepage();
+    $howItWorksSteps = HowItWorksStep::getForHomepage();
+@endphp
+
 <x-layouts.app title="Codexse - Premium Digital Marketplace">
     <!-- Hero Section -->
     <section class="relative overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
@@ -19,15 +30,15 @@
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                     </span>
-                    <span class="text-sm font-medium text-surface-700">10,000+ Digital Assets Available</span>
+                    <span class="text-sm font-medium text-surface-700">{{ $heroSection?->badge_text ?? '10,000+ Digital Assets Available' }}</span>
                 </div>
 
                 <h1 class="text-4xl font-extrabold tracking-tight text-surface-900 sm:text-5xl lg:text-6xl xl:text-7xl">
-                    Your One-Stop
-                    <span class="block bg-gradient-to-r from-primary-600 via-accent-500 to-cyan-500 bg-clip-text text-transparent">Digital Marketplace</span>
+                    {{ $heroSection?->title ?? 'Your One-Stop' }}
+                    <span class="block bg-gradient-to-r from-primary-600 via-accent-500 to-cyan-500 bg-clip-text text-transparent">{{ $heroSection?->subtitle ?? 'Digital Marketplace' }}</span>
                 </h1>
                 <p class="mx-auto mt-6 max-w-2xl text-lg text-surface-600 sm:text-xl">
-                    Buy premium products, hire expert freelancers, or find your next project. Everything you need to build, grow, and succeed.
+                    {{ $heroSection?->description ?? 'Buy premium products, hire expert freelancers, or find your next project. Everything you need to build, grow, and succeed.' }}
                 </p>
 
                 <!-- Search Box -->
@@ -81,34 +92,22 @@
     </section>
 
     <!-- Stats Marquee -->
+    @if($homepageStats->count() > 0)
     <section class="relative bg-surface-900 dark:bg-surface-950 py-4 overflow-hidden">
         <div class="flex animate-marquee whitespace-nowrap">
             @for($i = 0; $i < 2; $i++)
             <div class="flex items-center gap-12 mx-6">
+                @foreach($homepageStats as $stat)
                 <div class="flex items-center gap-3">
-                    <div class="w-2 h-2 rounded-full bg-primary-500"></div>
-                    <span class="text-white font-semibold">10,000+ Products</span>
+                    <div class="w-2 h-2 rounded-full bg-{{ $stat->color }}-500"></div>
+                    <span class="text-white font-semibold">{{ $stat->display_value }} {{ $stat->label }}</span>
                 </div>
-                <div class="flex items-center gap-3">
-                    <div class="w-2 h-2 rounded-full bg-accent-500"></div>
-                    <span class="text-white font-semibold">5,000+ Services</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="w-2 h-2 rounded-full bg-success-500"></div>
-                    <span class="text-white font-semibold">2,500+ Verified Sellers</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="w-2 h-2 rounded-full bg-warning-500"></div>
-                    <span class="text-white font-semibold">100% Secure Payments</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <div class="w-2 h-2 rounded-full bg-info-500"></div>
-                    <span class="text-white font-semibold">24/7 Support</span>
-                </div>
+                @endforeach
             </div>
             @endfor
         </div>
     </section>
+    @endif
 
     <!-- Trust Badges -->
     <x-trust-badges />
@@ -375,6 +374,30 @@
     </section>
 
     <!-- How It Works - Redesigned -->
+    @if($howItWorksSteps->count() > 0)
+    @php
+        $stepIconSvgs = [
+            'magnifying-glass' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>',
+            'shopping-cart' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>',
+            'shield-check' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>',
+            'credit-card' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>',
+            'arrow-down-tray' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>',
+            'check-circle' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>',
+            'rocket-launch' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>',
+            'cursor-arrow-rays' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/>',
+            'document-text' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>',
+            'user-plus' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>',
+            'chat-bubble-left-right' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12V9a2 2 0 00-2-2H6a2 2 0 00-2 2v12l4-4h10a2 2 0 002-2v-3z"/>',
+            'cog-6-tooth' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>',
+            'sparkles' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>',
+            'hand-thumb-up' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"/>',
+            'gift' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/>',
+            'truck' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>',
+            'star' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>',
+            'bolt' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>',
+        ];
+        $colorOrder = ['primary', 'accent', 'success', 'warning', 'info', 'danger'];
+    @endphp
     <section class="bg-white dark:bg-surface-900 py-20">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
@@ -383,54 +406,30 @@
                 <p class="mt-3 text-surface-600 dark:text-surface-400 max-w-2xl mx-auto">Get started in just a few simple steps</p>
             </div>
 
-            <div class="grid md:grid-cols-3 gap-8 relative">
+            <div class="grid md:grid-cols-{{ $howItWorksSteps->count() }} gap-8 relative">
+                @if($howItWorksSteps->count() > 1)
                 <!-- Connection Line -->
-                <div class="hidden md:block absolute top-16 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-primary-500 via-accent-500 to-success-500"></div>
+                <div class="hidden md:block absolute top-16 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-{{ $howItWorksSteps->first()->icon_color }}-500 via-{{ $howItWorksSteps->skip(1)->first()->icon_color ?? 'accent' }}-500 to-{{ $howItWorksSteps->last()->icon_color }}-500"></div>
+                @endif
 
-                <!-- Step 1 -->
+                @foreach($howItWorksSteps as $step)
                 <div class="relative text-center group">
                     <div class="relative inline-flex">
-                        <div class="w-32 h-32 rounded-3xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center shadow-2xl shadow-primary-500/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                        <div class="w-32 h-32 rounded-3xl bg-gradient-to-br from-{{ $step->icon_color }}-500 to-{{ $step->icon_color }}-600 flex items-center justify-center shadow-2xl shadow-{{ $step->icon_color }}-500/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                             <svg class="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                {!! $stepIconSvgs[$step->icon] ?? $stepIconSvgs['check-circle'] !!}
                             </svg>
                         </div>
-                        <div class="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 flex items-center justify-center font-bold text-lg shadow-lg">1</div>
+                        <div class="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 flex items-center justify-center font-bold text-lg shadow-lg">{{ $step->step_number }}</div>
                     </div>
-                    <h3 class="text-xl font-bold text-surface-900 dark:text-white mt-8 mb-3">Browse & Discover</h3>
-                    <p class="text-surface-600 dark:text-surface-400">Explore our vast marketplace of digital products, services, and job opportunities</p>
+                    <h3 class="text-xl font-bold text-surface-900 dark:text-white mt-8 mb-3">{{ $step->title }}</h3>
+                    <p class="text-surface-600 dark:text-surface-400">{{ $step->description }}</p>
                 </div>
-
-                <!-- Step 2 -->
-                <div class="relative text-center group">
-                    <div class="relative inline-flex">
-                        <div class="w-32 h-32 rounded-3xl bg-gradient-to-br from-accent-500 to-accent-600 flex items-center justify-center shadow-2xl shadow-accent-500/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                            <svg class="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                            </svg>
-                        </div>
-                        <div class="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 flex items-center justify-center font-bold text-lg shadow-lg">2</div>
-                    </div>
-                    <h3 class="text-xl font-bold text-surface-900 dark:text-white mt-8 mb-3">Purchase Securely</h3>
-                    <p class="text-surface-600 dark:text-surface-400">Pay with confidence using our secure escrow system. Your money is protected</p>
-                </div>
-
-                <!-- Step 3 -->
-                <div class="relative text-center group">
-                    <div class="relative inline-flex">
-                        <div class="w-32 h-32 rounded-3xl bg-gradient-to-br from-success-500 to-success-600 flex items-center justify-center shadow-2xl shadow-success-500/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                            <svg class="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                            </svg>
-                        </div>
-                        <div class="absolute -top-2 -right-2 w-10 h-10 rounded-full bg-surface-900 dark:bg-white text-white dark:text-surface-900 flex items-center justify-center font-bold text-lg shadow-lg">3</div>
-                    </div>
-                    <h3 class="text-xl font-bold text-surface-900 dark:text-white mt-8 mb-3">Download & Enjoy</h3>
-                    <p class="text-surface-600 dark:text-surface-400">Get instant access to your purchases with lifetime updates and support</p>
-                </div>
+                @endforeach
             </div>
         </div>
     </section>
+    @endif
 
     <!-- Recently Viewed -->
     @if(isset($recentlyViewed) && $recentlyViewed->count() > 0)
@@ -441,6 +440,15 @@
     <x-testimonials-carousel />
 
     <!-- CTA Section - Redesigned -->
+    @php
+        $ctaBenefits = $ctaSection?->metadata['benefits'] ?? ['Free to join', 'Low fees', 'Fast payouts'];
+        $ctaStats = $ctaSection?->metadata['stats'] ?? [
+            ['value' => '$2M+', 'label' => 'Paid to creators'],
+            ['value' => '2,500+', 'label' => 'Active sellers'],
+            ['value' => '50K+', 'label' => 'Happy customers'],
+            ['value' => '4.9', 'label' => 'Average rating'],
+        ];
+    @endphp
     <section class="bg-surface-50 dark:bg-surface-800 py-20">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="relative overflow-hidden rounded-[2.5rem] bg-surface-900 dark:bg-surface-950">
@@ -454,44 +462,30 @@
                 <div class="relative px-8 py-16 sm:px-16 lg:py-24">
                     <div class="grid lg:grid-cols-2 gap-12 items-center">
                         <div>
-                            <span class="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white/80 text-xs font-bold uppercase tracking-wider mb-6">Start Earning</span>
+                            <span class="inline-block px-4 py-1.5 rounded-full bg-white/10 text-white/80 text-xs font-bold uppercase tracking-wider mb-6">{{ $ctaSection?->badge_text ?? 'Start Earning' }}</span>
                             <h2 class="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
-                                Ready to turn your skills into
+                                {{ $ctaSection?->title ?? 'Ready to turn your skills into' }}
                                 <span class="bg-gradient-to-r from-primary-400 to-accent-400 bg-clip-text text-transparent">income?</span>
                             </h2>
                             <p class="text-lg text-surface-300 mb-8">
-                                Join thousands of creators earning money from their digital products and services. Set up your store in minutes and start selling today.
+                                {{ $ctaSection?->description ?? 'Join thousands of creators earning money from their digital products and services. Set up your store in minutes and start selling today.' }}
                             </p>
 
-                            <div class="grid sm:grid-cols-3 gap-4 mb-10">
+                            <div class="grid sm:grid-cols-{{ count($ctaBenefits) }} gap-4 mb-10">
+                                @foreach($ctaBenefits as $benefit)
                                 <div class="flex items-center gap-3 text-surface-300">
                                     <div class="w-10 h-10 rounded-xl bg-success-500/20 flex items-center justify-center shrink-0">
                                         <svg class="w-5 h-5 text-success-400" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
                                         </svg>
                                     </div>
-                                    <span class="font-medium">Free to join</span>
+                                    <span class="font-medium">{{ $benefit }}</span>
                                 </div>
-                                <div class="flex items-center gap-3 text-surface-300">
-                                    <div class="w-10 h-10 rounded-xl bg-success-500/20 flex items-center justify-center shrink-0">
-                                        <svg class="w-5 h-5 text-success-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                        </svg>
-                                    </div>
-                                    <span class="font-medium">Low fees</span>
-                                </div>
-                                <div class="flex items-center gap-3 text-surface-300">
-                                    <div class="w-10 h-10 rounded-xl bg-success-500/20 flex items-center justify-center shrink-0">
-                                        <svg class="w-5 h-5 text-success-400" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                        </svg>
-                                    </div>
-                                    <span class="font-medium">Fast payouts</span>
-                                </div>
+                                @endforeach
                             </div>
 
-                            <a href="{{ route('seller.apply') }}" class="group inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-white text-surface-900 font-bold text-lg shadow-2xl hover:shadow-white/20 transition-all hover:-translate-y-1">
-                                Start Selling Today
+                            <a href="{{ $ctaSection?->button_url ?? route('seller.apply') }}" class="group inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-white text-surface-900 font-bold text-lg shadow-2xl hover:shadow-white/20 transition-all hover:-translate-y-1">
+                                {{ $ctaSection?->button_text ?? 'Start Selling Today' }}
                                 <svg class="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
                                 </svg>
@@ -500,22 +494,12 @@
 
                         <!-- Stats -->
                         <div class="grid grid-cols-2 gap-4">
+                            @foreach($ctaStats as $stat)
                             <div class="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                                <div class="text-4xl font-bold text-white mb-2">$2M+</div>
-                                <div class="text-surface-400">Paid to creators</div>
+                                <div class="text-4xl font-bold text-white mb-2">{{ $stat['value'] }}</div>
+                                <div class="text-surface-400">{{ $stat['label'] }}</div>
                             </div>
-                            <div class="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                                <div class="text-4xl font-bold text-white mb-2">2,500+</div>
-                                <div class="text-surface-400">Active sellers</div>
-                            </div>
-                            <div class="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                                <div class="text-4xl font-bold text-white mb-2">50K+</div>
-                                <div class="text-surface-400">Happy customers</div>
-                            </div>
-                            <div class="p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                                <div class="text-4xl font-bold text-white mb-2">4.9</div>
-                                <div class="text-surface-400">Average rating</div>
-                            </div>
+                            @endforeach
                         </div>
                     </div>
                 </div>
