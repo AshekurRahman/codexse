@@ -125,6 +125,8 @@ create_backup() {
     MYSQLDUMP_BIN=""
     if command -v mysqldump &> /dev/null; then
         MYSQLDUMP_BIN="mysqldump"
+    elif [ -x "/Applications/AMPPS/apps/mysql/bin/mysqldump" ]; then
+        MYSQLDUMP_BIN="/Applications/AMPPS/apps/mysql/bin/mysqldump"
     elif [ -x "/Applications/AMPPS/mysql/bin/mysqldump" ]; then
         MYSQLDUMP_BIN="/Applications/AMPPS/mysql/bin/mysqldump"
     elif [ -x "/usr/local/mysql/bin/mysqldump" ]; then
