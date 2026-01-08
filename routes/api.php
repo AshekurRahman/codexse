@@ -25,7 +25,7 @@ Route::prefix('license')->middleware(['throttle:30,1', \App\Http\Middleware\Lice
 });
 
 // AI Chatbot endpoints (rate limited)
-Route::prefix('chatbot')->middleware('throttle:20,1')->group(function () {
+Route::prefix('chatbot')->middleware('throttle:60,1')->group(function () {
     Route::get('/session', [ChatbotController::class, 'session']);
     Route::post('/send', [ChatbotController::class, 'send']);
     Route::post('/close', [ChatbotController::class, 'close']);

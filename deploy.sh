@@ -116,20 +116,28 @@ create_backup() {
 
     # Backup database
     log "Backing up database..."
-    $PHP_BIN artisan db:backup --filename="${BACKUP_PATH}/database.sql" 2>/dev/null || {
-        # Fallback: use mysqldump if artisan command doesn't exist
-        DB_NAME=$(grep "^DB_DATABASE=" "${APP_DIR}/.env" | cut -d '=' -f2)
-        DB_USER=$(grep "^DB_USERNAME=" "${APP_DIR}/.env" | cut -d '=' -f2)
-        DB_PASS=$(grep "^DB_PASSWORD=" "${APP_DIR}/.env" | cut -d '=' -f2)
-        DB_HOST=$(grep "^DB_HOST=" "${APP_DIR}/.env" | cut -d '=' -f2)
+    DB_NAME=$(grep "^DB_DATABASE=" "${APP_DIR}/.env" | cut -d '=' -f2)
+    DB_USER=$(grep "^DB_USERNAME=" "${APP_DIR}/.env" | cut -d '=' -f2)
+    DB_PASS=$(grep "^DB_PASSWORD=" "${APP_DIR}/.env" | cut -d '=' -f2)
+    DB_HOST=$(grep "^DB_HOST=" "${APP_DIR}/.env" | cut -d '=' -f2)
 
-        if command -v mysqldump &> /dev/null; then
-            mysqldump -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" > "${BACKUP_PATH}/database.sql" 2>/dev/null
-            success "Database backed up"
-        else
-            warning "Could not backup database (mysqldump not found)"
-        fi
-    }
+    # Try common mysqldump locations
+    MYSQLDUMP_BIN=""
+    if command -v mysqldump &> /dev/null; then
+        MYSQLDUMP_BIN="mysqldump"
+    elif [ -x "/Applications/AMPPS/mysql/bin/mysqldump" ]; then
+        MYSQLDUMP_BIN="/Applications/AMPPS/mysql/bin/mysqldump"
+    elif [ -x "/usr/local/mysql/bin/mysqldump" ]; then
+        MYSQLDUMP_BIN="/usr/local/mysql/bin/mysqldump"
+    fi
+
+    if [ -n "$MYSQLDUMP_BIN" ]; then
+        $MYSQLDUMP_BIN -h"$DB_HOST" -u"$DB_USER" -p"$DB_PASS" "$DB_NAME" > "${BACKUP_PATH}/database.sql" 2>/dev/null && \
+            success "Database backed up" || \
+            warning "Database backup failed"
+    else
+        warning "Could not backup database (mysqldump not found)"
+    fi
 
     # Backup .env
     cp "${APP_DIR}/.env" "${BACKUP_PATH}/.env.backup"
