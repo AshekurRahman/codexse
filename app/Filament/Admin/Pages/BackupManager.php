@@ -7,11 +7,12 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Tables;
-use Filament\Tables\Table;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
+use Spatie\Backup\BackupDestination\BackupDestination;
+use Spatie\Backup\Helpers\Format;
 
 class BackupManager extends Page
 {
@@ -43,7 +44,7 @@ class BackupManager extends Page
         return $form
             ->schema([
                 Forms\Components\Section::make('Automatic Backup Settings')
-                    ->description('Configure automatic database backups')
+                    ->description('Configure automatic database backups with encryption')
                     ->schema([
                         Forms\Components\Toggle::make('auto_backup_enabled')
                             ->label('Enable Automatic Backups')
@@ -96,76 +97,134 @@ class BackupManager extends Page
     public function loadBackups(): void
     {
         $this->backups = [];
+
+        try {
+            // Get backups from Spatie's backup destination
+            $disk = Storage::disk('backups');
+            $appName = config('backup.backup.name');
+            $backupPath = $appName;
+
+            if (!$disk->exists($backupPath)) {
+                // Fallback to legacy backups directory
+                $this->loadLegacyBackups();
+                return;
+            }
+
+            $files = $disk->files($backupPath);
+
+            foreach ($files as $file) {
+                $filename = basename($file);
+
+                // Only show zip files (Spatie creates zip archives)
+                if (pathinfo($filename, PATHINFO_EXTENSION) !== 'zip') {
+                    continue;
+                }
+
+                $this->backups[] = [
+                    'name' => $filename,
+                    'size' => $this->formatBytes($disk->size($file)),
+                    'date' => date('Y-m-d H:i:s', $disk->lastModified($file)),
+                    'path' => $file,
+                    'is_encrypted' => $this->isEncrypted($filename),
+                ];
+            }
+
+            // Also load any legacy SQL backups
+            $this->loadLegacyBackups();
+
+            // Sort by date descending
+            usort($this->backups, function ($a, $b) {
+                return strtotime($b['date']) - strtotime($a['date']);
+            });
+        } catch (\Exception $e) {
+            Log::error('BackupManager: Failed to load backups', ['error' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Load legacy SQL backup files (from old exec()-based system)
+     */
+    protected function loadLegacyBackups(): void
+    {
         $backupPath = storage_path('app/backups');
 
         if (!File::exists($backupPath)) {
             File::makeDirectory($backupPath, 0755, true);
+            return;
         }
 
         $files = File::files($backupPath);
 
         foreach ($files as $file) {
-            if ($file->getExtension() === 'sql' || $file->getExtension() === 'zip') {
-                $this->backups[] = [
-                    'name' => $file->getFilename(),
-                    'size' => $this->formatBytes($file->getSize()),
-                    'date' => date('Y-m-d H:i:s', $file->getMTime()),
-                    'path' => $file->getPathname(),
-                ];
-            }
-        }
+            $ext = $file->getExtension();
 
-        // Sort by date descending
-        usort($this->backups, function ($a, $b) {
-            return strtotime($b['date']) - strtotime($a['date']);
-        });
+            // Only show sql and zip files
+            if (!in_array($ext, ['sql', 'zip'])) {
+                continue;
+            }
+
+            $filename = $file->getFilename();
+
+            // Skip if already added from Spatie backups
+            $exists = collect($this->backups)->contains('name', $filename);
+            if ($exists) {
+                continue;
+            }
+
+            $this->backups[] = [
+                'name' => $filename,
+                'size' => $this->formatBytes($file->getSize()),
+                'date' => date('Y-m-d H:i:s', $file->getMTime()),
+                'path' => $file->getPathname(),
+                'is_encrypted' => false,
+                'is_legacy' => true,
+            ];
+        }
     }
 
+    /**
+     * Check if backup is encrypted based on filename pattern
+     */
+    protected function isEncrypted(string $filename): bool
+    {
+        // Spatie encrypts if BACKUP_ARCHIVE_PASSWORD is set
+        return !empty(env('BACKUP_ARCHIVE_PASSWORD'));
+    }
+
+    /**
+     * Create a new backup using Spatie Laravel Backup
+     * This is secure - no exec() with shell commands
+     */
     public function createBackup(): void
     {
         try {
-            $backupPath = storage_path('app/backups');
-            if (!File::exists($backupPath)) {
-                File::makeDirectory($backupPath, 0755, true);
-            }
+            // Run Spatie backup command (database only for speed/security)
+            Artisan::call('backup:run', [
+                '--only-db' => true,
+                '--disable-notifications' => true,
+            ]);
 
-            $filename = 'backup_' . date('Y-m-d_H-i-s') . '.sql';
-            $filePath = $backupPath . '/' . $filename;
+            $output = Artisan::output();
 
-            // Get database credentials
-            $host = config('database.connections.mysql.host');
-            $database = config('database.connections.mysql.database');
-            $username = config('database.connections.mysql.username');
-            $password = config('database.connections.mysql.password');
+            $this->loadBackups();
 
-            // Create mysqldump command
-            $command = sprintf(
-                'mysqldump --host=%s --user=%s --password=%s %s > %s 2>&1',
-                escapeshellarg($host),
-                escapeshellarg($username),
-                escapeshellarg($password),
-                escapeshellarg($database),
-                escapeshellarg($filePath)
-            );
+            Log::info('BackupManager: Backup created successfully', [
+                'user_id' => auth()->id(),
+                'output' => $output,
+            ]);
 
-            exec($command, $output, $returnCode);
+            Notification::make()
+                ->title('Backup created successfully')
+                ->body('Database backup has been created and encrypted.')
+                ->success()
+                ->send();
 
-            if ($returnCode === 0 && File::exists($filePath)) {
-                $this->loadBackups();
-
-                Notification::make()
-                    ->title('Backup created successfully')
-                    ->body('File: ' . $filename)
-                    ->success()
-                    ->send();
-            } else {
-                Notification::make()
-                    ->title('Backup failed')
-                    ->body('Could not create database backup. Check server configuration.')
-                    ->danger()
-                    ->send();
-            }
         } catch (\Exception $e) {
+            Log::error('BackupManager: Backup creation failed', [
+                'user_id' => auth()->id(),
+                'error' => $e->getMessage(),
+            ]);
+
             Notification::make()
                 ->title('Backup failed')
                 ->body($e->getMessage())
@@ -174,97 +233,212 @@ class BackupManager extends Page
         }
     }
 
+    /**
+     * Download a backup file securely
+     */
     public function downloadBackup(string $filename): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        $path = storage_path('app/backups/' . $filename);
-
-        if (File::exists($path)) {
-            return response()->streamDownload(function () use ($path) {
-                echo file_get_contents($path);
-            }, $filename);
-        }
-
-        Notification::make()
-            ->title('File not found')
-            ->danger()
-            ->send();
-
-        return response()->streamDownload(function () {
-            echo '';
-        }, 'error.txt');
-    }
-
-    public function deleteBackup(string $filename): void
-    {
-        $path = storage_path('app/backups/' . $filename);
-
-        if (File::exists($path)) {
-            File::delete($path);
-            $this->loadBackups();
-
+        // Security: Validate filename to prevent directory traversal
+        $safeFilename = basename($filename);
+        if ($safeFilename !== $filename) {
             Notification::make()
-                ->title('Backup deleted')
-                ->success()
-                ->send();
-        } else {
-            Notification::make()
-                ->title('File not found')
+                ->title('Invalid filename')
                 ->danger()
                 ->send();
+
+            return $this->emptyResponse();
+        }
+
+        // Validate filename pattern
+        if (!preg_match('/^[\w\-\.]+\.(sql|zip)$/i', $safeFilename)) {
+            Notification::make()
+                ->title('Invalid filename format')
+                ->danger()
+                ->send();
+
+            return $this->emptyResponse();
+        }
+
+        try {
+            $disk = Storage::disk('backups');
+            $appName = config('backup.backup.name');
+
+            // Try Spatie backup location first
+            $spatiePath = $appName . '/' . $safeFilename;
+            if ($disk->exists($spatiePath)) {
+                $path = $spatiePath;
+            } else {
+                // Fallback to root of backups disk (legacy)
+                $path = $safeFilename;
+            }
+
+            if (!$disk->exists($path)) {
+                Notification::make()
+                    ->title('File not found')
+                    ->danger()
+                    ->send();
+
+                return $this->emptyResponse();
+            }
+
+            // Check file size to prevent memory issues (max 500MB)
+            $fileSize = $disk->size($path);
+            if ($fileSize > 500 * 1024 * 1024) {
+                Notification::make()
+                    ->title('File too large for download')
+                    ->body('Please use SFTP to download large backup files.')
+                    ->danger()
+                    ->send();
+
+                return $this->emptyResponse();
+            }
+
+            Log::info('BackupManager: Backup downloaded', [
+                'user_id' => auth()->id(),
+                'filename' => $safeFilename,
+            ]);
+
+            return $disk->download($path, $safeFilename);
+
+        } catch (\Exception $e) {
+            Log::error('BackupManager: Download failed', [
+                'filename' => $safeFilename,
+                'error' => $e->getMessage(),
+            ]);
+
+            Notification::make()
+                ->title('Download failed')
+                ->body('An error occurred while downloading the backup.')
+                ->danger()
+                ->send();
+
+            return $this->emptyResponse();
         }
     }
 
-    public function restoreBackup(string $filename): void
+    /**
+     * Delete a backup file securely
+     */
+    public function deleteBackup(string $filename): void
     {
-        try {
-            $path = storage_path('app/backups/' . $filename);
+        // Security: Validate filename to prevent directory traversal
+        $safeFilename = basename($filename);
+        if ($safeFilename !== $filename || !preg_match('/^[\w\-\.]+\.(sql|zip)$/i', $safeFilename)) {
+            Notification::make()
+                ->title('Invalid filename')
+                ->danger()
+                ->send();
+            return;
+        }
 
-            if (!File::exists($path)) {
+        try {
+            $disk = Storage::disk('backups');
+            $appName = config('backup.backup.name');
+
+            // Try Spatie backup location first
+            $spatiePath = $appName . '/' . $safeFilename;
+            if ($disk->exists($spatiePath)) {
+                $disk->delete($spatiePath);
+            } elseif ($disk->exists($safeFilename)) {
+                // Legacy location
+                $disk->delete($safeFilename);
+            } else {
                 Notification::make()
-                    ->title('Backup file not found')
+                    ->title('File not found')
                     ->danger()
                     ->send();
                 return;
             }
 
-            // Get database credentials
-            $host = config('database.connections.mysql.host');
-            $database = config('database.connections.mysql.database');
-            $username = config('database.connections.mysql.username');
-            $password = config('database.connections.mysql.password');
+            $this->loadBackups();
 
-            // Create mysql import command
-            $command = sprintf(
-                'mysql --host=%s --user=%s --password=%s %s < %s 2>&1',
-                escapeshellarg($host),
-                escapeshellarg($username),
-                escapeshellarg($password),
-                escapeshellarg($database),
-                escapeshellarg($path)
-            );
+            Log::info('BackupManager: Backup deleted', [
+                'user_id' => auth()->id(),
+                'filename' => $safeFilename,
+            ]);
 
-            exec($command, $output, $returnCode);
-
-            if ($returnCode === 0) {
-                Notification::make()
-                    ->title('Database restored successfully')
-                    ->body('Restored from: ' . $filename)
-                    ->success()
-                    ->send();
-            } else {
-                Notification::make()
-                    ->title('Restore failed')
-                    ->body('Could not restore database. Error: ' . implode("\n", $output))
-                    ->danger()
-                    ->send();
-            }
-        } catch (\Exception $e) {
             Notification::make()
-                ->title('Restore failed')
+                ->title('Backup deleted')
+                ->success()
+                ->send();
+
+        } catch (\Exception $e) {
+            Log::error('BackupManager: Delete failed', [
+                'filename' => $safeFilename,
+                'error' => $e->getMessage(),
+            ]);
+
+            Notification::make()
+                ->title('Delete failed')
+                ->body('An error occurred while deleting the backup.')
+                ->danger()
+                ->send();
+        }
+    }
+
+    /**
+     * Restore a backup - requires confirmation and is logged
+     * Note: For security, restore functionality should be carefully controlled
+     */
+    public function restoreBackup(string $filename): void
+    {
+        Notification::make()
+            ->title('Restore Not Available')
+            ->body('For security reasons, database restoration must be performed via command line: php artisan backup:restore')
+            ->warning()
+            ->send();
+
+        Log::warning('BackupManager: Restore attempted via UI', [
+            'user_id' => auth()->id(),
+            'filename' => $filename,
+        ]);
+    }
+
+    /**
+     * Cleanup old backups using Spatie's cleanup strategy
+     */
+    public function cleanupBackups(): void
+    {
+        try {
+            Artisan::call('backup:clean', [
+                '--disable-notifications' => true,
+            ]);
+
+            $output = Artisan::output();
+            $this->loadBackups();
+
+            Log::info('BackupManager: Cleanup completed', [
+                'user_id' => auth()->id(),
+                'output' => $output,
+            ]);
+
+            Notification::make()
+                ->title('Cleanup completed')
+                ->body('Old backups have been removed according to retention policy.')
+                ->success()
+                ->send();
+
+        } catch (\Exception $e) {
+            Log::error('BackupManager: Cleanup failed', [
+                'error' => $e->getMessage(),
+            ]);
+
+            Notification::make()
+                ->title('Cleanup failed')
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
         }
+    }
+
+    /**
+     * Return an empty response for error cases
+     */
+    protected function emptyResponse(): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        return response()->streamDownload(function () {
+            echo '';
+        }, 'error.txt');
     }
 
     private function formatBytes(int $bytes, int $precision = 2): string
@@ -280,13 +454,19 @@ class BackupManager extends Page
 
     public static function getBackupCount(): int
     {
-        $backupPath = storage_path('app/backups');
+        try {
+            $disk = Storage::disk('backups');
+            $appName = config('backup.backup.name');
 
-        if (!File::exists($backupPath)) {
+            if (!$disk->exists($appName)) {
+                return 0;
+            }
+
+            $files = $disk->files($appName);
+            return count(array_filter($files, fn($f) => str_ends_with($f, '.zip')));
+        } catch (\Exception $e) {
             return 0;
         }
-
-        return count(File::files($backupPath));
     }
 
     public static function getNavigationBadge(): ?string

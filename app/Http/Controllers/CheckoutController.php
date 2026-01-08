@@ -22,6 +22,7 @@ use App\Services\PushNotificationService;
 use App\Services\StripeService;
 use App\Services\TaxService;
 use App\Services\WalletService;
+use App\Services\WebhookProtectionService;
 use App\Notifications\ProductPurchaseConfirmation;
 use App\Notifications\NewSaleNotification;
 use Illuminate\Http\Request;
@@ -40,6 +41,7 @@ class CheckoutController extends Controller
     protected TaxService $taxService;
     protected FraudDetectionService $fraudService;
     protected WalletService $walletService;
+    protected WebhookProtectionService $webhookProtection;
 
     public function __construct(
         StripeService $stripeService,
@@ -47,7 +49,8 @@ class CheckoutController extends Controller
         PayPalService $paypalService,
         TaxService $taxService,
         FraudDetectionService $fraudService,
-        WalletService $walletService
+        WalletService $walletService,
+        WebhookProtectionService $webhookProtection
     ) {
         $this->stripeService = $stripeService;
         $this->payoneerService = $payoneerService;
@@ -55,6 +58,7 @@ class CheckoutController extends Controller
         $this->taxService = $taxService;
         $this->fraudService = $fraudService;
         $this->walletService = $walletService;
+        $this->webhookProtection = $webhookProtection;
     }
 
     public function index()
@@ -277,8 +281,32 @@ class CheckoutController extends Controller
         $paymentMethod = $request->input('payment_method');
         $billingState = $request->input('billing_state');
 
-        // Calculate tax if enabled
-        $taxData = $this->taxService->calculateTotals($total, 0, $billingState);
+        // Apply coupon discount if present in session
+        $couponCode = null;
+        $couponDiscount = 0;
+        $couponData = session('coupon');
+        if ($couponData && isset($couponData['id'])) {
+            $coupon = \App\Models\Coupon::find($couponData['id']);
+            if ($coupon && $coupon->isValid()) {
+                // Re-check user usage limit before applying
+                if (auth()->check() && $coupon->max_uses_per_user) {
+                    $userUsage = \App\Models\CouponUsage::where('coupon_id', $coupon->id)
+                        ->where('user_id', auth()->id())
+                        ->count();
+                    if ($userUsage < $coupon->max_uses_per_user) {
+                        $couponDiscount = $coupon->calculateDiscount($total);
+                        $couponCode = $coupon->code;
+                    }
+                } else {
+                    $couponDiscount = $coupon->calculateDiscount($total);
+                    $couponCode = $coupon->code;
+                }
+            }
+        }
+        $subtotalAfterDiscount = max(0, $total - $couponDiscount);
+
+        // Calculate tax if enabled (on discounted subtotal)
+        $taxData = $this->taxService->calculateTotals($subtotalAfterDiscount, 0, $billingState);
         $orderTotal = $taxData['total'];
 
         // Fraud detection check
@@ -315,6 +343,8 @@ class CheckoutController extends Controller
                 'order_number' => 'ORD-' . strtoupper(Str::random(10)),
                 'email' => $request->input('email'),
                 'subtotal' => $total,
+                'discount' => $couponDiscount,
+                'coupon_code' => $couponCode,
                 'tax_rate' => $taxData['tax_rate'],
                 'tax_amount' => $taxData['tax_amount'],
                 'billing_state' => $billingState,
@@ -933,14 +963,28 @@ class CheckoutController extends Controller
                 return redirect()->route('products.index')->with('error', 'Order not found.');
             }
 
-            // Verify ownership if user is logged in
-            if (auth()->check() && $order->user_id && (int) $order->user_id !== auth()->id()) {
-                Log::warning('Checkout: Success page - unauthorized access', [
-                    'order_id' => $orderId,
-                    'order_user_id' => $order->user_id,
-                    'current_user_id' => auth()->id(),
-                ]);
-                return redirect()->route('products.index')->with('error', 'Unauthorized access.');
+            // Verify ownership - if order has a user_id, check authorization
+            // Note: SameSite=strict cookies may not be sent on cross-site redirects from payment providers
+            if ($order->user_id) {
+                if (auth()->check()) {
+                    // User is authenticated - verify they own this order
+                    if ((int) $order->user_id !== auth()->id()) {
+                        Log::warning('Checkout: Success page - unauthorized access', [
+                            'order_id' => $orderId,
+                            'order_user_id' => $order->user_id,
+                            'current_user_id' => auth()->id(),
+                        ]);
+                        return redirect()->route('products.index')->with('error', 'Unauthorized access.');
+                    }
+                } else {
+                    // User is not authenticated (session lost due to SameSite=strict)
+                    // Redirect to login with success message
+                    Log::info('Checkout: Success page - session lost, redirecting to login', [
+                        'order_id' => $orderId,
+                        'order_number' => $order->order_number,
+                    ]);
+                    return redirect()->route('login')->with('success', 'Your order #' . $order->order_number . ' has been completed! Please log in to view your order details.');
+                }
             }
 
             // Clear cart
@@ -1023,14 +1067,27 @@ class CheckoutController extends Controller
             'token' => $request->query('token'),
         ]);
 
-        // Verify the order belongs to the current user (if logged in)
-        if (auth()->check() && $order->user_id && $order->user_id !== auth()->id()) {
-            Log::warning('Checkout: PayPal success - unauthorized access', [
-                'order_id' => $order->id,
-                'order_user_id' => $order->user_id,
-                'current_user_id' => auth()->id(),
-            ]);
-            return redirect()->route('products.index')->with('error', 'Unauthorized access.');
+        // Verify ownership - if order has a user_id, check authorization
+        // Note: SameSite=strict cookies may not be sent on cross-site redirects from payment providers
+        if ($order->user_id) {
+            if (auth()->check()) {
+                // User is authenticated - verify they own this order
+                if ((int) $order->user_id !== auth()->id()) {
+                    Log::warning('Checkout: PayPal success - unauthorized access', [
+                        'order_id' => $order->id,
+                        'order_user_id' => $order->user_id,
+                        'current_user_id' => auth()->id(),
+                    ]);
+                    return redirect()->route('products.index')->with('error', 'Unauthorized access.');
+                }
+            } else {
+                // User is not authenticated (session lost due to SameSite=strict)
+                // Still capture the payment but redirect to login with success message
+                Log::info('Checkout: PayPal success - session lost, will redirect to login after capture', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                ]);
+            }
         }
 
         $paypalOrderId = $request->query('token') ?? $order->paypal_order_id;
@@ -1087,9 +1144,14 @@ class CheckoutController extends Controller
                     'capture_id' => $captureResult['capture_id'] ?? null,
                 ]);
 
-                // Clear cart
+                // Clear cart if session exists
                 session()->forget('cart');
                 session()->forget('pending_order_items');
+
+                // If user's session was lost (SameSite=strict), redirect to login
+                if ($order->user_id && !auth()->check()) {
+                    return redirect()->route('login')->with('success', 'Your order #' . $order->order_number . ' has been completed! Please log in to view your order details.');
+                }
 
                 return view('pages.checkout-success', compact('order'));
             }
@@ -1150,15 +1212,27 @@ class CheckoutController extends Controller
             'user_id' => auth()->id(),
         ]);
 
-        // Verify the order belongs to the current user (if logged in)
-        // Handle case where session expired during payment
-        if (auth()->check() && $order->user_id && $order->user_id !== auth()->id()) {
-            Log::warning('Checkout: Payoneer success - unauthorized access', [
-                'order_id' => $order->id,
-                'order_user_id' => $order->user_id,
-                'current_user_id' => auth()->id(),
-            ]);
-            return redirect()->route('products.index')->with('error', 'Unauthorized access.');
+        // Verify ownership - if order has a user_id, check authorization
+        // Note: SameSite=strict cookies may not be sent on cross-site redirects from payment providers
+        if ($order->user_id) {
+            if (auth()->check()) {
+                // User is authenticated - verify they own this order
+                if ((int) $order->user_id !== auth()->id()) {
+                    Log::warning('Checkout: Payoneer success - unauthorized access', [
+                        'order_id' => $order->id,
+                        'order_user_id' => $order->user_id,
+                        'current_user_id' => auth()->id(),
+                    ]);
+                    return redirect()->route('products.index')->with('error', 'Unauthorized access.');
+                }
+            } else {
+                // User is not authenticated (session lost due to SameSite=strict)
+                // Still process the payment but redirect to login with success message
+                Log::info('Checkout: Payoneer success - session lost, will redirect to login after processing', [
+                    'order_id' => $order->id,
+                    'order_number' => $order->order_number,
+                ]);
+            }
         }
 
         try {
@@ -1177,9 +1251,14 @@ class CheckoutController extends Controller
                     'transaction_id' => $status['transactionId'] ?? null,
                 ]);
 
-                // Clear cart
+                // Clear cart if session exists
                 session()->forget('cart');
                 session()->forget('pending_order_items');
+
+                // If user's session was lost (SameSite=strict), redirect to login
+                if ($order->user_id && !auth()->check()) {
+                    return redirect()->route('login')->with('success', 'Your order #' . $order->order_number . ' has been completed! Please log in to view your order details.');
+                }
 
                 return view('pages.checkout-success', compact('order'));
             }
@@ -1190,6 +1269,12 @@ class CheckoutController extends Controller
                     'order_id' => $order->id,
                     'status' => $status['status'],
                 ]);
+
+                // If user's session was lost (SameSite=strict), redirect to login
+                if ($order->user_id && !auth()->check()) {
+                    return redirect()->route('login')->with('success', 'Your order #' . $order->order_number . ' is being processed. Please log in to check your order status.');
+                }
+
                 return view('pages.checkout-success', compact('order'))
                     ->with('warning', 'Your payment is being processed. You will receive confirmation shortly.');
             }
@@ -1215,18 +1300,44 @@ class CheckoutController extends Controller
      */
     public function payoneerWebhook(Request $request)
     {
-        $payload = $request->all();
+        $payload = $request->getContent();
 
-        // Verify webhook signature (if Payoneer provides one)
+        // Verify webhook signature - REQUIRED for security
         $signature = $request->header('X-Payoneer-Signature', '');
-        if (!$this->payoneerService->verifyWebhook(json_encode($payload), $signature)) {
-            Log::warning('Payoneer webhook signature verification failed');
-            // Continue processing anyway since verification is placeholder
+        if (!$this->payoneerService->verifyWebhook($payload, $signature)) {
+            Log::warning('Payoneer webhook rejected: Invalid signature', [
+                'ip' => $request->ip(),
+            ]);
+            return response('Invalid signature', 401);
         }
 
-        $transactionId = $payload['transactionId'] ?? null;
-        $status = $payload['status'] ?? null;
-        $reference = $payload['reference'] ?? $payload['payment']['reference'] ?? null;
+        // Replay attack prevention
+        $validation = $this->webhookProtection->validatePayoneerWebhook($request);
+        if (!$validation['valid']) {
+            Log::warning('Payoneer webhook replay detected', [
+                'error' => $validation['error'],
+                'ip' => $request->ip(),
+            ]);
+            return response($validation['error'], 400);
+        }
+
+        $webhookRecord = $validation['webhook'];
+
+        $data = json_decode($payload, true);
+        if (!$data) {
+            Log::warning('Payoneer webhook rejected: Invalid JSON payload');
+            $webhookRecord?->markFailed();
+            return response('Invalid payload', 400);
+        }
+
+        $transactionId = $data['transactionId'] ?? null;
+        $status = $data['status'] ?? null;
+        $reference = $data['reference'] ?? $data['payment']['reference'] ?? null;
+
+        // Update webhook record with event type
+        if ($webhookRecord && $status) {
+            $webhookRecord->update(['event_type' => 'payment.' . strtolower($status)]);
+        }
 
         Log::info('Payoneer webhook received', [
             'transactionId' => $transactionId,
@@ -1235,6 +1346,7 @@ class CheckoutController extends Controller
         ]);
 
         if (!$reference && !$transactionId) {
+            $webhookRecord?->markFailed();
             return response('Missing transaction reference', 400);
         }
 
@@ -1257,6 +1369,38 @@ class CheckoutController extends Controller
             case 'PAID':
             case 'COMPLETED':
                 if ($order->status === 'pending') {
+                    // Capture wallet hold if this was a partial wallet + Payoneer payment
+                    if ($order->wallet_hold_id) {
+                        try {
+                            $hold = $this->walletService->findHold($order->wallet_hold_id);
+                            if ($hold->canCapture()) {
+                                $walletTransaction = $this->walletService->captureFunds(
+                                    hold: $hold,
+                                    description: 'Partial payment captured: Order #' . $order->order_number,
+                                    transactionable: $order
+                                );
+
+                                $order->update([
+                                    'wallet_transaction_id' => $walletTransaction->id,
+                                ]);
+
+                                Log::info('Payoneer webhook: Wallet hold captured for partial payment', [
+                                    'order_id' => $order->id,
+                                    'hold_id' => $hold->id,
+                                    'transaction_id' => $walletTransaction->id,
+                                ]);
+                            }
+                        } catch (\Exception $e) {
+                            Log::error('Payoneer webhook: Failed to capture wallet hold', [
+                                'order_id' => $order->id,
+                                'hold_id' => $order->wallet_hold_id,
+                                'error' => $e->getMessage(),
+                            ]);
+                            // Continue with order completion even if wallet capture fails
+                            // The hold will expire and be released automatically
+                        }
+                    }
+
                     $this->completeOrder($order, $transactionId);
                 }
                 break;
@@ -1265,12 +1409,37 @@ class CheckoutController extends Controller
             case 'DECLINED':
             case 'CANCELED':
                 $order->update(['status' => 'failed']);
+
+                // Release wallet hold if payment was partial wallet + Payoneer
+                if ($order->wallet_hold_id) {
+                    try {
+                        $hold = $this->walletService->findHold($order->wallet_hold_id);
+                        if ($hold->canRelease()) {
+                            $this->walletService->releaseFunds($hold, 'Payoneer payment ' . strtolower($status));
+                            Log::info('Payoneer webhook: Wallet hold released on payment failure', [
+                                'order_id' => $order->id,
+                                'hold_id' => $hold->id,
+                                'reason' => $status,
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('Payoneer webhook: Failed to release wallet hold', [
+                            'order_id' => $order->id,
+                            'hold_id' => $order->wallet_hold_id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+
                 Log::info('Payoneer order marked as failed: ' . $order->order_number);
                 break;
 
             default:
                 Log::info('Unhandled Payoneer status: ' . $status);
         }
+
+        // Mark webhook as successfully processed
+        $webhookRecord?->markCompleted();
 
         return response('Webhook handled', 200);
     }
@@ -1291,32 +1460,69 @@ class CheckoutController extends Controller
             return response('Invalid signature', 400);
         }
 
-        // Handle the event
-        switch ($event->type) {
-            case 'checkout.session.completed':
-                $session = $event->data->object;
-                $this->handleCheckoutCompleted($session);
-                break;
-
-            case 'payment_intent.succeeded':
-                $paymentIntent = $event->data->object;
-                Log::info('Payment succeeded: ' . $paymentIntent->id);
-                break;
-
-            case 'payment_intent.payment_failed':
-                $paymentIntent = $event->data->object;
-                $this->handlePaymentFailed($paymentIntent);
-                break;
-
-            default:
-                Log::info('Unhandled Stripe event: ' . $event->type);
+        // Replay attack prevention: validate event hasn't been processed
+        $validation = $this->webhookProtection->validateStripeEvent($event, $request);
+        if (!$validation['valid']) {
+            Log::warning('Stripe webhook replay detected', [
+                'event_id' => $event->id,
+                'event_type' => $event->type,
+                'error' => $validation['error'],
+                'ip' => $request->ip(),
+            ]);
+            return response($validation['error'], 400);
         }
 
-        return response('Webhook handled', 200);
+        $webhookRecord = $validation['webhook'];
+
+        try {
+            // Handle the event
+            switch ($event->type) {
+                case 'checkout.session.completed':
+                    $session = $event->data->object;
+                    $this->handleCheckoutCompleted($session);
+                    break;
+
+                case 'payment_intent.succeeded':
+                    $paymentIntent = $event->data->object;
+                    Log::info('Payment succeeded: ' . $paymentIntent->id);
+                    break;
+
+                case 'payment_intent.payment_failed':
+                    $paymentIntent = $event->data->object;
+                    $this->handlePaymentFailed($paymentIntent);
+                    break;
+
+                default:
+                    Log::info('Unhandled Stripe event: ' . $event->type);
+            }
+
+            // Mark webhook as successfully processed
+            $webhookRecord?->markCompleted();
+
+            return response('Webhook handled', 200);
+
+        } catch (\Exception $e) {
+            // Mark webhook as failed but don't delete (allow investigation)
+            $webhookRecord?->markFailed();
+
+            Log::error('Stripe webhook processing error', [
+                'event_id' => $event->id,
+                'event_type' => $event->type,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
     }
 
     protected function handleCheckoutCompleted($session)
     {
+        // Check if this is a wallet deposit (based on metadata)
+        if (isset($session->metadata->type) && $session->metadata->type === 'wallet_deposit') {
+            $this->handleWalletDepositWebhook($session);
+            return;
+        }
+
         $order = Order::where('stripe_session_id', $session->id)->first();
 
         if (!$order) {
@@ -1392,10 +1598,93 @@ class CheckoutController extends Controller
         }
     }
 
+    /**
+     * Handle wallet deposit via webhook (fallback for redirect failures).
+     * This ensures deposits are credited even if user closes browser after payment.
+     */
+    protected function handleWalletDepositWebhook($session): void
+    {
+        $sessionId = $session->id;
+        $userId = $session->metadata->user_id ?? null;
+        $walletId = $session->metadata->wallet_id ?? null;
+        $amount = (float) ($session->metadata->amount ?? 0);
+
+        if (!$userId || !$amount) {
+            Log::error('Wallet deposit webhook: Missing required metadata', [
+                'session_id' => $sessionId,
+                'user_id' => $userId,
+                'amount' => $amount,
+            ]);
+            return;
+        }
+
+        // Check if already processed (idempotency)
+        $existingTransaction = \App\Models\WalletTransaction::where('payment_id', $sessionId)->first();
+        if ($existingTransaction) {
+            Log::info('Wallet deposit already processed via webhook', [
+                'session_id' => $sessionId,
+                'transaction_id' => $existingTransaction->id,
+            ]);
+            return;
+        }
+
+        // Find or create wallet
+        $wallet = \App\Models\Wallet::where('user_id', $userId)->first();
+        if (!$wallet) {
+            $user = \App\Models\User::find($userId);
+            if ($user) {
+                $wallet = $user->getOrCreateWallet();
+            }
+        }
+
+        if (!$wallet) {
+            Log::error('Wallet deposit webhook: Wallet not found', [
+                'session_id' => $sessionId,
+                'user_id' => $userId,
+            ]);
+            return;
+        }
+
+        try {
+            // Process the deposit
+            $wallet->deposit(
+                amount: $amount,
+                description: 'Wallet deposit via Stripe (webhook)',
+                paymentMethod: 'stripe',
+                paymentId: $sessionId
+            );
+
+            Log::info('Wallet deposit processed via webhook', [
+                'session_id' => $sessionId,
+                'user_id' => $userId,
+                'amount' => $amount,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Wallet deposit webhook failed: ' . $e->getMessage(), [
+                'session_id' => $sessionId,
+                'user_id' => $userId,
+                'amount' => $amount,
+            ]);
+        }
+    }
+
     protected function completeOrder(Order $order, $paymentIntentId = null)
     {
         try {
             DB::beginTransaction();
+
+            // Lock order to prevent race conditions (concurrent webhooks, page refreshes)
+            $order = Order::where('id', $order->id)->lockForUpdate()->first();
+
+            // Check if order was already completed by another process
+            if ($order->status !== 'pending') {
+                DB::rollBack();
+                Log::info('Checkout: Order already processed, skipping', [
+                    'order_id' => $order->id,
+                    'status' => $order->status,
+                ]);
+                return;
+            }
 
             // Get products from cart (stored in session during checkout)
             $cart = session()->get('cart', []);
@@ -1483,6 +1772,55 @@ class CheckoutController extends Controller
                 'stripe_payment_intent_id' => $paymentIntentId,
                 'paid_at' => now(),
             ]);
+
+            // Record coupon usage if a coupon was applied (with locking to prevent race conditions)
+            if ($order->coupon_code) {
+                // Lock the coupon row to prevent concurrent usage
+                $coupon = \App\Models\Coupon::where('code', $order->coupon_code)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($coupon) {
+                    // Check if coupon has already been used for this order (idempotency)
+                    $existingUsage = \App\Models\CouponUsage::where('coupon_id', $coupon->id)
+                        ->where('order_id', $order->id)
+                        ->exists();
+
+                    if (!$existingUsage) {
+                        // Verify usage limit hasn't been exceeded
+                        if ($coupon->usage_limit && $coupon->used_count >= $coupon->usage_limit) {
+                            Log::warning('Coupon usage limit exceeded during order completion', [
+                                'coupon_code' => $order->coupon_code,
+                                'order_id' => $order->id,
+                            ]);
+                        } else {
+                            // Create usage record
+                            \App\Models\CouponUsage::create([
+                                'coupon_id' => $coupon->id,
+                                'user_id' => $order->user_id,
+                                'order_id' => $order->id,
+                                'discount_amount' => $order->discount ?? 0,
+                            ]);
+                            // Increment global usage counter
+                            $coupon->increment('used_count');
+                            Log::info('Coupon usage recorded', [
+                                'coupon_code' => $order->coupon_code,
+                                'order_id' => $order->id,
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            // Process referral commission if user was referred
+            try {
+                $order->user->processReferralPurchaseCommission($order);
+            } catch (\Exception $e) {
+                Log::error('Failed to process referral commission: ' . $e->getMessage());
+            }
+
+            // Clear coupon from session after successful order
+            session()->forget('coupon');
 
             DB::commit();
 

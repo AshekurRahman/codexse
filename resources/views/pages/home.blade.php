@@ -114,6 +114,7 @@
     <x-trust-badges />
 
     <!-- Categories Section - Redesigned -->
+    @if($categories->count() > 0)
     <section class="bg-white dark:bg-surface-900 py-20">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-12" x-scroll-animate>
@@ -131,7 +132,7 @@
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-                @forelse($categories as $index => $category)
+                @foreach($categories as $index => $category)
                     <a href="{{ route('categories.show', $category) }}" class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-surface-50 to-surface-100 dark:from-surface-800 dark:to-surface-700 p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-primary-500/10 hover:-translate-y-2 border border-surface-200 dark:border-surface-700 hover:border-primary-300 dark:hover:border-primary-700" x-scroll-animate.delay="{{ $index * 50 }}">
                         <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-primary-500/10 to-accent-500/10 rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500"></div>
                         <div class="relative">
@@ -142,20 +143,11 @@
                             <p class="mt-1 text-sm text-surface-500 dark:text-surface-400">{{ $category->products_count ?? 0 }} items</p>
                         </div>
                     </a>
-                @empty
-                    @foreach(['UI Kits', 'Templates', 'Icons', 'Graphics', 'Themes', 'Plugins'] as $name)
-                        <div class="group relative overflow-hidden rounded-2xl bg-gradient-to-br from-surface-50 to-surface-100 dark:from-surface-800 dark:to-surface-700 p-6 border border-surface-200 dark:border-surface-700">
-                            <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center mb-4 shadow-lg shadow-primary-500/20">
-                                <x-category-icon class="w-7 h-7 text-white" />
-                            </div>
-                            <h3 class="font-bold text-surface-900 dark:text-white">{{ $name }}</h3>
-                            <p class="mt-1 text-sm text-surface-500 dark:text-surface-400">0 items</p>
-                        </div>
-                    @endforeach
-                @endforelse
+                @endforeach
             </div>
         </div>
     </section>
+    @endif
 
     <!-- Featured Products - Redesigned -->
     <section class="relative bg-gradient-to-b from-surface-50 to-white dark:from-surface-800/50 dark:to-surface-900 py-20 overflow-hidden">

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Seller;
 use App\Http\Controllers\Controller;
 use App\Models\JobPosting;
 use App\Models\JobProposal;
+use App\Rules\SecureFileUpload;
 use Illuminate\Http\Request;
 
 class JobProposalController extends Controller
@@ -74,7 +75,12 @@ class JobProposalController extends Controller
      */
     public function store(Request $request, JobPosting $jobPosting)
     {
+        $isAjax = $request->ajax() || $request->wantsJson();
+
         if (!$jobPosting->isOpen()) {
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'This job is not accepting proposals.'], 422);
+            }
             return redirect()->back()->with('error', 'This job is not accepting proposals.');
         }
 
@@ -82,26 +88,39 @@ class JobProposalController extends Controller
 
         // Check if already submitted
         if ($jobPosting->proposals()->where('seller_id', $seller->id)->exists()) {
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'You have already submitted a proposal for this job.'], 422);
+            }
             return redirect()->back()->with('error', 'You have already submitted a proposal for this job.');
         }
 
-        $validated = $request->validate([
-            'cover_letter' => 'required|string|max:5000',
-            'proposed_price' => 'required|numeric|min:5',
-            'proposed_duration' => 'required|integer|min:1',
-            'duration_type' => 'required|in:days,weeks,months',
-            'milestones' => 'nullable|array',
-            'milestones.*.title' => 'required|string|max:200',
-            'milestones.*.description' => 'nullable|string|max:500',
-            'milestones.*.amount' => 'required|numeric|min:1',
-            'milestones.*.due_date' => 'nullable|date|after:today',
-            'attachments.*' => 'nullable|file|max:10240',
-        ]);
+        try {
+            $validated = $request->validate([
+                'cover_letter' => 'required|string|max:5000',
+                'proposed_price' => 'required|numeric|min:5',
+                'proposed_duration' => 'required|integer|min:1',
+                'duration_type' => 'required|in:days,weeks,months',
+                'milestones' => 'nullable|array',
+                'milestones.*.title' => 'required|string|max:200',
+                'milestones.*.description' => 'nullable|string|max:500',
+                'milestones.*.amount' => 'required|numeric|min:1',
+                'milestones.*.due_date' => 'nullable|date|after:today',
+                'attachments.*' => ['nullable', 'file', SecureFileUpload::attachment(10)],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($isAjax) {
+                return response()->json(['success' => false, 'message' => 'Validation failed.', 'errors' => $e->errors()], 422);
+            }
+            throw $e;
+        }
 
         // Validate milestone amounts equal proposed price
         if (!empty($validated['milestones'])) {
             $milestonesTotal = array_sum(array_column($validated['milestones'], 'amount'));
             if (abs($milestonesTotal - $validated['proposed_price']) > 0.01) {
+                if ($isAjax) {
+                    return response()->json(['success' => false, 'message' => 'Milestone amounts must equal the total proposed price.'], 422);
+                }
                 return redirect()->back()
                     ->with('error', 'Milestone amounts must equal the total proposed price.')
                     ->withInput();
@@ -136,6 +155,14 @@ class JobProposalController extends Controller
 
         // Increment proposals count
         $jobPosting->increment('proposals_count');
+
+        if ($isAjax) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Proposal submitted successfully!',
+                'redirect' => route('seller.proposals.show', $proposal),
+            ]);
+        }
 
         return redirect()->route('seller.proposals.index')
             ->with('success', 'Proposal submitted successfully!');

@@ -13,9 +13,7 @@ Welcome to {{ config('app.name') }}, {{ $user->name }}! Your account is ready.
         <table role="presentation" width="100%" height="100%">
             <tr>
                 <td align="center" valign="middle">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21M16 7C16 9.20914 14.2091 11 12 11C9.79086 11 8 9.20914 8 7C8 4.79086 9.79086 3 12 3C14.2091 3 16 4.79086 16 7Z" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+<img src="{{ asset('images/email/user.webp') }}" alt="Welcome" style="width: 48px; height: 48px;">
                 </td>
             </tr>
         </table>
@@ -40,9 +38,7 @@ Welcome to {{ config('app.name') }}, {{ $user->name }}! Your account is ready.
                     <table role="presentation" width="100%" height="100%">
                         <tr>
                             <td align="center" valign="middle">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M20 7L12 3L4 7M20 7L12 11M20 7V17L12 21M12 11L4 7M12 11V21M4 7V17L12 21" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
+<img src="{{ asset('images/email/package.webp') }}" alt="Products" style="width: 24px; height: 24px;">
                             </td>
                         </tr>
                     </table>
@@ -63,9 +59,7 @@ Welcome to {{ config('app.name') }}, {{ $user->name }}! Your account is ready.
                     <table role="presentation" width="100%" height="100%">
                         <tr>
                             <td align="center" valign="middle">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21M20 8V14M23 11H17M12.5 7C12.5 9.20914 10.7091 11 8.5 11C6.29086 11 4.5 9.20914 4.5 7C4.5 4.79086 6.29086 3 8.5 3C10.7091 3 12.5 4.79086 12.5 7Z" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
+<img src="{{ asset('images/email/user-plus.webp') }}" alt="Freelancers" style="width: 24px; height: 24px;">
                             </td>
                         </tr>
                     </table>
@@ -86,9 +80,7 @@ Welcome to {{ config('app.name') }}, {{ $user->name }}! Your account is ready.
                     <table role="presentation" width="100%" height="100%">
                         <tr>
                             <td align="center" valign="middle">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M12 1V23M17 5H9.5C8.57174 5 7.6815 5.36875 7.02513 6.02513C6.36875 6.6815 6 7.57174 6 8.5C6 9.42826 6.36875 10.3185 7.02513 10.9749C7.6815 11.6313 8.57174 12 9.5 12H14.5C15.4283 12 16.3185 12.3687 16.9749 13.0251C17.6313 13.6815 18 14.5717 18 15.5C18 16.4283 17.6313 17.3185 16.9749 17.9749C16.3185 18.6313 15.4283 19 14.5 19H6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
+<img src="{{ asset('images/email/dollar-sign.webp') }}" alt="Sell" style="width: 24px; height: 24px;">
                             </td>
                         </tr>
                     </table>

@@ -51,9 +51,7 @@ Your order "{{ $order->title }}" has been delivered! Review and approve it now.
 <div style="background: #ffffff;">
     <div style="text-align: center; padding: 20px 40px 32px;">
         <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 20px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M20 6L9 17L4 12" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+<img src="{{ asset('images/email/check.webp') }}" alt="Delivered" style="width: 40px; height: 40px;">
         </div>
         <span style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #ffffff; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;">Delivery Complete</span>
         <h1 style="font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 8px;">Your Order Has Been Delivered!</h1>
@@ -131,9 +129,7 @@ Your order "{{ $order->title }}" has been delivered! Review and approve it now.
         <tr>
             <td style="padding: 14px; width: 52px;">
                 <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+<img src="{{ asset('images/email/file-text.webp') }}" alt="File" style="width: 20px; height: 20px;">
                 </div>
             </td>
             <td style="padding: 14px 14px 14px 0;">
@@ -150,9 +146,7 @@ Your order "{{ $order->title }}" has been delivered! Review and approve it now.
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
             <tr>
                 <td style="width: 40px; vertical-align: top;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#d97706" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
+<img src="{{ asset('images/email/alert-circle.webp') }}" alt="Action Required" style="width: 24px; height: 24px;">
                 </td>
                 <td style="padding-left: 12px;">
                     <p style="font-weight: 600; color: #92400e; margin: 0 0 4px; font-size: 14px;">Action Required</p>

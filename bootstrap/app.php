@@ -28,11 +28,16 @@ return Application::configure(basePath: dirname(__DIR__))
             'rate.limit' => \App\Http\Middleware\DynamicRateLimiter::class,
             'honeypot' => \App\Http\Middleware\HoneypotProtection::class,
             'two-factor' => \App\Http\Middleware\TwoFactorMiddleware::class,
+            'no-cache' => \App\Http\Middleware\NoCacheSensitiveResponse::class,
+            'webhook.protect' => \App\Http\Middleware\WebhookReplayProtection::class,
         ]);
 
-        // Exclude Stripe webhook from CSRF verification
+        // Exclude webhook routes from CSRF verification
         $middleware->validateCsrfTokens(except: [
             'stripe/webhook',
+            'payoneer/webhook',
+            'escrow/webhook',
+            'subscriptions/webhook',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -27,6 +27,8 @@ class JobProposal extends Model
     ];
 
     protected $casts = [
+        'job_posting_id' => 'integer',
+        'seller_id' => 'integer',
         'proposed_price' => 'decimal:2',
         'milestones' => 'array',
         'attachments' => 'array',
@@ -46,7 +48,7 @@ class JobProposal extends Model
 
     public function contract(): HasOne
     {
-        return $this->hasOne(JobContract::class, 'proposal_id');
+        return $this->hasOne(JobContract::class, 'job_proposal_id');
     }
 
     // Scopes

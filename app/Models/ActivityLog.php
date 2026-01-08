@@ -67,6 +67,47 @@ class ActivityLog extends Model
     public const ACTION_DATA_EXPORTED = 'data_exported';
     public const ACTION_SESSION_REVOKED = 'session_revoked';
 
+    // Financial actions
+    public const ACTION_WALLET_DEPOSIT = 'wallet_deposit';
+    public const ACTION_WALLET_WITHDRAWAL = 'wallet_withdrawal';
+    public const ACTION_PAYOUT_REQUESTED = 'payout_requested';
+    public const ACTION_PAYOUT_APPROVED = 'payout_approved';
+    public const ACTION_PAYOUT_REJECTED = 'payout_rejected';
+    public const ACTION_PAYOUT_PROCESSED = 'payout_processed';
+    public const ACTION_PAYOUT_FAILED = 'payout_failed';
+
+    // Escrow actions
+    public const ACTION_ESCROW_CREATED = 'escrow_created';
+    public const ACTION_ESCROW_HELD = 'escrow_held';
+    public const ACTION_ESCROW_RELEASED = 'escrow_released';
+    public const ACTION_ESCROW_REFUNDED = 'escrow_refunded';
+    public const ACTION_ESCROW_DISPUTED = 'escrow_disputed';
+
+    // Admin actions
+    public const ACTION_ADMIN_SELLER_APPROVED = 'admin_seller_approved';
+    public const ACTION_ADMIN_SELLER_REJECTED = 'admin_seller_rejected';
+    public const ACTION_ADMIN_PRODUCT_APPROVED = 'admin_product_approved';
+    public const ACTION_ADMIN_PRODUCT_REJECTED = 'admin_product_rejected';
+    public const ACTION_ADMIN_DISPUTE_RESOLVED = 'admin_dispute_resolved';
+    public const ACTION_ADMIN_REFUND_ISSUED = 'admin_refund_issued';
+    public const ACTION_ADMIN_USER_SUSPENDED = 'admin_user_suspended';
+    public const ACTION_ADMIN_USER_UNSUSPENDED = 'admin_user_unsuspended';
+    public const ACTION_ADMIN_ROLE_ASSIGNED = 'admin_role_assigned';
+    public const ACTION_ADMIN_SETTING_CHANGED = 'admin_setting_changed';
+
+    // Subscription actions
+    public const ACTION_SUBSCRIPTION_CREATED = 'subscription_created';
+    public const ACTION_SUBSCRIPTION_CANCELLED = 'subscription_cancelled';
+    public const ACTION_SUBSCRIPTION_RENEWED = 'subscription_renewed';
+
+    // Order actions
+    public const ACTION_ORDER_CANCELLED = 'order_cancelled';
+    public const ACTION_ORDER_REFUNDED = 'order_refunded';
+
+    // API actions
+    public const ACTION_API_KEY_GENERATED = 'api_key_generated';
+    public const ACTION_API_KEY_REVOKED = 'api_key_revoked';
+
     public const ACTIONS = [
         self::ACTION_LOGIN => 'Login',
         self::ACTION_LOGOUT => 'Logout',
@@ -92,6 +133,41 @@ class ActivityLog extends Model
         self::ACTION_CONSENT_UPDATED => 'Consent Updated',
         self::ACTION_DATA_EXPORTED => 'Data Exported',
         self::ACTION_SESSION_REVOKED => 'Session Revoked',
+        // Financial actions
+        self::ACTION_WALLET_DEPOSIT => 'Wallet Deposit',
+        self::ACTION_WALLET_WITHDRAWAL => 'Wallet Withdrawal',
+        self::ACTION_PAYOUT_REQUESTED => 'Payout Requested',
+        self::ACTION_PAYOUT_APPROVED => 'Payout Approved',
+        self::ACTION_PAYOUT_REJECTED => 'Payout Rejected',
+        self::ACTION_PAYOUT_PROCESSED => 'Payout Processed',
+        self::ACTION_PAYOUT_FAILED => 'Payout Failed',
+        // Escrow actions
+        self::ACTION_ESCROW_CREATED => 'Escrow Created',
+        self::ACTION_ESCROW_HELD => 'Escrow Held',
+        self::ACTION_ESCROW_RELEASED => 'Escrow Released',
+        self::ACTION_ESCROW_REFUNDED => 'Escrow Refunded',
+        self::ACTION_ESCROW_DISPUTED => 'Escrow Disputed',
+        // Admin actions
+        self::ACTION_ADMIN_SELLER_APPROVED => 'Seller Approved',
+        self::ACTION_ADMIN_SELLER_REJECTED => 'Seller Rejected',
+        self::ACTION_ADMIN_PRODUCT_APPROVED => 'Product Approved',
+        self::ACTION_ADMIN_PRODUCT_REJECTED => 'Product Rejected',
+        self::ACTION_ADMIN_DISPUTE_RESOLVED => 'Dispute Resolved',
+        self::ACTION_ADMIN_REFUND_ISSUED => 'Refund Issued',
+        self::ACTION_ADMIN_USER_SUSPENDED => 'User Suspended',
+        self::ACTION_ADMIN_USER_UNSUSPENDED => 'User Unsuspended',
+        self::ACTION_ADMIN_ROLE_ASSIGNED => 'Role Assigned',
+        self::ACTION_ADMIN_SETTING_CHANGED => 'Setting Changed',
+        // Subscription actions
+        self::ACTION_SUBSCRIPTION_CREATED => 'Subscription Created',
+        self::ACTION_SUBSCRIPTION_CANCELLED => 'Subscription Cancelled',
+        self::ACTION_SUBSCRIPTION_RENEWED => 'Subscription Renewed',
+        // Order actions
+        self::ACTION_ORDER_CANCELLED => 'Order Cancelled',
+        self::ACTION_ORDER_REFUNDED => 'Order Refunded',
+        // API actions
+        self::ACTION_API_KEY_GENERATED => 'API Key Generated',
+        self::ACTION_API_KEY_REVOKED => 'API Key Revoked',
     ];
 
     // Categories
@@ -104,6 +180,11 @@ class ActivityLog extends Model
     public const CATEGORY_SELLER = 'seller';
     public const CATEGORY_PRIVACY = 'privacy';
     public const CATEGORY_SYSTEM = 'system';
+    public const CATEGORY_FINANCE = 'finance';
+    public const CATEGORY_ADMIN = 'admin';
+    public const CATEGORY_ESCROW = 'escrow';
+    public const CATEGORY_SUBSCRIPTION = 'subscription';
+    public const CATEGORY_API = 'api';
 
     public const CATEGORIES = [
         self::CATEGORY_AUTH => 'Authentication',
@@ -115,6 +196,11 @@ class ActivityLog extends Model
         self::CATEGORY_SELLER => 'Seller',
         self::CATEGORY_PRIVACY => 'Privacy',
         self::CATEGORY_SYSTEM => 'System',
+        self::CATEGORY_FINANCE => 'Finance',
+        self::CATEGORY_ADMIN => 'Admin Actions',
+        self::CATEGORY_ESCROW => 'Escrow',
+        self::CATEGORY_SUBSCRIPTION => 'Subscription',
+        self::CATEGORY_API => 'API',
     ];
 
     // Causer types

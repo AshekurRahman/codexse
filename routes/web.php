@@ -394,20 +394,22 @@ Route::delete('/cart/remove/{item}', [CartController::class, 'remove'])->name('c
 Route::post('/coupon/apply', [CouponController::class, 'apply'])->name('coupon.apply');
 Route::post('/coupon/remove', [CouponController::class, 'remove'])->name('coupon.remove');
 
-// Checkout (auth only, no email verification required)
-Route::middleware(['auth'])->group(function () {
+// Checkout (auth only, no email verification required, rate limited, no-cache)
+Route::middleware(['auth', 'throttle:10,1', 'no-cache'])->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout');
-    Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process');
+    Route::post('/checkout', [CheckoutController::class, 'process'])->name('checkout.process')->middleware('throttle:5,1');
     Route::post('/checkout/calculate-tax', [CheckoutController::class, 'calculateTax'])->name('checkout.calculate-tax');
 });
 
-// Payment success/cancel routes - outside auth to handle session expiry during payment
-Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
-Route::get('/checkout/cancel', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
-Route::get('/checkout/payoneer/success/{order}', [CheckoutController::class, 'payoneerSuccess'])->name('checkout.payoneer.success');
-Route::get('/checkout/paypal/success/{order}', [CheckoutController::class, 'paypalSuccess'])->name('checkout.paypal.success');
-Route::get('/wallet/deposit/success', [App\Http\Controllers\WalletController::class, 'depositSuccess'])->name('wallet.deposit.success');
-Route::get('/wallet/deposit/cancel', [App\Http\Controllers\WalletController::class, 'depositCancel'])->name('wallet.deposit.cancel');
+// Payment success/cancel routes - outside auth to handle session expiry during payment (rate limited, no-cache)
+Route::middleware(['throttle:20,1', 'no-cache'])->group(function () {
+    Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
+    Route::get('/checkout/cancel', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
+    Route::get('/checkout/payoneer/success/{order}', [CheckoutController::class, 'payoneerSuccess'])->name('checkout.payoneer.success');
+    Route::get('/checkout/paypal/success/{order}', [CheckoutController::class, 'paypalSuccess'])->name('checkout.paypal.success');
+    Route::get('/wallet/deposit/success', [App\Http\Controllers\WalletController::class, 'depositSuccess'])->name('wallet.deposit.success');
+    Route::get('/wallet/deposit/cancel', [App\Http\Controllers\WalletController::class, 'depositCancel'])->name('wallet.deposit.cancel');
+});
 
 // Escrow payment success/cancel routes - outside auth to handle session expiry during payment
 Route::get('/escrow/confirm', [EscrowController::class, 'confirmPayment'])->name('escrow.confirm');
@@ -429,6 +431,11 @@ Route::get('/cookies', [PageController::class, 'cookies'])->name('cookies');
 Route::get('/license', [PageController::class, 'license'])->name('license');
 Route::get('/refund-policy', [PageController::class, 'refund'])->name('refund');
 Route::get('/guidelines', [PageController::class, 'guidelines'])->name('guidelines');
+
+// Email change verification (public route - user may not be logged in when clicking)
+Route::get('/profile/email/verify', [ProfileController::class, 'verifyEmailChange'])
+    ->name('profile.email.verify')
+    ->middleware('throttle:10,1');
 
 // Become a Seller (public landing page)
 Route::get('/become-a-seller', [SellerApplicationController::class, 'index'])->name('become-seller');
@@ -460,6 +467,12 @@ Route::get('/jobs/{jobPosting:slug}', [JobPostingController::class, 'show'])->na
 // Product Requests (public form)
 Route::get('/request-product', [ProductRequestController::class, 'create'])->name('product-request.create');
 Route::post('/request-product', [ProductRequestController::class, 'store'])->name('product-request.store');
+Route::post('/request-product/upload', [ProductRequestController::class, 'upload'])
+    ->middleware('throttle:30,1')
+    ->name('product-request.upload');
+Route::post('/request-product/delete-upload', [ProductRequestController::class, 'deleteUpload'])
+    ->middleware('throttle:60,1')
+    ->name('product-request.delete-upload');
 Route::get('/request-product/success', [ProductRequestController::class, 'success'])->name('product-request.success');
 
 // Newsletter
@@ -503,7 +516,7 @@ Route::prefix('live-chat')->name('live-chat.')->group(function () {
 });
 
 // Admin Live Chat Routes
-Route::middleware(['auth'])->prefix('admin/live-chat')->name('admin.live-chat.')->group(function () {
+Route::middleware(['auth', 'verified'])->prefix('admin/live-chat')->name('admin.live-chat.')->group(function () {
     Route::get('/waiting', function () {
         return \App\Models\LiveChat::where('status', 'waiting')
             ->with(['user', 'latestMessage'])
@@ -542,10 +555,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Profile (from Breeze)
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Profile (from Breeze) - no-cache for sensitive account data
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit')->middleware('no-cache');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update')->middleware('no-cache');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy')->middleware('no-cache');
+
+    // Email change verification (requires auth)
+    Route::post('/profile/email/cancel', [ProfileController::class, 'cancelEmailChange'])->name('profile.email.cancel')->middleware('no-cache');
+    Route::post('/profile/email/resend', [ProfileController::class, 'resendEmailChangeVerification'])->name('profile.email.resend')->middleware('no-cache');
 
     // Wishlist
     Route::get('/wishlist', [DashboardController::class, 'wishlist'])->name('wishlist');
@@ -575,8 +592,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
     Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])->name('reviews.vote');
 
-    // Wallet (auth required)
-    Route::prefix('wallet')->name('wallet.')->group(function () {
+    // Wallet (auth required, no-cache for financial data)
+    Route::prefix('wallet')->name('wallet.')->middleware('no-cache')->group(function () {
         Route::get('/', [App\Http\Controllers\WalletController::class, 'index'])->name('index');
         Route::get('/deposit', [App\Http\Controllers\WalletController::class, 'showDeposit'])->name('deposit');
         Route::post('/deposit', [App\Http\Controllers\WalletController::class, 'deposit'])->name('deposit.process');
@@ -623,6 +640,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/messages', [ConversationController::class, 'store'])->name('conversations.store');
     Route::get('/messages/{conversation}', [ConversationController::class, 'show'])->name('conversations.show');
     Route::post('/messages/{conversation}/reply', [ConversationController::class, 'reply'])->name('conversations.reply');
+    Route::get('/messages/{conversation}/fetch', [ConversationController::class, 'messages'])->name('conversations.messages');
 
     // Support Tickets
     Route::get('/support', [SupportTicketController::class, 'index'])->name('support.index');
@@ -746,7 +764,7 @@ Route::middleware(['auth', 'verified', 'seller'])->prefix('seller')->name('selle
     Route::post('/service-orders/{serviceOrder}/extend', [App\Http\Controllers\Seller\ServiceOrderController::class, 'extendDelivery'])->name('service-orders.extend');
     Route::post('/service-orders/{serviceOrder}/reject', [App\Http\Controllers\Seller\ServiceOrderController::class, 'reject'])->name('service-orders.reject');
 
-    // Custom Quote Requests
+    // Custom Quote Requests (Seller)
     Route::get('/quote-requests', [App\Http\Controllers\Seller\CustomQuoteController::class, 'index'])->name('quotes.index');
     Route::get('/quote-requests/{quoteRequest}', [App\Http\Controllers\Seller\CustomQuoteController::class, 'show'])->name('quotes.show');
     Route::get('/quote-requests/{quoteRequest}/create-quote', [App\Http\Controllers\Seller\CustomQuoteController::class, 'createQuote'])->name('quotes.create-quote');

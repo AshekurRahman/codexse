@@ -7,19 +7,25 @@ use App\Models\Service;
 use App\Models\Subscription;
 use App\Models\SubscriptionInvoice;
 use App\Models\SubscriptionPlan;
+use App\Services\WebhookProtectionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Stripe\Stripe;
 use Stripe\Customer;
 use Stripe\Subscription as StripeSubscription;
 use Stripe\Checkout\Session as StripeCheckoutSession;
+use Stripe\Webhook;
 
 class SubscriptionController extends Controller
 {
-    public function __construct()
+    protected WebhookProtectionService $webhookProtection;
+
+    public function __construct(WebhookProtectionService $webhookProtection)
     {
         Stripe::setApiKey(config('services.stripe.secret'));
+        $this->webhookProtection = $webhookProtection;
     }
 
     /**
@@ -423,30 +429,63 @@ class SubscriptionController extends Controller
         $webhookSecret = config('services.stripe.webhook_secret');
 
         try {
-            $event = \Stripe\Webhook::constructEvent($payload, $sigHeader, $webhookSecret);
+            $event = Webhook::constructEvent($payload, $sigHeader, $webhookSecret);
         } catch (\Exception $e) {
+            Log::error('Subscription webhook: Invalid signature', [
+                'error' => $e->getMessage(),
+            ]);
             return response()->json(['error' => 'Invalid webhook signature'], 400);
         }
 
-        switch ($event->type) {
-            case 'customer.subscription.updated':
-                $this->handleSubscriptionUpdated($event->data->object);
-                break;
-
-            case 'customer.subscription.deleted':
-                $this->handleSubscriptionDeleted($event->data->object);
-                break;
-
-            case 'invoice.paid':
-                $this->handleInvoicePaid($event->data->object);
-                break;
-
-            case 'invoice.payment_failed':
-                $this->handleInvoicePaymentFailed($event->data->object);
-                break;
+        // Replay attack prevention: validate event hasn't been processed
+        $validation = $this->webhookProtection->validateStripeEvent($event, $request);
+        if (!$validation['valid']) {
+            Log::warning('Subscription webhook replay detected', [
+                'event_id' => $event->id,
+                'event_type' => $event->type,
+                'error' => $validation['error'],
+                'ip' => $request->ip(),
+            ]);
+            return response()->json(['error' => $validation['error']], 400);
         }
 
-        return response()->json(['status' => 'success']);
+        $webhookRecord = $validation['webhook'];
+
+        try {
+            switch ($event->type) {
+                case 'customer.subscription.updated':
+                    $this->handleSubscriptionUpdated($event->data->object);
+                    break;
+
+                case 'customer.subscription.deleted':
+                    $this->handleSubscriptionDeleted($event->data->object);
+                    break;
+
+                case 'invoice.paid':
+                    $this->handleInvoicePaid($event->data->object);
+                    break;
+
+                case 'invoice.payment_failed':
+                    $this->handleInvoicePaymentFailed($event->data->object);
+                    break;
+            }
+
+            // Mark webhook as successfully processed
+            $webhookRecord?->markCompleted();
+
+            return response()->json(['status' => 'success']);
+
+        } catch (\Exception $e) {
+            $webhookRecord?->markFailed();
+
+            Log::error('Subscription webhook processing error', [
+                'event_id' => $event->id,
+                'event_type' => $event->type,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
+        }
     }
 
     protected function handleSubscriptionUpdated($stripeSubscription)

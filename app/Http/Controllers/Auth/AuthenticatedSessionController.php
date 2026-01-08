@@ -48,11 +48,38 @@ class AuthenticatedSessionController extends Controller
             $redirectUrl = redirect()->intended(route('dashboard', absolute: false))->getTargetUrl();
         }
 
+        // Security: Validate redirect URL to prevent open redirects
+        $redirectUrl = $this->validateRedirectUrl($redirectUrl);
+
         if ($request->expectsJson()) {
             return response()->json(['redirect' => $redirectUrl]);
         }
 
         return redirect($redirectUrl);
+    }
+
+    /**
+     * Validate redirect URL to prevent open redirect attacks.
+     */
+    protected function validateRedirectUrl(string $url): string
+    {
+        $parsed = parse_url($url);
+
+        // Allow relative URLs
+        if (!isset($parsed['host'])) {
+            return $url;
+        }
+
+        // Get allowed hosts (current app domain)
+        $appHost = parse_url(config('app.url'), PHP_URL_HOST);
+
+        // Only allow redirects to the same host
+        if ($parsed['host'] === $appHost) {
+            return $url;
+        }
+
+        // Default to dashboard for external/untrusted URLs
+        return route('dashboard');
     }
 
     /**

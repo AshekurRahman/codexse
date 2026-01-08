@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariation;
+use App\Rules\SecureFileUpload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -37,7 +38,7 @@ class ProductController extends Controller
             'sale_price' => 'nullable|numeric|min:0',
             'category_id' => 'required|exists:categories,id',
             'thumbnail' => 'required|image|max:2048',
-            'file' => 'required|file|max:102400|mimes:zip,rar,7z,tar,gz,pdf,doc,docx,xls,xlsx,psd,ai,sketch,fig', // 100MB, allowed file types
+            'file' => ['required', 'file', SecureFileUpload::productFile()],
             'demo_url' => 'nullable|url|max:255',
             'preview_url' => 'nullable|url|max:255',
         ]);
@@ -92,7 +93,7 @@ class ProductController extends Controller
             'sale_price' => 'nullable|numeric|min:0',
             'category_id' => 'required|exists:categories,id',
             'thumbnail' => 'nullable|image|max:2048',
-            'file' => 'nullable|file|max:102400|mimes:zip,rar,7z,tar,gz,pdf,doc,docx,xls,xlsx,psd,ai,sketch,fig',
+            'file' => ['nullable', 'file', SecureFileUpload::productFile()],
             'demo_url' => 'nullable|url|max:255',
             'preview_url' => 'nullable|url|max:255',
             'has_variations' => 'nullable|boolean',

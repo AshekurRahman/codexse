@@ -198,10 +198,9 @@ class RefundService
         $user = $order->user;
         $wallet = $user->getOrCreateWallet();
 
-        // Credit the refund amount back to wallet
-        $wallet->credit(
+        // Credit the refund amount back to wallet using the refund() method
+        $wallet->refund(
             $refund->amount,
-            'refund',
             "Refund for order {$order->order_number}",
             $order
         );
@@ -226,11 +225,11 @@ class RefundService
             // Calculate seller's share of the refund
             $sellerRefundAmount = $item->seller_amount * $refundProportion;
 
-            if ($sellerRefundAmount > 0 && $sellerWallet->balance >= $sellerRefundAmount) {
-                $sellerWallet->debit(
+            if ($sellerRefundAmount > 0 && $sellerWallet->canWithdraw($sellerRefundAmount)) {
+                $sellerWallet->withdraw(
                     $sellerRefundAmount,
-                    'refund',
                     "Refund deduction for order {$order->order_number}",
+                    null,
                     $order
                 );
             }

@@ -180,4 +180,19 @@ return [
 
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Slow Query Monitoring
+    |--------------------------------------------------------------------------
+    |
+    | These options control the slow query monitoring feature. When enabled,
+    | queries that exceed the threshold will be logged with severity based
+    | on how slow they are (warning: 1s+, error: 3s+, critical: 5s+).
+    |
+    */
+
+    'log_slow_queries' => env('DB_LOG_SLOW_QUERIES', true),
+
+    'slow_query_threshold' => env('DB_SLOW_QUERY_THRESHOLD', 1000), // milliseconds
+
 ];

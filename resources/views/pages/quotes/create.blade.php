@@ -215,15 +215,17 @@
                                             file: file
                                         };
 
+                                        this.files.push(fileObj);
+
                                         if (file.type.startsWith('image/')) {
                                             const reader = new FileReader();
+                                            const idx = this.files.length - 1;
                                             reader.onload = (e) => {
-                                                fileObj.preview = e.target.result;
+                                                // Trigger Alpine reactivity by reassigning the array item
+                                                this.files[idx] = { ...this.files[idx], preview: e.target.result };
                                             };
                                             reader.readAsDataURL(file);
                                         }
-
-                                        this.files.push(fileObj);
                                     }
 
                                     this.updateInput();

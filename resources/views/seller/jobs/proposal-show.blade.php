@@ -148,7 +148,7 @@
                             </div>
 
                             <div>
-                                <a href="{{ route('seller.jobs.show', $proposal->jobPosting) }}" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium text-sm">
+                                <a href="{{ route('jobs.show', $proposal->jobPosting) }}" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium text-sm">
                                     View Full Job Posting &rarr;
                                 </a>
                             </div>

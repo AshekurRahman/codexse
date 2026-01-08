@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\RefundResource\Pages;
+use App\Filament\Admin\Traits\HasResourceAuthorization;
 use App\Models\Refund;
 use App\Services\RefundService;
 use Filament\Forms;
@@ -15,6 +16,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class RefundResource extends Resource
 {
+    use HasResourceAuthorization;
+
     protected static ?string $model = Refund::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-receipt-refund';
@@ -22,6 +25,8 @@ class RefundResource extends Resource
     protected static ?string $navigationGroup = 'Sales';
 
     protected static ?int $navigationSort = 3;
+
+    protected static ?string $permissionName = 'refund';
 
     public static function getNavigationBadge(): ?string
     {

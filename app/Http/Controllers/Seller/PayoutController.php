@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
 use App\Models\Payout;
+use App\Services\ActivityLogService;
 use Illuminate\Http\Request;
 
 class PayoutController extends Controller
@@ -39,11 +40,36 @@ class PayoutController extends Controller
             paymentMethod: 'stripe_payout'
         );
 
-        $payout = Payout::create([
+        // Create payout with automatic approval check for large amounts
+        $payout = Payout::createWithApprovalCheck([
             'seller_id' => $seller->id,
             'amount' => $payoutAmount,
-            'status' => 'pending',
         ]);
+
+        // Log the payout request
+        ActivityLogService::logPayoutRequested(
+            auth()->user(),
+            $payout,
+            $payoutAmount,
+            'stripe'
+        );
+
+        // Log the wallet withdrawal
+        ActivityLogService::logWalletWithdrawal(
+            auth()->user(),
+            $wallet,
+            $payoutAmount,
+            'Payout request to Stripe'
+        );
+
+        // Different success message based on approval requirement
+        if ($payout->requires_approval) {
+            return redirect()->back()->with('success',
+                'Payout request of $' . number_format($payoutAmount, 2) . ' submitted successfully. ' .
+                'Due to the amount exceeding $' . number_format(Payout::APPROVAL_THRESHOLD, 2) . ', ' .
+                'it requires admin approval before processing.'
+            );
+        }
 
         return redirect()->back()->with('success', 'Payout request of $' . number_format($payoutAmount, 2) . ' submitted successfully.');
     }

@@ -7,6 +7,7 @@ use App\Models\CustomQuote;
 use App\Models\CustomQuoteRequest;
 use App\Models\Service;
 use App\Models\ServiceOrder;
+use App\Rules\SecureFileUpload;
 use App\Services\EscrowService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -46,7 +47,7 @@ class CustomQuoteController extends Controller
             'budget_min' => 'nullable|numeric|min:0',
             'budget_max' => 'nullable|numeric|min:0|gte:budget_min',
             'deadline' => 'nullable|date|after:today',
-            'attachments.*' => 'nullable|file|max:10240',
+            'attachments.*' => ['nullable', 'file', SecureFileUpload::attachment(10)],
         ]);
 
         try {
@@ -125,8 +126,8 @@ class CustomQuoteController extends Controller
     public function show(CustomQuoteRequest $quoteRequest)
     {
         // Only buyer or seller can view
-        if ($quoteRequest->buyer_id !== auth()->id() &&
-            (!auth()->user()->seller || auth()->user()->seller->id !== $quoteRequest->seller_id)) {
+        if ((int) $quoteRequest->buyer_id !== (int) auth()->id() &&
+            (!auth()->user()->seller || (int) auth()->user()->seller->id !== (int) $quoteRequest->seller_id)) {
             abort(403);
         }
 
@@ -140,7 +141,7 @@ class CustomQuoteController extends Controller
      */
     public function accept(CustomQuoteRequest $quoteRequest, EscrowService $escrowService)
     {
-        if ($quoteRequest->buyer_id !== auth()->id()) {
+        if ((int) $quoteRequest->buyer_id !== (int) auth()->id()) {
             abort(403);
         }
 
@@ -196,7 +197,7 @@ class CustomQuoteController extends Controller
      */
     public function reject(Request $request, CustomQuoteRequest $quoteRequest)
     {
-        if ($quoteRequest->buyer_id !== auth()->id()) {
+        if ((int) $quoteRequest->buyer_id !== (int) auth()->id()) {
             abort(403);
         }
 

@@ -7,6 +7,7 @@ use App\Models\Conversation;
 use App\Models\JobContract;
 use App\Models\JobPosting;
 use App\Models\JobProposal;
+use App\Rules\SecureFileUpload;
 use App\Services\EscrowService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -124,7 +125,7 @@ class JobPostingController extends Controller
             'duration_type' => 'nullable|in:one_time,ongoing',
             'skills_required' => 'nullable|array',
             'experience_level' => 'nullable|in:entry,intermediate,expert',
-            'attachments.*' => 'nullable|file|max:10240',
+            'attachments.*' => ['nullable', 'file', SecureFileUpload::attachment(10)],
             'closes_in_days' => 'nullable|integer|min:1|max:90',
             'status' => 'required|in:draft,open',
         ]);
@@ -222,7 +223,7 @@ class JobPostingController extends Controller
             'duration_type' => 'nullable|in:one_time,ongoing',
             'skills_required' => 'nullable|array',
             'experience_level' => 'nullable|in:entry,intermediate,expert',
-            'attachments.*' => 'nullable|file|max:10240',
+            'attachments.*' => ['nullable', 'file', SecureFileUpload::attachment(10)],
             'closes_in_days' => 'nullable|integer|min:1|max:90',
             'status' => 'required|in:draft,open',
         ]);

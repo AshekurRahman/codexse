@@ -72,7 +72,10 @@ class CategoryResource extends Resource
                             ->default(true),
                         Forms\Components\Toggle::make('is_featured')
                             ->label('Featured'),
-                    ])->columns(3),
+                        Forms\Components\Toggle::make('show_on_homepage')
+                            ->label('Show on Homepage')
+                            ->helperText('Display this category in the homepage section'),
+                    ])->columns(4),
             ]);
     }
 
@@ -100,6 +103,9 @@ class CategoryResource extends Resource
                 Tables\Columns\IconColumn::make('is_featured')
                     ->label('Featured')
                     ->boolean(),
+                Tables\Columns\IconColumn::make('show_on_homepage')
+                    ->label('Homepage')
+                    ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -111,6 +117,8 @@ class CategoryResource extends Resource
                     ->label('Active'),
                 Tables\Filters\TernaryFilter::make('is_featured')
                     ->label('Featured'),
+                Tables\Filters\TernaryFilter::make('show_on_homepage')
+                    ->label('Homepage'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),

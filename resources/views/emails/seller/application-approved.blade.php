@@ -13,9 +13,7 @@ Congratulations! Your seller application for {{ config('app.name') }} has been a
         <table role="presentation" width="100%" height="100%">
             <tr>
                 <td align="center" valign="middle">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M20 6L9 17L4 12" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+<img src="{{ asset('images/email/check.webp') }}" alt="Approved" style="width: 48px; height: 48px;">
                 </td>
             </tr>
         </table>
@@ -44,10 +42,7 @@ Congratulations! Your seller application for {{ config('app.name') }} has been a
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                     <tr>
                         <td style="width: 24px; vertical-align: top; padding-right: 12px;">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M9 12L11 14L15 10" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
+<img src="{{ asset('images/email/check-circle.webp') }}" alt="Success" style="width: 24px; height: 24px;">
                         </td>
                         <td>
                             <p style="color: #166534; margin: 0; font-size: 14px; line-height: 1.6;">

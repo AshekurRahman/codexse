@@ -47,9 +47,9 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName('Codexse')
-            ->brandLogo(asset('images/logo-dark.svg'))
+            ->brandLogo(asset('images/logo-dark.png'))
             ->brandLogoHeight('2.5rem')
-            ->favicon(asset('images/logo-icon.svg'))
+            ->favicon(asset('images/logo-icon.png'))
             ->darkMode(false)
             ->colors([
                 'primary' => Color::Violet,
@@ -147,6 +147,8 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                \App\Http\Middleware\AdminTwoFactorMiddleware::class,
+                \App\Http\Middleware\AdminIpWhitelist::class,
             ]);
     }
 }

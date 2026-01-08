@@ -60,11 +60,18 @@ class ServiceResource extends Resource
                     ->schema([
                         Forms\Components\FileUpload::make('thumbnail')
                             ->image()
-                            ->directory('services/thumbnails'),
+                            ->directory('services/thumbnails')
+                            ->maxSize(5120)
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->helperText('Max file size: 5MB. Accepted formats: JPEG, PNG, WebP'),
                         Forms\Components\FileUpload::make('gallery_images')
                             ->multiple()
                             ->image()
-                            ->directory('services/gallery'),
+                            ->directory('services/gallery')
+                            ->maxSize(5120)
+                            ->maxFiles(10)
+                            ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                            ->helperText('Max 10 images, 5MB each'),
                     ])->columns(2),
 
                 Forms\Components\Section::make('Status & Settings')

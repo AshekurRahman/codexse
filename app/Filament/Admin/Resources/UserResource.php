@@ -3,6 +3,8 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\UserResource\Pages;
+use App\Filament\Admin\Traits\HasResourceAuthorization;
+use App\Filament\Admin\Traits\LogsResourceActions;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -13,6 +15,9 @@ use Illuminate\Support\Facades\Hash;
 
 class UserResource extends Resource
 {
+    use HasResourceAuthorization;
+    use LogsResourceActions;
+
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
@@ -22,6 +27,8 @@ class UserResource extends Resource
     protected static ?int $navigationSort = 1;
 
     protected static ?string $recordTitleAttribute = 'name';
+
+    protected static ?string $permissionName = 'user';
 
     public static function getNavigationBadge(): ?string
     {

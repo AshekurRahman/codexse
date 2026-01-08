@@ -37,3 +37,38 @@ Schedule::command('wallet:cleanup-idempotency')
     ->daily()
     ->at('01:00')
     ->withoutOverlapping();
+
+// Automated database backups (encrypted via Spatie Laravel Backup)
+Schedule::command('backup:run --only-db')
+    ->daily()
+    ->at('02:00')
+    ->withoutOverlapping()
+    ->onSuccess(function () {
+        \Illuminate\Support\Facades\Log::info('Scheduled backup completed successfully');
+    })
+    ->onFailure(function () {
+        \Illuminate\Support\Facades\Log::error('Scheduled backup failed');
+    });
+
+// Clean up old backups according to retention policy
+Schedule::command('backup:clean')
+    ->daily()
+    ->at('03:00')
+    ->withoutOverlapping();
+
+// Monitor backup health
+Schedule::command('backup:monitor')
+    ->daily()
+    ->at('04:00');
+
+// Clean up old processed webhooks
+Schedule::command('webhooks:cleanup --days=30')
+    ->daily()
+    ->at('05:00')
+    ->withoutOverlapping();
+
+// Clean up orphaned temp uploads (files older than 24 hours)
+Schedule::command('uploads:cleanup-temp --hours=24')
+    ->daily()
+    ->at('06:00')
+    ->withoutOverlapping();

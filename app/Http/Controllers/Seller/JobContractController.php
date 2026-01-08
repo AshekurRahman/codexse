@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\JobContract;
 use App\Models\JobMilestone;
 use App\Models\Message;
+use App\Rules\SecureFileUpload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -128,7 +129,7 @@ class JobContractController extends Controller
 
         $request->validate([
             'notes' => 'required|string|max:5000',
-            'files.*' => 'nullable|file|max:51200', // 50MB
+            'files.*' => ['nullable', 'file', SecureFileUpload::productFile()],
         ]);
 
         // Handle file uploads

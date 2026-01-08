@@ -84,10 +84,7 @@ You have a new service order! #{{ $order->order_number }} - {{ format_price($ord
 <div style="background: #ffffff;">
     <div style="text-align: center; padding: 20px 40px 32px;">
         <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); border-radius: 20px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px -5px rgba(251, 191, 36, 0.4);">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.709 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18457 2.99721 7.13633 4.39828 5.49707C5.79935 3.85782 7.69279 2.71538 9.79619 2.24015C11.8996 1.76491 14.1003 1.98234 16.07 2.86" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M22 4L12 14.01L9 11.01" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+<img src="{{ asset('images/email/check-circle.webp') }}" alt="New Order" style="width: 40px; height: 40px;">
         </div>
         <h1 style="font-size: 28px; font-weight: 700; color: #111827; margin: 0 0 8px;">New Order Received!</h1>
         <p style="font-size: 16px; color: #6b7280; margin: 0;">Time to deliver amazing work</p>
@@ -166,9 +163,7 @@ You have a new service order! #{{ $order->order_number }} - {{ format_price($ord
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
             <tr>
                 <td style="vertical-align: top; padding-right: 12px;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+<img src="{{ asset('images/email/clipboard.webp') }}" alt="Requirements" style="width: 24px; height: 24px;">
                 </td>
                 <td>
                     <p style="font-weight: 600; color: #92400e; margin: 0 0 8px; font-size: 14px;">Buyer Requirements</p>

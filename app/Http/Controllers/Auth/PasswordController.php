@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\PasswordHistory;
 use App\Models\SecurityLog;
+use App\Services\SecurityNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -58,6 +59,13 @@ class PasswordController extends Controller
             $request->ip(),
             $user->id,
             ['user_agent' => $request->userAgent()]
+        );
+
+        // Send notification to user about password change
+        app(SecurityNotificationService::class)->notifyPasswordChanged(
+            user: $user,
+            ipAddress: $request->ip(),
+            userAgent: $request->userAgent()
         );
 
         return back()->with('status', 'password-updated');

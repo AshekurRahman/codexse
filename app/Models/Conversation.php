@@ -26,6 +26,9 @@ class Conversation extends Model
     protected function casts(): array
     {
         return [
+            'buyer_id' => 'integer',
+            'seller_id' => 'integer',
+            'product_id' => 'integer',
             'last_message_at' => 'datetime',
         ];
     }

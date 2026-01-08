@@ -17,7 +17,7 @@ class JobContract extends Model
     protected $fillable = [
         'contract_number',
         'job_posting_id',
-        'proposal_id',
+        'job_proposal_id',
         'client_id',
         'seller_id',
         'conversation_id',
@@ -61,7 +61,7 @@ class JobContract extends Model
 
     public function proposal(): BelongsTo
     {
-        return $this->belongsTo(JobProposal::class, 'proposal_id');
+        return $this->belongsTo(JobProposal::class, 'job_proposal_id');
     }
 
     public function client(): BelongsTo

@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\OrderResource\Pages;
+use App\Filament\Admin\Traits\HasResourceAuthorization;
 use App\Models\Order;
 use App\Models\Refund;
 use App\Services\InvoiceService;
@@ -16,6 +17,8 @@ use Filament\Tables\Table;
 
 class OrderResource extends Resource
 {
+    use HasResourceAuthorization;
+
     protected static ?string $model = Order::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
@@ -25,6 +28,8 @@ class OrderResource extends Resource
     protected static ?int $navigationSort = 1;
 
     protected static ?string $recordTitleAttribute = 'order_number';
+
+    protected static ?string $permissionName = 'order';
 
     public static function getNavigationBadge(): ?string
     {

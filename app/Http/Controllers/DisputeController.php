@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Dispute;
 use App\Models\JobContract;
 use App\Models\ServiceOrder;
+use App\Rules\SecureFileUpload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -105,7 +106,7 @@ class DisputeController extends Controller
             'disputable_id' => 'required|integer',
             'reason' => 'required|string|in:' . implode(',', array_keys(Dispute::REASONS)),
             'description' => 'required|string|min:50|max:5000',
-            'evidence.*' => 'nullable|file|max:10240', // 10MB per file
+            'evidence.*' => ['nullable', 'file', SecureFileUpload::attachment(10)],
         ]);
 
         // Determine the disputable model
@@ -221,7 +222,7 @@ class DisputeController extends Controller
         }
 
         $request->validate([
-            'evidence.*' => 'required|file|max:10240',
+            'evidence.*' => ['required', 'file', SecureFileUpload::attachment(10)],
             'note' => 'nullable|string|max:1000',
         ]);
 

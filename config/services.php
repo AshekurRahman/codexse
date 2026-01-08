@@ -48,4 +48,86 @@ return [
         'private_key' => env('VAPID_PRIVATE_KEY'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | PayPal
+    |--------------------------------------------------------------------------
+    */
+
+    'paypal' => [
+        'mode' => env('PAYPAL_MODE', 'sandbox'),
+        'client_id' => env('PAYPAL_CLIENT_ID'),
+        'client_secret' => env('PAYPAL_CLIENT_SECRET'),
+        'webhook_id' => env('PAYPAL_WEBHOOK_ID'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Payoneer (Seller Payouts)
+    |--------------------------------------------------------------------------
+    */
+
+    'payoneer' => [
+        'partner_id' => env('PAYONEER_PARTNER_ID'),
+        'username' => env('PAYONEER_USERNAME'),
+        'password' => env('PAYONEER_PASSWORD'),
+        'program_id' => env('PAYONEER_PROGRAM_ID'),
+        'sandbox' => env('PAYONEER_SANDBOX', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | License API
+    |--------------------------------------------------------------------------
+    */
+
+    'license' => [
+        'api_key' => env('LICENSE_API_KEY'),
+        'rate_limit' => env('LICENSE_API_RATE_LIMIT', 60),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Newsletter Providers
+    |--------------------------------------------------------------------------
+    */
+
+    'newsletter' => [
+        'provider' => env('NEWSLETTER_PROVIDER'),
+    ],
+
+    'mailchimp' => [
+        'api_key' => env('MAILCHIMP_API_KEY'),
+        'list_id' => env('MAILCHIMP_LIST_ID'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Google reCAPTCHA
+    |--------------------------------------------------------------------------
+    */
+
+    'recaptcha' => [
+        'site_key' => env('RECAPTCHA_SITE_KEY'),
+        'secret_key' => env('RECAPTCHA_SECRET_KEY'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Social Login Providers
+    |--------------------------------------------------------------------------
+    */
+
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+
+    'github' => [
+        'client_id' => env('GITHUB_CLIENT_ID'),
+        'client_secret' => env('GITHUB_CLIENT_SECRET'),
+        'redirect' => env('GITHUB_REDIRECT_URI'),
+    ],
+
 ];

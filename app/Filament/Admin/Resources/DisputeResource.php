@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources;
 use App\Filament\Admin\Resources\DisputeResource\Pages;
 use App\Filament\Admin\Resources\DisputeResource\RelationManagers;
 use App\Models\Dispute;
+use App\Services\ActivityLogService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -218,6 +219,14 @@ class DisputeResource extends Resource
                             'resolved_by' => auth()->id(),
                             'resolved_at' => now(),
                         ]);
+
+                        // Log the dispute resolution
+                        ActivityLogService::logAdminDisputeResolved(
+                            $record,
+                            auth()->user(),
+                            'Resolved in buyer favor',
+                            (float) $data['refund_amount']
+                        );
                     }),
                 Tables\Actions\Action::make('resolve_seller')
                     ->label('Favor Seller')
@@ -242,6 +251,14 @@ class DisputeResource extends Resource
                             'resolved_by' => auth()->id(),
                             'resolved_at' => now(),
                         ]);
+
+                        // Log the dispute resolution
+                        ActivityLogService::logAdminDisputeResolved(
+                            $record,
+                            auth()->user(),
+                            'Resolved in seller favor',
+                            null
+                        );
                     }),
             ])
             ->bulkActions([

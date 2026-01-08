@@ -100,22 +100,8 @@ class GeographicSalesMap extends Widget
 
     public function getCountryDistribution(): array
     {
-        $days = (int) $this->filter;
-        $startDate = now()->subDays($days);
-
-        return Order::whereIn('status', ['completed', 'processing', 'delivered'])
-            ->where('created_at', '>=', $startDate)
-            ->whereNotNull('billing_country')
-            ->select('billing_country', DB::raw('COUNT(*) as orders_count'), DB::raw('SUM(total) as total_revenue'))
-            ->groupBy('billing_country')
-            ->orderByDesc('total_revenue')
-            ->limit(5)
-            ->get()
-            ->map(fn ($item) => [
-                'country' => $item->billing_country,
-                'orders' => $item->orders_count,
-                'revenue' => $item->total_revenue,
-            ])
-            ->toArray();
+        // billing_country column not available - return empty array
+        // Geographic distribution is shown by billing_state in getRegionData() instead
+        return [];
     }
 }

@@ -192,24 +192,6 @@ class ActivityLogService
     }
 
     /**
-     * Log email change
-     */
-    public static function logEmailChanged(User $user, string $oldEmail, string $newEmail): void
-    {
-        self::log(
-            ActivityLog::ACTION_EMAIL_CHANGED,
-            ActivityLog::CATEGORY_SECURITY,
-            'Email address was changed',
-            $user,
-            [],
-            ['email' => $oldEmail],
-            ['email' => $newEmail],
-            $user,
-            ActivityLog::RISK_HIGH
-        );
-    }
-
-    /**
      * Log profile update
      */
     public static function logProfileUpdated(User $user, array $oldValues = [], array $newValues = []): void
@@ -497,6 +479,681 @@ class ActivityLogService
             'login_count' => $logs->where('action', ActivityLog::ACTION_LOGIN)->count(),
             'last_login' => $logs->where('action', ActivityLog::ACTION_LOGIN)->first()?->created_at,
         ];
+    }
+
+    // ==========================================
+    // FINANCIAL ACTIONS
+    // ==========================================
+
+    /**
+     * Log wallet deposit
+     */
+    public static function logWalletDeposit(User $user, Model $wallet, float $amount, string $method, ?string $transactionId = null): void
+    {
+        self::log(
+            ActivityLog::ACTION_WALLET_DEPOSIT,
+            ActivityLog::CATEGORY_FINANCE,
+            "Deposited $" . number_format($amount, 2) . " via {$method}",
+            $wallet,
+            [
+                'amount' => $amount,
+                'method' => $method,
+                'transaction_id' => $transactionId,
+                'wallet_balance_after' => $wallet->balance ?? null,
+            ],
+            null,
+            null,
+            $user,
+            ActivityLog::RISK_MEDIUM
+        );
+    }
+
+    /**
+     * Log wallet withdrawal
+     */
+    public static function logWalletWithdrawal(User $user, Model $wallet, float $amount, string $reason): void
+    {
+        self::log(
+            ActivityLog::ACTION_WALLET_WITHDRAWAL,
+            ActivityLog::CATEGORY_FINANCE,
+            "Withdrew $" . number_format($amount, 2) . " - {$reason}",
+            $wallet,
+            [
+                'amount' => $amount,
+                'reason' => $reason,
+                'wallet_balance_after' => $wallet->balance ?? null,
+            ],
+            null,
+            null,
+            $user,
+            ActivityLog::RISK_MEDIUM
+        );
+    }
+
+    /**
+     * Log payout request
+     */
+    public static function logPayoutRequested(User $user, Model $payout, float $amount, string $method): void
+    {
+        self::log(
+            ActivityLog::ACTION_PAYOUT_REQUESTED,
+            ActivityLog::CATEGORY_FINANCE,
+            "Requested payout of $" . number_format($amount, 2) . " via {$method}",
+            $payout,
+            [
+                'amount' => $amount,
+                'method' => $method,
+                'payout_id' => $payout->id,
+            ],
+            null,
+            null,
+            $user,
+            ActivityLog::RISK_HIGH
+        );
+    }
+
+    /**
+     * Log payout processed
+     */
+    public static function logPayoutProcessed(Model $payout, ?User $processedBy = null): void
+    {
+        $seller = $payout->seller;
+        $user = $seller?->user;
+
+        self::log(
+            ActivityLog::ACTION_PAYOUT_PROCESSED,
+            ActivityLog::CATEGORY_FINANCE,
+            "Payout of $" . number_format($payout->amount, 2) . " processed",
+            $payout,
+            [
+                'amount' => $payout->amount,
+                'processed_by' => $processedBy?->id,
+            ],
+            null,
+            null,
+            $user,
+            ActivityLog::RISK_MEDIUM
+        );
+    }
+
+    /**
+     * Log payout approved by admin
+     */
+    public static function logPayoutApproved(User $admin, Model $payout, ?string $notes = null): void
+    {
+        $seller = $payout->seller;
+        $sellerUser = $seller?->user;
+
+        self::log(
+            ActivityLog::ACTION_PAYOUT_APPROVED,
+            ActivityLog::CATEGORY_ADMIN,
+            "Approved payout of $" . number_format($payout->amount, 2) . " for " . ($seller?->business_name ?? 'unknown seller'),
+            $payout,
+            [
+                'amount' => $payout->amount,
+                'seller_id' => $seller?->id,
+                'seller_name' => $seller?->business_name,
+                'seller_email' => $sellerUser?->email,
+                'notes' => $notes,
+            ],
+            null,
+            null,
+            $admin,
+            ActivityLog::RISK_HIGH
+        );
+    }
+
+    /**
+     * Log payout rejected by admin
+     */
+    public static function logPayoutRejected(User $admin, Model $payout, string $reason): void
+    {
+        $seller = $payout->seller;
+        $sellerUser = $seller?->user;
+
+        self::log(
+            ActivityLog::ACTION_PAYOUT_REJECTED,
+            ActivityLog::CATEGORY_ADMIN,
+            "Rejected payout of $" . number_format($payout->amount, 2) . " for " . ($seller?->business_name ?? 'unknown seller'),
+            $payout,
+            [
+                'amount' => $payout->amount,
+                'seller_id' => $seller?->id,
+                'seller_name' => $seller?->business_name,
+                'seller_email' => $sellerUser?->email,
+                'rejection_reason' => $reason,
+            ],
+            null,
+            null,
+            $admin,
+            ActivityLog::RISK_HIGH
+        );
+    }
+
+    // ==========================================
+    // ESCROW ACTIONS
+    // ==========================================
+
+    /**
+     * Log escrow created
+     */
+    public static function logEscrowCreated(Model $transaction, User $payer): void
+    {
+        self::log(
+            ActivityLog::ACTION_ESCROW_CREATED,
+            ActivityLog::CATEGORY_ESCROW,
+            "Escrow created for $" . number_format($transaction->amount, 2),
+            $transaction,
+            [
+                'amount' => $transaction->amount,
+                'platform_fee' => $transaction->platform_fee,
+                'seller_amount' => $transaction->seller_amount,
+                'seller_id' => $transaction->seller_id,
+            ],
+            null,
+            null,
+            $payer,
+            ActivityLog::RISK_MEDIUM
+        );
+    }
+
+    /**
+     * Log escrow funds held
+     */
+    public static function logEscrowHeld(Model $transaction): void
+    {
+        $payer = User::find($transaction->payer_id);
+
+        self::log(
+            ActivityLog::ACTION_ESCROW_HELD,
+            ActivityLog::CATEGORY_ESCROW,
+            "Escrow funds held: $" . number_format($transaction->amount, 2),
+            $transaction,
+            [
+                'amount' => $transaction->amount,
+                'transaction_number' => $transaction->transaction_number ?? null,
+            ],
+            null,
+            null,
+            $payer,
+            ActivityLog::RISK_MEDIUM
+        );
+    }
+
+    /**
+     * Log escrow funds released
+     */
+    public static function logEscrowReleased(Model $transaction, ?User $releasedBy = null, ?string $notes = null): void
+    {
+        $payee = User::find($transaction->payee_id);
+
+        self::log(
+            ActivityLog::ACTION_ESCROW_RELEASED,
+            ActivityLog::CATEGORY_ESCROW,
+            "Escrow released: $" . number_format($transaction->seller_amount, 2) . " to seller",
+            $transaction,
+            [
+                'amount' => $transaction->amount,
+                'seller_amount' => $transaction->seller_amount,
+                'platform_fee' => $transaction->platform_fee,
+                'released_by' => $releasedBy?->id,
+                'notes' => $notes,
+            ],
+            null,
+            null,
+            $payee,
+            ActivityLog::RISK_HIGH
+        );
+    }
+
+    /**
+     * Log escrow refunded
+     */
+    public static function logEscrowRefunded(Model $transaction, ?User $refundedBy = null, ?string $reason = null): void
+    {
+        $payer = User::find($transaction->payer_id);
+
+        self::log(
+            ActivityLog::ACTION_ESCROW_REFUNDED,
+            ActivityLog::CATEGORY_ESCROW,
+            "Escrow refunded: $" . number_format($transaction->amount, 2),
+            $transaction,
+            [
+                'amount' => $transaction->amount,
+                'refunded_by' => $refundedBy?->id,
+                'reason' => $reason,
+            ],
+            null,
+            null,
+            $payer,
+            ActivityLog::RISK_HIGH
+        );
+    }
+
+    /**
+     * Log escrow disputed
+     */
+    public static function logEscrowDisputed(Model $transaction, User $disputedBy): void
+    {
+        self::log(
+            ActivityLog::ACTION_ESCROW_DISPUTED,
+            ActivityLog::CATEGORY_ESCROW,
+            "Escrow disputed for $" . number_format($transaction->amount, 2),
+            $transaction,
+            [
+                'amount' => $transaction->amount,
+                'disputed_by' => $disputedBy->id,
+            ],
+            null,
+            null,
+            $disputedBy,
+            ActivityLog::RISK_HIGH,
+            true // Mark as suspicious for review
+        );
+    }
+
+    // ==========================================
+    // ADMIN ACTIONS
+    // ==========================================
+
+    /**
+     * Log admin seller approval
+     */
+    public static function logAdminSellerApproved(Model $seller, User $admin): void
+    {
+        self::log(
+            ActivityLog::ACTION_ADMIN_SELLER_APPROVED,
+            ActivityLog::CATEGORY_ADMIN,
+            "Approved seller: {$seller->store_name}",
+            $seller,
+            [
+                'seller_id' => $seller->id,
+                'store_name' => $seller->store_name,
+                'approved_by' => $admin->id,
+            ],
+            null,
+            null,
+            $seller->user,
+            ActivityLog::RISK_LOW
+        );
+    }
+
+    /**
+     * Log admin seller rejection
+     */
+    public static function logAdminSellerRejected(Model $seller, User $admin, ?string $reason = null): void
+    {
+        self::log(
+            ActivityLog::ACTION_ADMIN_SELLER_REJECTED,
+            ActivityLog::CATEGORY_ADMIN,
+            "Rejected seller: {$seller->store_name}",
+            $seller,
+            [
+                'seller_id' => $seller->id,
+                'store_name' => $seller->store_name,
+                'rejected_by' => $admin->id,
+                'reason' => $reason,
+            ],
+            null,
+            null,
+            $seller->user,
+            ActivityLog::RISK_LOW
+        );
+    }
+
+    /**
+     * Log admin product approval
+     */
+    public static function logAdminProductApproved(Model $product, User $admin): void
+    {
+        self::log(
+            ActivityLog::ACTION_ADMIN_PRODUCT_APPROVED,
+            ActivityLog::CATEGORY_ADMIN,
+            "Approved product: {$product->name}",
+            $product,
+            [
+                'product_id' => $product->id,
+                'product_name' => $product->name,
+                'approved_by' => $admin->id,
+            ],
+            null,
+            null,
+            $product->seller?->user
+        );
+    }
+
+    /**
+     * Log admin product rejection
+     */
+    public static function logAdminProductRejected(Model $product, User $admin, ?string $reason = null): void
+    {
+        self::log(
+            ActivityLog::ACTION_ADMIN_PRODUCT_REJECTED,
+            ActivityLog::CATEGORY_ADMIN,
+            "Rejected product: {$product->name}",
+            $product,
+            [
+                'product_id' => $product->id,
+                'product_name' => $product->name,
+                'rejected_by' => $admin->id,
+                'reason' => $reason,
+            ],
+            null,
+            null,
+            $product->seller?->user
+        );
+    }
+
+    /**
+     * Log admin dispute resolution
+     */
+    public static function logAdminDisputeResolved(Model $dispute, User $admin, string $resolution, ?float $refundAmount = null): void
+    {
+        self::log(
+            ActivityLog::ACTION_ADMIN_DISPUTE_RESOLVED,
+            ActivityLog::CATEGORY_ADMIN,
+            "Resolved dispute #{$dispute->id}: {$resolution}",
+            $dispute,
+            [
+                'dispute_id' => $dispute->id,
+                'resolution' => $resolution,
+                'refund_amount' => $refundAmount,
+                'resolved_by' => $admin->id,
+            ],
+            null,
+            null,
+            User::find($dispute->initiated_by),
+            ActivityLog::RISK_HIGH
+        );
+    }
+
+    /**
+     * Log admin refund issued
+     */
+    public static function logAdminRefundIssued(Model $order, User $admin, float $amount, string $reason): void
+    {
+        $buyer = $order->buyer ?? $order->user;
+
+        self::log(
+            ActivityLog::ACTION_ADMIN_REFUND_ISSUED,
+            ActivityLog::CATEGORY_ADMIN,
+            "Refund of $" . number_format($amount, 2) . " issued for order #{$order->order_number}",
+            $order,
+            [
+                'order_id' => $order->id,
+                'amount' => $amount,
+                'reason' => $reason,
+                'issued_by' => $admin->id,
+            ],
+            null,
+            null,
+            $buyer,
+            ActivityLog::RISK_HIGH
+        );
+    }
+
+    /**
+     * Log admin user suspension
+     */
+    public static function logAdminUserSuspended(User $user, User $admin, string $reason): void
+    {
+        self::log(
+            ActivityLog::ACTION_ADMIN_USER_SUSPENDED,
+            ActivityLog::CATEGORY_ADMIN,
+            "User suspended: {$user->email}",
+            $user,
+            [
+                'user_id' => $user->id,
+                'reason' => $reason,
+                'suspended_by' => $admin->id,
+            ],
+            null,
+            null,
+            $user,
+            ActivityLog::RISK_HIGH
+        );
+    }
+
+    /**
+     * Log admin user unsuspension
+     */
+    public static function logAdminUserUnsuspended(User $user, User $admin): void
+    {
+        self::log(
+            ActivityLog::ACTION_ADMIN_USER_UNSUSPENDED,
+            ActivityLog::CATEGORY_ADMIN,
+            "User unsuspended: {$user->email}",
+            $user,
+            [
+                'user_id' => $user->id,
+                'unsuspended_by' => $admin->id,
+            ],
+            null,
+            null,
+            $user
+        );
+    }
+
+    /**
+     * Log admin role assignment
+     */
+    public static function logAdminRoleAssigned(User $user, User $admin, string $role, bool $added = true): void
+    {
+        self::log(
+            ActivityLog::ACTION_ADMIN_ROLE_ASSIGNED,
+            ActivityLog::CATEGORY_ADMIN,
+            ($added ? "Added" : "Removed") . " role '{$role}' for user {$user->email}",
+            $user,
+            [
+                'user_id' => $user->id,
+                'role' => $role,
+                'action' => $added ? 'added' : 'removed',
+                'assigned_by' => $admin->id,
+            ],
+            null,
+            null,
+            $user,
+            ActivityLog::RISK_HIGH
+        );
+    }
+
+    /**
+     * Log admin setting change
+     */
+    public static function logAdminSettingChanged(User $admin, string $setting, $oldValue, $newValue): void
+    {
+        self::log(
+            ActivityLog::ACTION_ADMIN_SETTING_CHANGED,
+            ActivityLog::CATEGORY_ADMIN,
+            "Changed setting: {$setting}",
+            null,
+            [
+                'setting' => $setting,
+                'changed_by' => $admin->id,
+            ],
+            ['value' => $oldValue],
+            ['value' => $newValue],
+            $admin,
+            ActivityLog::RISK_MEDIUM
+        );
+    }
+
+    // ==========================================
+    // SUBSCRIPTION ACTIONS
+    // ==========================================
+
+    /**
+     * Log subscription created
+     */
+    public static function logSubscriptionCreated(User $user, Model $subscription): void
+    {
+        self::log(
+            ActivityLog::ACTION_SUBSCRIPTION_CREATED,
+            ActivityLog::CATEGORY_SUBSCRIPTION,
+            "Created subscription: " . ($subscription->plan_name ?? 'Plan'),
+            $subscription,
+            [
+                'subscription_id' => $subscription->id,
+                'plan' => $subscription->plan_name ?? null,
+                'amount' => $subscription->amount ?? null,
+            ],
+            null,
+            null,
+            $user
+        );
+    }
+
+    /**
+     * Log subscription cancelled
+     */
+    public static function logSubscriptionCancelled(User $user, Model $subscription, ?string $reason = null): void
+    {
+        self::log(
+            ActivityLog::ACTION_SUBSCRIPTION_CANCELLED,
+            ActivityLog::CATEGORY_SUBSCRIPTION,
+            "Cancelled subscription: " . ($subscription->plan_name ?? 'Plan'),
+            $subscription,
+            [
+                'subscription_id' => $subscription->id,
+                'reason' => $reason,
+            ],
+            null,
+            null,
+            $user,
+            ActivityLog::RISK_MEDIUM
+        );
+    }
+
+    /**
+     * Log subscription renewed
+     */
+    public static function logSubscriptionRenewed(User $user, Model $subscription): void
+    {
+        self::log(
+            ActivityLog::ACTION_SUBSCRIPTION_RENEWED,
+            ActivityLog::CATEGORY_SUBSCRIPTION,
+            "Subscription renewed: " . ($subscription->plan_name ?? 'Plan'),
+            $subscription,
+            [
+                'subscription_id' => $subscription->id,
+            ],
+            null,
+            null,
+            $user
+        );
+    }
+
+    // ==========================================
+    // ORDER ACTIONS
+    // ==========================================
+
+    /**
+     * Log order cancellation
+     */
+    public static function logOrderCancelled(User $user, Model $order, string $reason): void
+    {
+        self::log(
+            ActivityLog::ACTION_ORDER_CANCELLED,
+            ActivityLog::CATEGORY_ORDER,
+            "Order #{$order->order_number} cancelled",
+            $order,
+            [
+                'order_number' => $order->order_number,
+                'reason' => $reason,
+                'total' => $order->total,
+            ],
+            null,
+            null,
+            $user,
+            ActivityLog::RISK_MEDIUM
+        );
+    }
+
+    /**
+     * Log order refund
+     */
+    public static function logOrderRefunded(User $user, Model $order, float $amount, string $reason): void
+    {
+        self::log(
+            ActivityLog::ACTION_ORDER_REFUNDED,
+            ActivityLog::CATEGORY_ORDER,
+            "Order #{$order->order_number} refunded: $" . number_format($amount, 2),
+            $order,
+            [
+                'order_number' => $order->order_number,
+                'amount' => $amount,
+                'reason' => $reason,
+            ],
+            null,
+            null,
+            $user,
+            ActivityLog::RISK_HIGH
+        );
+    }
+
+    // ==========================================
+    // API ACTIONS
+    // ==========================================
+
+    /**
+     * Log API key generated
+     */
+    public static function logApiKeyGenerated(User $user, ?string $keyName = null): void
+    {
+        self::log(
+            ActivityLog::ACTION_API_KEY_GENERATED,
+            ActivityLog::CATEGORY_API,
+            "API key generated" . ($keyName ? ": {$keyName}" : ''),
+            $user,
+            [
+                'key_name' => $keyName,
+            ],
+            null,
+            null,
+            $user,
+            ActivityLog::RISK_HIGH
+        );
+    }
+
+    /**
+     * Log API key revoked
+     */
+    public static function logApiKeyRevoked(User $user, ?string $keyName = null): void
+    {
+        self::log(
+            ActivityLog::ACTION_API_KEY_REVOKED,
+            ActivityLog::CATEGORY_API,
+            "API key revoked" . ($keyName ? ": {$keyName}" : ''),
+            $user,
+            [
+                'key_name' => $keyName,
+            ],
+            null,
+            null,
+            $user,
+            ActivityLog::RISK_MEDIUM
+        );
+    }
+
+    /**
+     * Log email changed
+     */
+    public static function logEmailChanged(User $user, string $oldEmail): void
+    {
+        self::log(
+            ActivityLog::ACTION_EMAIL_CHANGED,
+            ActivityLog::CATEGORY_SECURITY,
+            "Email changed from {$oldEmail} to {$user->email}",
+            $user,
+            [
+                'old_email' => $oldEmail,
+                'new_email' => $user->email,
+            ],
+            ['email' => $oldEmail],
+            ['email' => $user->email],
+            $user,
+            ActivityLog::RISK_HIGH
+        );
     }
 
     /**

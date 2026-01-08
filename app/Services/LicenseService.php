@@ -122,59 +122,65 @@ class LicenseService
      */
     public function activate(License $license, array $metadata = []): array
     {
-        if (!$license->isActive()) {
-            return [
-                'success' => false,
-                'error' => 'License is not active',
-            ];
-        }
+        // Use transaction with locking to prevent race conditions
+        return \DB::transaction(function () use ($license, $metadata) {
+            // Lock the license row to prevent concurrent activations
+            $license = License::where('id', $license->id)->lockForUpdate()->first();
 
-        if (!$license->canActivate()) {
-            return [
-                'success' => false,
-                'error' => 'Maximum activations reached',
-                'activations_used' => $license->activations_count,
-                'activations_max' => $license->max_activations,
-            ];
-        }
+            if (!$license->isActive()) {
+                return [
+                    'success' => false,
+                    'error' => 'License is not active',
+                ];
+            }
 
-        // Check if this domain/machine is already activated
-        $existingActivation = $license->activations()
-            ->active()
-            ->when(isset($metadata['domain']), fn($q) => $q->where('domain', $metadata['domain']))
-            ->when(isset($metadata['machine_id']), fn($q) => $q->where('machine_id', $metadata['machine_id']))
-            ->first();
+            if (!$license->canActivate()) {
+                return [
+                    'success' => false,
+                    'error' => 'Maximum activations reached',
+                    'activations_used' => $license->activations_count,
+                    'activations_max' => $license->max_activations,
+                ];
+            }
 
-        if ($existingActivation) {
+            // Check if this domain/machine is already activated
+            $existingActivation = $license->activations()
+                ->active()
+                ->when(isset($metadata['domain']), fn($q) => $q->where('domain', $metadata['domain']))
+                ->when(isset($metadata['machine_id']), fn($q) => $q->where('machine_id', $metadata['machine_id']))
+                ->first();
+
+            if ($existingActivation) {
+                return [
+                    'success' => true,
+                    'message' => 'Already activated',
+                    'activation_id' => $existingActivation->id,
+                    'activations_remaining' => $license->activationsRemaining(),
+                ];
+            }
+
+            // Create new activation
+            $activation = LicenseActivation::create([
+                'license_id' => $license->id,
+                'domain' => $metadata['domain'] ?? null,
+                'ip_address' => $metadata['ip_address'] ?? request()->ip(),
+                'machine_id' => $metadata['machine_id'] ?? null,
+            ]);
+
+            // Increment activation count
+            $license->increment('activations_count');
+
+            // Set activated_at if first activation
+            if ($license->activated_at === null) {
+                $license->update(['activated_at' => now()]);
+            }
+
             return [
                 'success' => true,
-                'message' => 'Already activated',
-                'activation_id' => $existingActivation->id,
-                'activations_remaining' => $license->activationsRemaining(),
+                'activation_id' => $activation->id,
+                'activations_remaining' => $license->fresh()->activationsRemaining(),
             ];
-        }
-
-        // Create new activation
-        $activation = LicenseActivation::create([
-            'license_id' => $license->id,
-            'domain' => $metadata['domain'] ?? null,
-            'ip_address' => $metadata['ip_address'] ?? request()->ip(),
-            'machine_id' => $metadata['machine_id'] ?? null,
-        ]);
-
-        // Increment activation count
-        $license->increment('activations_count');
-
-        // Set activated_at if first activation
-        if ($license->activated_at === null) {
-            $license->update(['activated_at' => now()]);
-        }
-
-        return [
-            'success' => true,
-            'activation_id' => $activation->id,
-            'activations_remaining' => $license->fresh()->activationsRemaining(),
-        ];
+        });
     }
 
     /**

@@ -15,9 +15,8 @@ class Wallet extends Model
 
     protected $fillable = [
         'user_id',
-        'balance',
-        'pending_balance',
-        'held_balance',
+        // 'balance', 'pending_balance', 'held_balance' - NEVER mass assignable (security: financial fraud)
+        // Use deposit(), withdraw(), refund() methods instead
         'currency',
         'is_active',
         'is_frozen',

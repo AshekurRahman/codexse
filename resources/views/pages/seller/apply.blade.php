@@ -57,36 +57,52 @@
                         @enderror
                     </div>
 
-                    <!-- Product Types -->
-                    <div>
+                    <!-- Categories -->
+                    <div x-data="{ showOther: {{ in_array('other', old('categories', $existingApplication?->categories ?? [])) ? 'true' : 'false' }} }">
                         <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
                             What will you sell? <span class="text-danger-500">*</span>
                         </label>
                         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            @foreach([
-                                'ui-kits' => 'UI Kits',
-                                'templates' => 'Templates',
-                                'icons' => 'Icons',
-                                'illustrations' => 'Illustrations',
-                                'themes' => 'Themes',
-                                'code' => 'Code & Scripts',
-                                'fonts' => 'Fonts',
-                                'mockups' => 'Mockups',
-                                'other' => 'Other',
-                            ] as $value => $label)
+                            @foreach($categories as $category)
                                 <label class="relative flex items-center justify-center p-3 rounded-lg border border-surface-300 dark:border-surface-600 cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors has-[:checked]:border-primary-500 has-[:checked]:bg-primary-50 dark:has-[:checked]:bg-primary-900/20">
                                     <input
                                         type="checkbox"
-                                        name="product_types[]"
-                                        value="{{ $value }}"
+                                        name="categories[]"
+                                        value="{{ $category->slug }}"
                                         class="sr-only"
-                                        {{ in_array($value, old('product_types', [])) ? 'checked' : '' }}
+                                        {{ in_array($category->slug, old('categories', $existingApplication?->categories ?? [])) ? 'checked' : '' }}
                                     >
-                                    <span class="text-sm font-medium text-surface-700 dark:text-surface-300">{{ $label }}</span>
+                                    <span class="text-sm font-medium text-surface-700 dark:text-surface-300">{{ $category->name }}</span>
                                 </label>
                             @endforeach
+                            <!-- Other Option -->
+                            <label class="relative flex items-center justify-center p-3 rounded-lg border border-surface-300 dark:border-surface-600 cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-700 transition-colors has-[:checked]:border-primary-500 has-[:checked]:bg-primary-50 dark:has-[:checked]:bg-primary-900/20">
+                                <input
+                                    type="checkbox"
+                                    name="categories[]"
+                                    value="other"
+                                    class="sr-only"
+                                    x-on:change="showOther = $el.checked"
+                                    {{ in_array('other', old('categories', $existingApplication?->categories ?? [])) ? 'checked' : '' }}
+                                >
+                                <span class="text-sm font-medium text-surface-700 dark:text-surface-300">Other</span>
+                            </label>
                         </div>
-                        @error('product_types')
+                        <!-- Other Category Input -->
+                        <div x-show="showOther" x-collapse class="mt-3">
+                            <input
+                                type="text"
+                                name="other_category"
+                                value="{{ old('other_category', $existingApplication?->other_category) }}"
+                                placeholder="Please specify your category..."
+                                class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white placeholder-surface-400 focus:border-primary-500 focus:ring-primary-500"
+                            >
+                            <p class="mt-1 text-sm text-surface-500 dark:text-surface-400">Suggest a new category for your products</p>
+                        </div>
+                        @error('categories')
+                            <p class="mt-1 text-sm text-danger-500">{{ $message }}</p>
+                        @enderror
+                        @error('other_category')
                             <p class="mt-1 text-sm text-danger-500">{{ $message }}</p>
                         @enderror
                     </div>

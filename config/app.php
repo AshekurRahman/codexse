@@ -56,6 +56,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Security Notification Email
+    |--------------------------------------------------------------------------
+    |
+    | This email address will receive security-related notifications such as
+    | suspicious login activity, account lockouts, brute force attempts,
+    | and other security alerts. Leave empty to disable security alerts.
+    |
+    */
+
+    'security_email' => env('SECURITY_EMAIL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

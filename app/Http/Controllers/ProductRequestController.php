@@ -4,8 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\ProductRequest;
-use Illuminate\Http\Request;
+use App\Rules\SecureFileUpload;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class ProductRequestController extends Controller
@@ -21,9 +25,75 @@ class ProductRequestController extends Controller
     }
 
     /**
+     * Upload a file via AJAX.
+     */
+    public function upload(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:5120', SecureFileUpload::attachment()],
+        ]);
+
+        $file = $request->file('file');
+
+        // Generate a unique filename to prevent overwrites
+        $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('product-requests/temp', $filename, 'public');
+
+        if (!$path) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to upload file.',
+            ], 500);
+        }
+
+        // Get file info
+        $isImage = Str::startsWith($file->getMimeType(), 'image/');
+
+        return response()->json([
+            'success' => true,
+            'file' => [
+                'path' => $path,
+                'name' => $file->getClientOriginalName(),
+                'size' => $file->getSize(),
+                'url' => asset('storage/' . $path),
+                'is_image' => $isImage,
+            ],
+        ]);
+    }
+
+    /**
+     * Delete an uploaded file via AJAX.
+     */
+    public function deleteUpload(Request $request): JsonResponse
+    {
+        $request->validate([
+            'path' => 'required|string',
+        ]);
+
+        $path = $request->input('path');
+
+        // Security: Only allow deleting files in the product-requests/temp directory
+        if (!Str::startsWith($path, 'product-requests/temp/')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid file path.',
+            ], 403);
+        }
+
+        // Delete the file
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
+
+        return response()->json([
+            'success' => true,
+        ]);
+    }
+
+    /**
      * Store a new product request.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -37,22 +107,38 @@ class ProductRequestController extends Controller
             'urgency' => 'required|in:low,normal,high,urgent',
             'features' => 'nullable|string|max:2000',
             'reference_urls' => 'nullable|string|max:1000',
-            'attachments.*' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,gif,pdf,doc,docx,zip',
+            'uploaded_files' => 'nullable|json',
         ], [
             'description.min' => 'Please provide at least 50 characters describing what you need.',
             'budget_max.gte' => 'Maximum budget must be greater than or equal to minimum budget.',
         ]);
 
-        // Handle file uploads
+        // Handle pre-uploaded files (AJAX uploads)
         $attachments = [];
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $path = $file->store('product-requests', 'public');
-                $attachments[] = [
-                    'path' => $path,
-                    'name' => $file->getClientOriginalName(),
-                    'size' => $file->getSize(),
-                ];
+        if (!empty($validated['uploaded_files'])) {
+            $uploadedFiles = json_decode($validated['uploaded_files'], true);
+
+            if (is_array($uploadedFiles)) {
+                foreach ($uploadedFiles as $file) {
+                    // Validate file path
+                    if (!isset($file['path']) || !Str::startsWith($file['path'], 'product-requests/temp/')) {
+                        continue;
+                    }
+
+                    // Move from temp to permanent location
+                    $oldPath = $file['path'];
+                    $newPath = Str::replace('product-requests/temp/', 'product-requests/', $oldPath);
+
+                    if (Storage::disk('public')->exists($oldPath)) {
+                        Storage::disk('public')->move($oldPath, $newPath);
+
+                        $attachments[] = [
+                            'path' => $newPath,
+                            'name' => $file['name'] ?? basename($newPath),
+                            'size' => $file['size'] ?? Storage::disk('public')->size($newPath),
+                        ];
+                    }
+                }
             }
         }
 
@@ -73,6 +159,14 @@ class ProductRequestController extends Controller
             'attachments' => !empty($attachments) ? $attachments : null,
             'status' => ProductRequest::STATUS_PENDING,
         ]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Your product request has been submitted successfully!',
+                'redirect' => route('product-request.success'),
+            ]);
+        }
 
         return redirect()
             ->route('product-request.success')

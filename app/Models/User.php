@@ -24,7 +24,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
         'name',
         'email',
         'password',
-        'is_admin',
+        // 'is_admin' - NEVER mass assignable (security: privilege escalation)
         'avatar',
         'bio',
         'website',
@@ -51,6 +51,9 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
         'gdpr_deletion_requested_at',
         'locked_until',
         'failed_login_attempts',
+        'pending_email',
+        'email_change_token',
+        'email_change_token_expires_at',
     ];
 
     /**
@@ -82,6 +85,7 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
             'gdpr_deletion_requested_at' => 'datetime',
             'locked_until' => 'datetime',
             'failed_login_attempts' => 'integer',
+            'email_change_token_expires_at' => 'datetime',
         ];
     }
 
@@ -177,6 +181,73 @@ class User extends Authenticatable implements MustVerifyEmail, FilamentUser
         } catch (\Exception $e) {
             \Log::warning('Failed to send verification email to ' . $this->email . ': ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Initiate email change verification.
+     */
+    public function initiateEmailChange(string $newEmail): void
+    {
+        $this->pending_email = $newEmail;
+        $this->email_change_token = \Illuminate\Support\Str::random(64);
+        $this->email_change_token_expires_at = now()->addHours(24);
+        $this->save();
+
+        // Send verification email to the NEW email address
+        \Illuminate\Support\Facades\Mail::to($newEmail)->send(
+            new \App\Mail\VerifyEmailChange($this)
+        );
+    }
+
+    /**
+     * Confirm email change with token.
+     */
+    public function confirmEmailChange(string $token): bool
+    {
+        if (!$this->pending_email || !$this->email_change_token) {
+            return false;
+        }
+
+        if (!hash_equals($this->email_change_token, $token)) {
+            return false;
+        }
+
+        if ($this->email_change_token_expires_at && $this->email_change_token_expires_at->isPast()) {
+            return false;
+        }
+
+        // Update to new email
+        $oldEmail = $this->email;
+        $this->email = $this->pending_email;
+        $this->email_verified_at = now(); // Mark as verified since they clicked the link
+        $this->pending_email = null;
+        $this->email_change_token = null;
+        $this->email_change_token_expires_at = null;
+        $this->save();
+
+        // Log the email change
+        \App\Services\ActivityLogService::logEmailChanged($this, $oldEmail);
+
+        return true;
+    }
+
+    /**
+     * Cancel pending email change.
+     */
+    public function cancelPendingEmailChange(): void
+    {
+        $this->pending_email = null;
+        $this->email_change_token = null;
+        $this->email_change_token_expires_at = null;
+        $this->save();
+    }
+
+    /**
+     * Check if there's a pending email change.
+     */
+    public function hasPendingEmailChange(): bool
+    {
+        return !empty($this->pending_email) && !empty($this->email_change_token);
     }
 
     /**

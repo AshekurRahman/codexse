@@ -14,7 +14,7 @@
             $logoUrl = asset('storage/' . $organizationLogo);
         }
     } else {
-        $logoUrl = asset('images/logo.svg');
+        $logoUrl = asset('images/logo.png');
     }
 
     $siteUrl = config('app.url');

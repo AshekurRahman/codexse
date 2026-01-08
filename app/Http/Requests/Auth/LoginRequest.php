@@ -5,6 +5,7 @@ namespace App\Http\Requests\Auth;
 use App\Models\LoginAttempt;
 use App\Models\SecurityLog;
 use App\Models\User;
+use App\Services\SecurityNotificationService;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -15,14 +16,20 @@ use Illuminate\Validation\ValidationException;
 class LoginRequest extends FormRequest
 {
     /**
-     * Maximum failed login attempts before account lockout.
+     * Get maximum failed login attempts before account lockout.
      */
-    protected const MAX_ATTEMPTS = 5;
+    protected function maxAttempts(): int
+    {
+        return config('auth.lockout.max_attempts', 5);
+    }
 
     /**
-     * Account lockout duration in minutes.
+     * Get account lockout duration in minutes.
      */
-    protected const LOCKOUT_MINUTES = 15;
+    protected function lockoutMinutes(): int
+    {
+        return config('auth.lockout.lockout_minutes', 15);
+    }
 
     /**
      * Determine if the user is authorized to make this request.
@@ -93,14 +100,35 @@ class LoginRequest extends FormRequest
             LoginAttempt::REASON_INVALID_CREDENTIALS
         );
 
+        $securityService = app(SecurityNotificationService::class);
+
         if ($user) {
             $user->increment('failed_login_attempts');
 
+            // Notify admins of suspicious activity after threshold
+            $securityService->notifySuspiciousLogin(
+                user: $user,
+                email: $this->input('email'),
+                ipAddress: $this->ip(),
+                failedAttempts: $user->failed_login_attempts,
+                userAgent: $this->userAgent()
+            );
+
             // Check if account should be locked
-            if ($user->failed_login_attempts >= self::MAX_ATTEMPTS) {
+            if ($user->failed_login_attempts >= $this->maxAttempts()) {
+                $lockedUntil = now()->addMinutes($this->lockoutMinutes());
                 $user->update([
-                    'locked_until' => now()->addMinutes(self::LOCKOUT_MINUTES),
+                    'locked_until' => $lockedUntil,
                 ]);
+
+                // Send account locked notification
+                $securityService->notifyAccountLocked(
+                    user: $user,
+                    ipAddress: $this->ip(),
+                    failedAttempts: $user->failed_login_attempts,
+                    lockedUntil: $lockedUntil,
+                    userAgent: $this->userAgent()
+                );
 
                 // Log security event
                 SecurityLog::log(
@@ -115,6 +143,18 @@ class LoginRequest extends FormRequest
                         'locked_until' => $user->locked_until,
                         'user_agent' => $this->userAgent(),
                     ]
+                );
+            }
+        } else {
+            // Unknown email - still notify if there are many attempts from this IP
+            $ipAttempts = RateLimiter::attempts($this->throttleKey());
+            if ($ipAttempts >= 3) {
+                $securityService->notifySuspiciousLogin(
+                    user: null,
+                    email: $this->input('email'),
+                    ipAddress: $this->ip(),
+                    failedAttempts: $ipAttempts,
+                    userAgent: $this->userAgent()
                 );
             }
         }
@@ -196,7 +236,7 @@ class LoginRequest extends FormRequest
      */
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), self::MAX_ATTEMPTS)) {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), $this->maxAttempts())) {
             return;
         }
 

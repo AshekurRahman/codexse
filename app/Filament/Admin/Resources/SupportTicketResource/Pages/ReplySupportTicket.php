@@ -40,7 +40,19 @@ class ReplySupportTicket extends Page implements HasForms
                     ->label('Your Reply'),
                 Forms\Components\FileUpload::make('attachment')
                     ->directory('ticket-attachments')
-                    ->visibility('private'),
+                    ->visibility('private')
+                    ->maxSize(10240)
+                    ->acceptedFileTypes([
+                        'image/jpeg',
+                        'image/png',
+                        'image/gif',
+                        'image/webp',
+                        'application/pdf',
+                        'text/plain',
+                        'application/zip',
+                        'application/x-zip-compressed',
+                    ])
+                    ->helperText('Max 10MB. Allowed: Images, PDF, TXT, ZIP'),
                 Forms\Components\Select::make('status')
                     ->options([
                         'open' => 'Open',

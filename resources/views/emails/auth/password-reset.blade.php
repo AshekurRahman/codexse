@@ -13,9 +13,7 @@ Reset your {{ config('app.name') }} password. This link expires in 60 minutes.
         <table role="presentation" width="100%" height="100%">
             <tr>
                 <td align="center" valign="middle">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M15 7C16.1046 7 17 7.89543 17 9V11H7V9C7 7.89543 7.89543 7 9 7M15 7H9M15 7C15 5.89543 14.1046 5 13 5H11C9.89543 5 9 5.89543 9 7M19 11V19C19 20.1046 18.1046 21 17 21H7C5.89543 21 5 20.1046 5 19V11M19 11H5M12 15V17" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
+                    <img src="{{ asset('images/email/lock.webp') }}" alt="Lock" style="width: 48px; height: 48px;">
                 </td>
             </tr>
         </table>
@@ -44,10 +42,7 @@ Reset your {{ config('app.name') }} password. This link expires in 60 minutes.
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                     <tr>
                         <td style="width: 24px; vertical-align: top; padding-right: 12px;">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M12 8V12M12 16H12.01" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
+                            <img src="{{ asset('images/email/alert-circle.webp') }}" alt="Warning" style="width: 24px; height: 24px;">
                         </td>
                         <td>
                             <p style="color: #92400e; margin: 0; font-size: 14px; line-height: 1.6;">
@@ -65,6 +60,7 @@ Reset your {{ config('app.name') }} password. This link expires in 60 minutes.
         <tr>
             <td align="center" style="padding: 16px 0 32px;">
                 <a href="{{ $resetUrl }}" style="display: inline-block; padding: 18px 48px; background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 10px; box-shadow: 0 4px 14px -3px rgba(245, 158, 11, 0.5);">
+                    <img src="{{ asset('images/email/key.webp') }}" alt="" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 8px;">
                     Reset Password
                 </a>
             </td>
@@ -86,11 +82,14 @@ Reset your {{ config('app.name') }} password. This link expires in 60 minutes.
     <div style="height: 1px; background: linear-gradient(90deg, transparent 0%, #e2e8f0 50%, transparent 100%); margin: 0 0 24px;"></div>
 
     <!-- Support -->
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
         <tr>
-            <td style="text-align: center;">
+            <td style="padding: 20px; text-align: center;">
                 <p style="color: #64748b; font-size: 14px; margin: 0 0 8px;">Need help? We're here for you!</p>
-                <a href="{{ url('/support') }}" style="color: #6366f1; font-size: 14px; text-decoration: none; font-weight: 500;">Contact Support</a>
+                <a href="{{ url('/support') }}" style="color: #6366f1; font-size: 14px; text-decoration: none; font-weight: 500;">
+                    <img src="{{ asset('images/email/message.webp') }}" alt="" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;">
+                    Contact Support
+                </a>
             </td>
         </tr>
     </table>

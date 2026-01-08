@@ -6,12 +6,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Cache;
 use Spatie\Sluggable\HasSlug;
 use Spatie\Sluggable\SlugOptions;
 
 class Category extends Model
 {
     use HasFactory, HasSlug;
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => Cache::forget('home_categories'));
+        static::deleted(fn () => Cache::forget('home_categories'));
+    }
 
     protected $fillable = [
         'parent_id',
@@ -23,6 +30,7 @@ class Category extends Model
         'sort_order',
         'is_active',
         'is_featured',
+        'show_on_homepage',
     ];
 
     protected function casts(): array
@@ -30,6 +38,7 @@ class Category extends Model
         return [
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
+            'show_on_homepage' => 'boolean',
         ];
     }
 
@@ -92,5 +101,10 @@ class Category extends Model
     public function scopeParentCategories($query)
     {
         return $query->whereNull('parent_id');
+    }
+
+    public function scopeHomepage($query)
+    {
+        return $query->where('show_on_homepage', true);
     }
 }

@@ -16,8 +16,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-// License validation and activation endpoints (rate limited)
-Route::prefix('license')->middleware('throttle:30,1')->group(function () {
+// License validation and activation endpoints (rate limited + API key auth)
+Route::prefix('license')->middleware(['throttle:30,1', \App\Http\Middleware\LicenseApiAuth::class])->group(function () {
     Route::post('/validate', [LicenseController::class, 'validate']);
     Route::post('/activate', [LicenseController::class, 'activate']);
     Route::post('/deactivate', [LicenseController::class, 'deactivate']);

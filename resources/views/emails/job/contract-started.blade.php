@@ -56,10 +56,7 @@ Your contract "{{ $contract->title }}" has been started. Let's build something a
 <div style="background: #ffffff;">
     <div style="text-align: center; padding: 20px 40px 32px;">
         <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 20px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#ffffff" stroke-width="2"/>
-                <path d="M7.5 12L10.5 15L16.5 9" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+<img src="{{ asset('images/email/check-circle.webp') }}" alt="Contract Started" style="width: 40px; height: 40px;">
         </div>
         <span class="contract-badge">Contract Active</span>
         <h1 style="font-size: 26px; font-weight: 700; color: #111827; margin: 16px 0 8px;">{{ $contract->title }}</h1>
@@ -173,10 +170,7 @@ Your contract "{{ $contract->title }}" has been started. Let's build something a
             <tr>
                 <td style="width: 48px; vertical-align: top;">
                     <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#ffffff" stroke-width="2"/>
-                            <path d="M9 12L11 14L15 10" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+<img src="{{ asset('images/email/shield-check.webp') }}" alt="Escrow Protected" style="width: 24px; height: 24px;">
                     </div>
                 </td>
                 <td style="padding-left: 16px;">

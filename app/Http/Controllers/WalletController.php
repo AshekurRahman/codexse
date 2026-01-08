@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Wallet;
 use App\Models\WalletTransaction;
+use App\Services\ActivityLogService;
 use App\Services\StripeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -63,9 +64,6 @@ class WalletController extends Controller
      */
     public function deposit(Request $request)
     {
-        // Debug: Check if method is called
-        file_put_contents(storage_path('logs/wallet-debug.log'), date('Y-m-d H:i:s') . " - Deposit called\n", FILE_APPEND);
-
         Log::info('Wallet deposit method called', [
             'amount' => $request->input('amount'),
             'user_id' => Auth::id(),
@@ -138,34 +136,71 @@ class WalletController extends Controller
 
     /**
      * Handle successful deposit.
+     * Note: This route works without authentication because SameSite=strict
+     * cookies are not sent on cross-site redirects from Stripe.
      */
     public function depositSuccess(Request $request)
     {
         $sessionId = $request->get('session_id');
 
         if (!$sessionId) {
-            return redirect()->route('wallet.index')->with('error', 'Invalid session.');
+            return redirect()->route('login')->with('error', 'Invalid payment session.');
         }
 
         try {
             $session = StripeSession::retrieve($sessionId);
 
             if ($session->payment_status !== 'paid') {
-                return redirect()->route('wallet.index')->with('error', 'Payment was not completed.');
+                Log::warning('Wallet deposit: Payment not completed', [
+                    'session_id' => $sessionId,
+                    'payment_status' => $session->payment_status,
+                ]);
+                return redirect()->route('login')->with('error', 'Payment was not completed.');
             }
 
-            // Check if already processed
+            // Check if already processed (idempotency)
             $existingTransaction = WalletTransaction::where('payment_id', $sessionId)->first();
             if ($existingTransaction) {
-                return redirect()->route('wallet.index')->with('info', 'This deposit has already been processed.');
+                // Already processed - redirect to wallet if logged in, otherwise login
+                if (auth()->check()) {
+                    return redirect()->route('wallet.index')->with('info', 'This deposit has already been processed.');
+                }
+                return redirect()->route('login')->with('success', 'Your deposit was processed successfully. Please log in to view your wallet.');
             }
 
-            $userId = $session->metadata->user_id;
+            // Get user info from Stripe session metadata
+            $userId = (int) $session->metadata->user_id;
+            $walletId = (int) $session->metadata->wallet_id;
             $amount = (float) $session->metadata->amount;
 
-            $wallet = Wallet::where('user_id', $userId)->first();
+            // Validate metadata exists
+            if (!$userId || !$amount) {
+                Log::error('Wallet deposit: Missing metadata', [
+                    'session_id' => $sessionId,
+                    'metadata' => $session->metadata,
+                ]);
+                return redirect()->route('login')->with('error', 'Invalid payment session data.');
+            }
+
+            // Find the wallet
+            $wallet = Wallet::where('id', $walletId)->where('user_id', $userId)->first();
             if (!$wallet) {
-                return redirect()->route('wallet.index')->with('error', 'Wallet not found.');
+                Log::error('Wallet deposit: Wallet not found', [
+                    'session_id' => $sessionId,
+                    'user_id' => $userId,
+                    'wallet_id' => $walletId,
+                ]);
+                return redirect()->route('login')->with('error', 'Wallet not found.');
+            }
+
+            // Get the user for logging
+            $user = \App\Models\User::find($userId);
+            if (!$user) {
+                Log::error('Wallet deposit: User not found', [
+                    'session_id' => $sessionId,
+                    'user_id' => $userId,
+                ]);
+                return redirect()->route('login')->with('error', 'User not found.');
             }
 
             // Process the deposit
@@ -176,9 +211,40 @@ class WalletController extends Controller
                 paymentId: $sessionId
             );
 
-            return redirect()->route('wallet.index')->with('success', 'Successfully deposited $' . number_format($amount, 2) . ' to your wallet!');
+            // Refresh wallet to get updated balance
+            $wallet->refresh();
+
+            // Log the deposit
+            ActivityLogService::logWalletDeposit(
+                $user,
+                $wallet,
+                $amount,
+                'stripe',
+                $sessionId
+            );
+
+            Log::info('Wallet deposit successful', [
+                'user_id' => $userId,
+                'wallet_id' => $walletId,
+                'amount' => $amount,
+                'session_id' => $sessionId,
+            ]);
+
+            // If user is authenticated, redirect to wallet
+            if (auth()->check() && auth()->id() === $userId) {
+                return redirect()->route('wallet.index')->with('success', 'Successfully deposited $' . number_format($amount, 2) . ' to your wallet!');
+            }
+
+            // User not authenticated (session lost due to SameSite=strict), redirect to login with success message
+            return redirect()->route('login')->with('success', 'Successfully deposited $' . number_format($amount, 2) . ' to your wallet! Please log in to continue.');
+
         } catch (\Exception $e) {
-            return redirect()->route('wallet.index')->with('error', 'An error occurred while processing your deposit.');
+            Log::error('Wallet deposit error', [
+                'session_id' => $sessionId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return redirect()->route('login')->with('error', 'An error occurred while processing your deposit. Please contact support.');
         }
     }
 

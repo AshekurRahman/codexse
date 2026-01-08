@@ -114,9 +114,23 @@ class NewsletterSubscriberResource extends Resource
                             ->default(true),
                     ])
                     ->action(function (array $data) {
-                        $path = storage_path('app/public/' . $data['file']);
+                        // Security: Validate file path to prevent directory traversal
+                        $filename = basename($data['file']);
+                        if ($filename !== $data['file'] || !preg_match('/^[\w\-\.]+\.csv$/i', $filename)) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Invalid filename')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
 
-                        if (!file_exists($path)) {
+                        $path = storage_path('app/public/' . $filename);
+
+                        // Verify file exists and is within the expected directory
+                        $realPath = realpath($path);
+                        $allowedDir = realpath(storage_path('app/public'));
+
+                        if (!$realPath || !str_starts_with($realPath, $allowedDir)) {
                             \Filament\Notifications\Notification::make()
                                 ->title('File not found')
                                 ->danger()
@@ -124,7 +138,7 @@ class NewsletterSubscriberResource extends Resource
                             return;
                         }
 
-                        $handle = fopen($path, 'r');
+                        $handle = fopen($realPath, 'r');
                         $headers = fgetcsv($handle);
 
                         $emailIndex = array_search('email', array_map('strtolower', $headers));
@@ -169,7 +183,7 @@ class NewsletterSubscriberResource extends Resource
                         }
 
                         fclose($handle);
-                        unlink($path);
+                        unlink($realPath);
 
                         \Filament\Notifications\Notification::make()
                             ->title('Import completed')

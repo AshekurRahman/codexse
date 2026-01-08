@@ -45,7 +45,7 @@ Your service order #{{ $order->order_number }} has been placed successfully!
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="80" height="80" style="margin: 0 auto 24px; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); border-radius: 20px; box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.4);">
             <tr>
                 <td align="center" valign="middle">
-                    <img src="https://img.icons8.com/ios-filled/50/ffffff/services.png" alt="Service" width="40" height="40" style="display: block;">
+                    <img src="{{ asset('images/icons/service.webp') }}" alt="Service" width="40" height="40" style="display: block;">
                 </td>
             </tr>
         </table>

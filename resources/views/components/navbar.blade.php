@@ -4,7 +4,7 @@
             <!-- Logo -->
             <div class="flex items-center gap-8">
                 <a href="{{ route('home') }}" class="flex items-center gap-2.5">
-                    <img src="{{ asset('images/logo-icon.svg') }}" alt="Codexse" class="h-8 w-8">
+                    <img src="{{ asset('images/logo-icon.png') }}" alt="Codexse" class="h-8 w-8">
                     <span class="text-xl font-bold text-surface-900 dark:text-white">Codexse</span>
                 </a>
 

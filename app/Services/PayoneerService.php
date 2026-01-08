@@ -16,14 +16,24 @@ class PayoneerService
 
     public function __construct()
     {
-        $this->isLive = Setting::get('payoneer_mode', 'sandbox') === 'live';
+        // Database settings take priority, then config
+        $configSandbox = config('services.payoneer.sandbox', true);
+        $dbMode = Setting::get('payoneer_mode');
+
+        $this->isLive = $dbMode !== null
+            ? $dbMode === 'live'
+            : !$configSandbox;
+
         $this->baseUrl = $this->isLive
             ? 'https://api.payoneer.com/v4'
             : 'https://api.sandbox.payoneer.com/v4';
 
-        $this->programId = Setting::get('payoneer_program_id');
-        $this->apiUsername = Setting::get('payoneer_api_username');
-        $this->apiPassword = Setting::get('payoneer_api_password');
+        $this->programId = Setting::get('payoneer_program_id')
+            ?: config('services.payoneer.program_id');
+        $this->apiUsername = Setting::get('payoneer_api_username')
+            ?: config('services.payoneer.username');
+        $this->apiPassword = Setting::get('payoneer_api_password')
+            ?: config('services.payoneer.password');
     }
 
     /**
@@ -138,13 +148,40 @@ class PayoneerService
     }
 
     /**
-     * Verify webhook signature
+     * Verify webhook signature using HMAC-SHA256.
+     *
+     * Payoneer signs webhooks using HMAC-SHA256 with a shared secret.
+     * The signature is sent in the X-Payoneer-Signature header.
      */
     public function verifyWebhook(string $payload, string $signature): bool
     {
-        // Implement webhook signature verification based on Payoneer's requirements
-        // This is a placeholder - actual implementation depends on Payoneer's webhook security
-        return true;
+        $webhookSecret = Setting::get('payoneer_webhook_secret');
+
+        // If no webhook secret is configured, reject all webhooks for security
+        if (empty($webhookSecret)) {
+            Log::warning('Payoneer webhook rejected: No webhook secret configured');
+            return false;
+        }
+
+        // If no signature provided, reject the webhook
+        if (empty($signature)) {
+            Log::warning('Payoneer webhook rejected: No signature provided');
+            return false;
+        }
+
+        // Calculate expected signature using HMAC-SHA256
+        $expectedSignature = hash_hmac('sha256', $payload, $webhookSecret);
+
+        // Use timing-safe comparison to prevent timing attacks
+        $isValid = hash_equals($expectedSignature, $signature);
+
+        if (!$isValid) {
+            Log::warning('Payoneer webhook signature verification failed', [
+                'provided_signature' => substr($signature, 0, 20) . '...',
+            ]);
+        }
+
+        return $isValid;
     }
 
     /**

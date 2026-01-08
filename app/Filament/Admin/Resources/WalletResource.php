@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\WalletResource\Pages;
 use App\Filament\Admin\Resources\WalletResource\RelationManagers;
+use App\Filament\Admin\Traits\HasResourceAuthorization;
 use App\Models\User;
 use App\Models\Wallet;
 use Filament\Forms;
@@ -18,6 +19,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class WalletResource extends Resource
 {
+    use HasResourceAuthorization;
+
     protected static ?string $model = Wallet::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-wallet';
@@ -25,6 +28,8 @@ class WalletResource extends Resource
     protected static ?string $navigationGroup = 'Finance';
 
     protected static ?int $navigationSort = 1;
+
+    protected static ?string $permissionName = 'wallet';
 
     public static function form(Form $form): Form
     {

@@ -208,8 +208,9 @@ class BlockMaliciousIps
             'suspicious_count' => $count,
         ]);
 
-        // Auto-block if threshold exceeded
-        $threshold = Setting::get('auto_block_threshold', 10);
+        // Auto-block if threshold exceeded (database setting, then config, then default)
+        $configThreshold = config('security.ip_blocking.threshold', 10);
+        $threshold = Setting::get('auto_block_threshold', $configThreshold);
         if ($count >= $threshold) {
             $this->autoBlockIp($ip, 'Exceeded suspicious activity threshold');
         }
@@ -220,7 +221,9 @@ class BlockMaliciousIps
      */
     protected function autoBlockIp(string $ip, string $reason): void
     {
-        $blockDuration = Setting::get('auto_block_duration', 24); // hours
+        // Database setting, then config, then default
+        $configDuration = config('security.ip_blocking.duration_hours', 24);
+        $blockDuration = Setting::get('auto_block_duration', $configDuration); // hours
 
         BlockedIp::updateOrCreate(
             ['ip_address' => $ip],

@@ -8,12 +8,12 @@ Please verify your email address to complete your {{ config('app.name') }} regis
 
 @section('hero')
 <div style="background: #ffffff; padding: 40px; text-align: center;">
-    <!-- Verify Icon - Using HTML/CSS for email compatibility -->
+    <!-- Verify Icon - Email envelope with gradient background -->
     <div style="width: 96px; height: 96px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); border-radius: 24px; margin: 0 auto 24px; box-shadow: 0 16px 32px -8px rgba(99, 102, 241, 0.4);">
         <table role="presentation" width="100%" height="100%">
             <tr>
                 <td align="center" valign="middle">
-                    <span style="font-size: 48px; line-height: 1;">&#9993;</span>
+                    <img src="{{ asset('images/email/envelope.webp') }}" alt="Email" style="width: 48px; height: 48px;">
                 </td>
             </tr>
         </table>
@@ -42,9 +42,7 @@ Please verify your email address to complete your {{ config('app.name') }} regis
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                     <tr>
                         <td style="width: 32px; vertical-align: top; padding-right: 12px;">
-                            <div style="width: 28px; height: 28px; background: #3b82f6; border-radius: 50%; text-align: center; line-height: 28px;">
-                                <span style="color: #ffffff; font-size: 14px; font-weight: bold;">i</span>
-                            </div>
+                            <img src="{{ asset('images/email/info-circle.webp') }}" alt="Info" style="width: 28px; height: 28px;">
                         </td>
                         <td>
                             <p style="color: #1e40af; margin: 0; font-size: 14px; line-height: 1.6;">
@@ -69,7 +67,8 @@ Please verify your email address to complete your {{ config('app.name') }} regis
                 <![endif]-->
                 <!--[if !mso]><!-->
                 <a href="{{ $verificationUrl }}" style="display: inline-block; padding: 18px 48px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: #ffffff; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 10px; box-shadow: 0 4px 14px -3px rgba(99, 102, 241, 0.5);">
-                    &#10003; Verify Email Address
+                    <img src="{{ asset('images/email/check.webp') }}" alt="" style="width: 18px; height: 18px; vertical-align: middle; margin-right: 8px;">
+                    Verify Email Address
                 </a>
                 <!--<![endif]-->
             </td>
@@ -100,9 +99,7 @@ Please verify your email address to complete your {{ config('app.name') }} regis
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                     <tr>
                         <td style="width: 28px; vertical-align: top;">
-                            <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 50%; text-align: center; line-height: 20px;">
-                                <span style="color: #ffffff; font-size: 12px;">&#10003;</span>
-                            </div>
+                            <img src="{{ asset('images/email/shopping-bag.webp') }}" alt="" style="width: 20px; height: 20px;">
                         </td>
                         <td style="padding-left: 12px;">
                             <p style="color: #334155; margin: 0; font-size: 14px;">Browse and purchase premium digital products</p>
@@ -116,9 +113,7 @@ Please verify your email address to complete your {{ config('app.name') }} regis
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                     <tr>
                         <td style="width: 28px; vertical-align: top;">
-                            <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 50%; text-align: center; line-height: 20px;">
-                                <span style="color: #ffffff; font-size: 12px;">&#10003;</span>
-                            </div>
+                            <img src="{{ asset('images/email/users.webp') }}" alt="" style="width: 20px; height: 20px;">
                         </td>
                         <td style="padding-left: 12px;">
                             <p style="color: #334155; margin: 0; font-size: 14px;">Hire talented freelancers for your projects</p>
@@ -132,9 +127,7 @@ Please verify your email address to complete your {{ config('app.name') }} regis
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                     <tr>
                         <td style="width: 28px; vertical-align: top;">
-                            <div style="width: 20px; height: 20px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 50%; text-align: center; line-height: 20px;">
-                                <span style="color: #ffffff; font-size: 12px;">&#10003;</span>
-                            </div>
+                            <img src="{{ asset('images/email/wallet.webp') }}" alt="" style="width: 20px; height: 20px;">
                         </td>
                         <td style="padding-left: 12px;">
                             <p style="color: #334155; margin: 0; font-size: 14px;">Become a seller and start earning</p>
@@ -150,7 +143,10 @@ Please verify your email address to complete your {{ config('app.name') }} regis
         <tr>
             <td style="padding: 20px; text-align: center;">
                 <p style="color: #64748b; font-size: 14px; margin: 0 0 8px;">Need help? We're here for you!</p>
-                <a href="{{ url('/support') }}" style="color: #6366f1; font-size: 14px; text-decoration: none; font-weight: 500;">&#128172; Contact Support</a>
+                <a href="{{ url('/support') }}" style="color: #6366f1; font-size: 14px; text-decoration: none; font-weight: 500;">
+                    <img src="{{ asset('images/email/message.webp') }}" alt="" style="width: 16px; height: 16px; vertical-align: middle; margin-right: 6px;">
+                    Contact Support
+                </a>
             </td>
         </tr>
     </table>

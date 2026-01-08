@@ -184,22 +184,22 @@
                                         @endphp
                                         @if($facebook)
                                         <a href="{{ $facebook }}" style="display: inline-block; width: 36px; height: 36px; background: #e2e8f0; border-radius: 50%; margin: 0 4px; text-align: center; line-height: 36px;">
-                                            <img src="{{ asset('images/icons/facebook.png') }}" alt="Facebook" width="18" height="18" style="vertical-align: middle;">
+                                            <img src="{{ asset('images/icons/facebook.webp') }}" alt="Facebook" width="18" height="18" style="vertical-align: middle;">
                                         </a>
                                         @endif
                                         @if($twitter)
                                         <a href="{{ $twitter }}" style="display: inline-block; width: 36px; height: 36px; background: #e2e8f0; border-radius: 50%; margin: 0 4px; text-align: center; line-height: 36px;">
-                                            <img src="{{ asset('images/icons/twitter.png') }}" alt="Twitter" width="18" height="18" style="vertical-align: middle;">
+                                            <img src="{{ asset('images/icons/twitter.webp') }}" alt="Twitter" width="18" height="18" style="vertical-align: middle;">
                                         </a>
                                         @endif
                                         @if($instagram)
                                         <a href="{{ $instagram }}" style="display: inline-block; width: 36px; height: 36px; background: #e2e8f0; border-radius: 50%; margin: 0 4px; text-align: center; line-height: 36px;">
-                                            <img src="{{ asset('images/icons/instagram.png') }}" alt="Instagram" width="18" height="18" style="vertical-align: middle;">
+                                            <img src="{{ asset('images/icons/instagram.webp') }}" alt="Instagram" width="18" height="18" style="vertical-align: middle;">
                                         </a>
                                         @endif
                                         @if($linkedin)
                                         <a href="{{ $linkedin }}" style="display: inline-block; width: 36px; height: 36px; background: #e2e8f0; border-radius: 50%; margin: 0 4px; text-align: center; line-height: 36px;">
-                                            <img src="{{ asset('images/icons/linkedin.png') }}" alt="LinkedIn" width="18" height="18" style="vertical-align: middle;">
+                                            <img src="{{ asset('images/icons/linkedin.webp') }}" alt="LinkedIn" width="18" height="18" style="vertical-align: middle;">
                                         </a>
                                         @endif
                                     </td>

@@ -27,6 +27,8 @@ class WalletService
     protected int $maxRetries = 3;
     protected int $retryDelayMs = 100;
     protected int $idempotencyKeyTtlHours = 24;
+    protected float $minDeposit = 5.00;
+    protected float $maxBalance = 10000.00;
 
     public function __construct()
     {
@@ -34,13 +36,37 @@ class WalletService
     }
 
     /**
-     * Load settings from database.
+     * Load settings from database with config fallbacks.
      */
     protected function loadSettings(): void
     {
-        $this->holdExpirationMinutes = (int) Setting::get('wallet_hold_expiration_minutes', 30);
+        // Database settings take priority, then config, then defaults
+        $configHoldHours = config('wallet.hold_expiry_hours', 24);
+        $this->holdExpirationMinutes = (int) Setting::get('wallet_hold_expiration_minutes', $configHoldHours * 60);
+
         $this->maxRetries = (int) Setting::get('wallet_max_retries', 3);
-        $this->idempotencyKeyTtlHours = (int) Setting::get('wallet_idempotency_key_ttl_hours', 24);
+
+        $configIdempotencyTtl = config('wallet.idempotency_ttl_hours', 24);
+        $this->idempotencyKeyTtlHours = (int) Setting::get('wallet_idempotency_key_ttl_hours', $configIdempotencyTtl);
+
+        $this->minDeposit = (float) config('wallet.min_deposit', 5.00);
+        $this->maxBalance = (float) config('wallet.max_balance', 10000.00);
+    }
+
+    /**
+     * Get minimum deposit amount.
+     */
+    public function getMinDeposit(): float
+    {
+        return $this->minDeposit;
+    }
+
+    /**
+     * Get maximum wallet balance.
+     */
+    public function getMaxBalance(): float
+    {
+        return $this->maxBalance;
     }
 
     /**
@@ -111,15 +137,6 @@ class WalletService
             'idempotency_key' => $idempotencyKey,
         ]);
 
-        // Check idempotency first
-        $cached = $this->checkIdempotency($wallet, $idempotencyKey, WalletIdempotencyKey::OPERATION_HOLD);
-        if ($cached && isset($cached['hold_id'])) {
-            Log::info('WalletService: Returning cached hold from idempotency', [
-                'hold_id' => $cached['hold_id'],
-            ]);
-            return WalletHold::findOrFail($cached['hold_id']);
-        }
-
         return $this->executeWithRetry(function () use (
             $wallet, $amount, $idempotencyKey, $description,
             $holdable, $metadata, $expirationMinutes
@@ -130,6 +147,15 @@ class WalletService
             ) {
                 // Lock wallet row for update (pessimistic locking)
                 $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->firstOrFail();
+
+                // Check idempotency INSIDE transaction with lock to prevent race conditions
+                $cached = $this->checkIdempotencyWithLock($wallet, $idempotencyKey, WalletIdempotencyKey::OPERATION_HOLD);
+                if ($cached && isset($cached['hold_id'])) {
+                    Log::info('WalletService: Returning cached hold from idempotency', [
+                        'hold_id' => $cached['hold_id'],
+                    ]);
+                    return WalletHold::findOrFail($cached['hold_id']);
+                }
 
                 // Validate wallet state
                 $this->validateWallet($wallet);
@@ -362,15 +388,6 @@ class WalletService
             'idempotency_key' => $idempotencyKey,
         ]);
 
-        // Check idempotency first
-        $cached = $this->checkIdempotency($wallet, $idempotencyKey, WalletIdempotencyKey::OPERATION_PURCHASE);
-        if ($cached && isset($cached['transaction_id'])) {
-            Log::info('WalletService: Returning cached transaction from idempotency', [
-                'transaction_id' => $cached['transaction_id'],
-            ]);
-            return WalletTransaction::findOrFail($cached['transaction_id']);
-        }
-
         return $this->executeWithRetry(function () use (
             $wallet, $amount, $idempotencyKey, $description, $transactionable, $metadata
         ) {
@@ -378,6 +395,15 @@ class WalletService
                 $wallet, $amount, $idempotencyKey, $description, $transactionable, $metadata
             ) {
                 $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->firstOrFail();
+
+                // Check idempotency INSIDE transaction with lock to prevent race conditions
+                $cached = $this->checkIdempotencyWithLock($wallet, $idempotencyKey, WalletIdempotencyKey::OPERATION_PURCHASE);
+                if ($cached && isset($cached['transaction_id'])) {
+                    Log::info('WalletService: Returning cached transaction from idempotency', [
+                        'transaction_id' => $cached['transaction_id'],
+                    ]);
+                    return WalletTransaction::findOrFail($cached['transaction_id']);
+                }
 
                 $this->validateWallet($wallet);
 
@@ -443,15 +469,6 @@ class WalletService
             'idempotency_key' => $idempotencyKey,
         ]);
 
-        // Check idempotency first
-        $cached = $this->checkIdempotency($wallet, $idempotencyKey, WalletIdempotencyKey::OPERATION_REFUND);
-        if ($cached && isset($cached['transaction_id'])) {
-            Log::info('WalletService: Returning cached refund from idempotency', [
-                'transaction_id' => $cached['transaction_id'],
-            ]);
-            return WalletTransaction::findOrFail($cached['transaction_id']);
-        }
-
         return $this->executeWithRetry(function () use (
             $wallet, $amount, $idempotencyKey, $description, $transactionable, $metadata
         ) {
@@ -459,6 +476,15 @@ class WalletService
                 $wallet, $amount, $idempotencyKey, $description, $transactionable, $metadata
             ) {
                 $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->firstOrFail();
+
+                // Check idempotency INSIDE transaction with lock to prevent race conditions
+                $cached = $this->checkIdempotencyWithLock($wallet, $idempotencyKey, WalletIdempotencyKey::OPERATION_REFUND);
+                if ($cached && isset($cached['transaction_id'])) {
+                    Log::info('WalletService: Returning cached refund from idempotency', [
+                        'transaction_id' => $cached['transaction_id'],
+                    ]);
+                    return WalletTransaction::findOrFail($cached['transaction_id']);
+                }
 
                 $balanceBefore = $wallet->balance;
                 $wallet->balance += $amount;
@@ -567,10 +593,31 @@ class WalletService
 
     /**
      * Check if an idempotency key exists and return cached response.
+     * Note: Use checkIdempotencyWithLock inside transactions to prevent race conditions.
      */
     public function checkIdempotency(Wallet $wallet, string $key, string $operation): ?array
     {
         $record = WalletIdempotencyKey::findValid($key, $wallet->id);
+
+        if ($record && $record->operation === $operation) {
+            return $record->response;
+        }
+
+        return null;
+    }
+
+    /**
+     * Check idempotency with row-level locking to prevent race conditions.
+     * MUST be called inside a DB transaction for the lock to be effective.
+     */
+    public function checkIdempotencyWithLock(Wallet $wallet, string $key, string $operation): ?array
+    {
+        // Use lockForUpdate to prevent concurrent inserts with the same key
+        $record = WalletIdempotencyKey::where('key', $key)
+            ->where('wallet_id', $wallet->id)
+            ->where('expires_at', '>', now())
+            ->lockForUpdate()
+            ->first();
 
         if ($record && $record->operation === $operation) {
             return $record->response;

@@ -173,9 +173,27 @@ class DashboardController extends Controller
         ));
     }
 
-    public function purchases()
+    public function purchases(Request $request)
     {
-        $orders = auth()->user()->orders()->with(['items.product', 'items.license'])->latest()->paginate(10);
+        $query = auth()->user()->orders()->with(['items.product', 'items.license']);
+
+        // Search by order number or product name
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('order_number', 'like', "%{$search}%")
+                  ->orWhereHas('items', function ($itemQuery) use ($search) {
+                      $itemQuery->where('product_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Filter by status
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
+        }
+
+        $orders = $query->latest()->paginate(10);
+
         return view('pages.purchases', compact('orders'));
     }
 

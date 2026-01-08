@@ -59,18 +59,20 @@ return [
         ],
 
         'single' => [
-            'driver' => 'single',
+            'driver' => 'custom',
+            'via' => \App\Logging\CreateSanitizedLogger::class,
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
-            'replace_placeholders' => true,
+            'name' => 'laravel',
         ],
 
         'daily' => [
-            'driver' => 'daily',
+            'driver' => 'custom',
+            'via' => \App\Logging\CreateSanitizedLogger::class,
             'path' => storage_path('logs/laravel.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
-            'replace_placeholders' => true,
+            'name' => 'laravel',
         ],
 
         'slack' => [
@@ -128,19 +130,30 @@ return [
         ],
 
         'errors' => [
-            'driver' => 'daily',
+            'driver' => 'custom',
+            'via' => \App\Logging\CreateSanitizedLogger::class,
             'path' => storage_path('logs/errors.log'),
             'level' => 'warning',
             'days' => 30,
-            'replace_placeholders' => true,
+            'name' => 'errors',
         ],
 
         'fraud' => [
-            'driver' => 'daily',
+            'driver' => 'custom',
+            'via' => \App\Logging\CreateSanitizedLogger::class,
             'path' => storage_path('logs/fraud.log'),
             'level' => 'info',
             'days' => 90,
-            'replace_placeholders' => true,
+            'name' => 'fraud',
+        ],
+
+        'security' => [
+            'driver' => 'custom',
+            'via' => \App\Logging\CreateSanitizedLogger::class,
+            'path' => storage_path('logs/security.log'),
+            'level' => 'info',
+            'days' => 90,
+            'name' => 'security',
         ],
 
     ],

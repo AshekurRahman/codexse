@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Seller;
 
 use App\Http\Controllers\Controller;
 use App\Models\SellerVerification;
+use App\Rules\SecureFileUpload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -74,9 +75,9 @@ class VerificationController extends Controller
             'date_of_birth' => 'nullable|date|before:today',
             'country' => 'required|string|max:100',
             'address' => 'nullable|string|max:500',
-            'document_front' => 'required|image|max:5120', // 5MB
-            'document_back' => 'nullable|image|max:5120',
-            'selfie_with_document' => 'required_if:verification_type,identity|image|max:5120',
+            'document_front' => ['required', SecureFileUpload::identityDocument(5)],
+            'document_back' => ['nullable', SecureFileUpload::identityDocument(5)],
+            'selfie_with_document' => ['required_if:verification_type,identity', SecureFileUpload::identityDocument(5)],
         ]);
 
         // Upload documents

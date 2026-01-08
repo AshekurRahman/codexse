@@ -104,11 +104,11 @@ class CustomerInsightsWidget extends Widget
                 'users.id',
                 'users.name',
                 'users.email',
-                'users.avatar',
+                'users.social_avatar',
                 DB::raw('COUNT(orders.id) as orders_count'),
                 DB::raw('SUM(orders.total) as total_spent')
             )
-            ->groupBy('users.id', 'users.name', 'users.email', 'users.avatar')
+            ->groupBy('users.id', 'users.name', 'users.email', 'users.social_avatar')
             ->orderByDesc('total_spent')
             ->limit(5)
             ->get()
@@ -116,7 +116,7 @@ class CustomerInsightsWidget extends Widget
                 'id' => $customer->id,
                 'name' => $customer->name,
                 'email' => $customer->email,
-                'avatar' => $customer->avatar,
+                'avatar' => $customer->social_avatar,
                 'orders_count' => $customer->orders_count,
                 'total_spent' => $customer->total_spent,
             ])

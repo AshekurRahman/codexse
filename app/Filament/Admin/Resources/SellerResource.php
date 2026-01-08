@@ -3,11 +3,15 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\SellerResource\Pages;
+use App\Filament\Admin\Traits\HasResourceAuthorization;
 use App\Models\Seller;
 use App\Notifications\SellerApplicationApproved;
 use App\Notifications\SellerApplicationRejected;
+use App\Services\ActivityLogService;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Infolists;
+use Filament\Infolists\Infolist;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -17,6 +21,8 @@ use Illuminate\Support\Str;
 
 class SellerResource extends Resource
 {
+    use HasResourceAuthorization;
+
     protected static ?string $model = Seller::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
@@ -26,6 +32,8 @@ class SellerResource extends Resource
     protected static ?int $navigationSort = 2;
 
     protected static ?string $recordTitleAttribute = 'store_name';
+
+    protected static ?string $permissionName = 'seller';
 
     public static function getNavigationBadge(): ?string
     {
@@ -189,6 +197,9 @@ class SellerResource extends Resource
                     ->action(function ($record) {
                         $record->update(['status' => 'approved', 'approved_at' => now()]);
 
+                        // Log the approval
+                        ActivityLogService::logAdminSellerApproved($record, auth()->user());
+
                         // Send approval notification
                         try {
                             $record->user->notify(new SellerApplicationApproved($record));
@@ -216,6 +227,9 @@ class SellerResource extends Resource
                     ->action(function ($record, array $data) {
                         $record->update(['status' => 'rejected']);
 
+                        // Log the rejection
+                        ActivityLogService::logAdminSellerRejected($record, auth()->user(), $data['rejection_reason']);
+
                         // Send rejection notification
                         try {
                             $record->user->notify(new SellerApplicationRejected($record, $data['rejection_reason']));
@@ -236,6 +250,128 @@ class SellerResource extends Resource
             ]);
     }
 
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                Infolists\Components\Section::make('Store Information')
+                    ->schema([
+                        Infolists\Components\ImageEntry::make('logo')
+                            ->label('Logo')
+                            ->circular()
+                            ->defaultImageUrl(fn ($record) => $record->logo_url),
+                        Infolists\Components\TextEntry::make('store_name')
+                            ->label('Store Name'),
+                        Infolists\Components\TextEntry::make('store_slug')
+                            ->label('Store Slug')
+                            ->copyable(),
+                        Infolists\Components\TextEntry::make('user.name')
+                            ->label('Owner'),
+                        Infolists\Components\TextEntry::make('user.email')
+                            ->label('Email')
+                            ->copyable(),
+                        Infolists\Components\TextEntry::make('website')
+                            ->label('Website')
+                            ->url(fn ($state) => $state)
+                            ->openUrlInNewTab(),
+                        Infolists\Components\TextEntry::make('description')
+                            ->label('Description')
+                            ->columnSpanFull(),
+                    ])->columns(3),
+
+                Infolists\Components\Section::make('Categories')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('categories')
+                            ->label('Selected Categories')
+                            ->badge()
+                            ->separator(',')
+                            ->formatStateUsing(fn ($state) => is_array($state) ? implode(', ', $state) : $state),
+                        Infolists\Components\TextEntry::make('other_category')
+                            ->label('Custom Category')
+                            ->visible(fn ($record) => !empty($record->other_category)),
+                    ])->columns(2),
+
+                Infolists\Components\Section::make('Status & Level')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('status')
+                            ->badge()
+                            ->color(fn (string $state): string => match ($state) {
+                                'pending' => 'warning',
+                                'approved' => 'success',
+                                'suspended' => 'danger',
+                                'rejected' => 'gray',
+                                default => 'gray',
+                            }),
+                        Infolists\Components\TextEntry::make('level')
+                            ->badge()
+                            ->color(fn (string $state): string => match ($state) {
+                                'bronze' => 'gray',
+                                'silver' => 'info',
+                                'gold' => 'warning',
+                                'platinum' => 'success',
+                                default => 'gray',
+                            }),
+                        Infolists\Components\IconEntry::make('is_verified')
+                            ->label('Verified')
+                            ->boolean(),
+                        Infolists\Components\IconEntry::make('is_featured')
+                            ->label('Featured')
+                            ->boolean(),
+                        Infolists\Components\TextEntry::make('approved_at')
+                            ->label('Approved At')
+                            ->dateTime(),
+                    ])->columns(5),
+
+                Infolists\Components\Section::make('Statistics')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('products_count')
+                            ->label('Products'),
+                        Infolists\Components\TextEntry::make('total_sales')
+                            ->label('Total Sales')
+                            ->money('USD'),
+                        Infolists\Components\TextEntry::make('total_earnings')
+                            ->label('Total Earnings')
+                            ->money('USD'),
+                        Infolists\Components\TextEntry::make('available_balance')
+                            ->label('Available Balance')
+                            ->money('USD'),
+                        Infolists\Components\TextEntry::make('commission_rate')
+                            ->label('Custom Commission')
+                            ->suffix('%')
+                            ->placeholder('Using default'),
+                    ])->columns(5),
+
+                Infolists\Components\Section::make('Vacation Mode')
+                    ->schema([
+                        Infolists\Components\IconEntry::make('is_on_vacation')
+                            ->label('On Vacation')
+                            ->boolean(),
+                        Infolists\Components\TextEntry::make('vacation_message')
+                            ->label('Vacation Message')
+                            ->visible(fn ($record) => $record->is_on_vacation),
+                        Infolists\Components\TextEntry::make('vacation_started_at')
+                            ->label('Started')
+                            ->dateTime()
+                            ->visible(fn ($record) => $record->is_on_vacation),
+                        Infolists\Components\TextEntry::make('vacation_ends_at')
+                            ->label('Ends')
+                            ->dateTime()
+                            ->visible(fn ($record) => $record->is_on_vacation),
+                    ])->columns(4)
+                    ->visible(fn ($record) => $record->is_on_vacation),
+
+                Infolists\Components\Section::make('Timestamps')
+                    ->schema([
+                        Infolists\Components\TextEntry::make('created_at')
+                            ->label('Applied At')
+                            ->dateTime(),
+                        Infolists\Components\TextEntry::make('updated_at')
+                            ->label('Last Updated')
+                            ->dateTime(),
+                    ])->columns(2),
+            ]);
+    }
+
     public static function getRelations(): array
     {
         return [];
@@ -246,6 +382,7 @@ class SellerResource extends Resource
         return [
             'index' => Pages\ListSellers::route('/'),
             'create' => Pages\CreateSeller::route('/create'),
+            'view' => Pages\ViewSeller::route('/{record}'),
             'edit' => Pages\EditSeller::route('/{record}/edit'),
         ];
     }

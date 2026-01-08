@@ -178,22 +178,87 @@ class SecurityDashboard extends Page
             return;
         }
 
-        BlockedIp::block(
-            $this->blockIpAddress,
-            $this->blockReason ?? 'Manual block',
-            'admin:' . auth()->id(),
-            $this->blockDuration
-        );
+        // Validate IP address format (IPv4, IPv6, or CIDR notation)
+        $ip = trim($this->blockIpAddress);
 
-        Notification::make()
-            ->title('IP blocked successfully')
-            ->body("IP {$this->blockIpAddress} has been blocked")
-            ->success()
-            ->send();
+        // Check for CIDR notation (e.g., 192.168.1.0/24)
+        if (str_contains($ip, '/')) {
+            $parts = explode('/', $ip);
+            if (count($parts) !== 2) {
+                Notification::make()
+                    ->title('Invalid CIDR notation')
+                    ->body('CIDR format should be like 192.168.1.0/24 or 2001:db8::/32')
+                    ->danger()
+                    ->send();
+                return;
+            }
 
-        $this->blockIpAddress = null;
-        $this->blockReason = null;
-        $this->blockDuration = 24;
+            $baseIp = $parts[0];
+            $prefix = $parts[1];
+
+            // Validate base IP
+            if (!filter_var($baseIp, FILTER_VALIDATE_IP)) {
+                Notification::make()
+                    ->title('Invalid IP address in CIDR notation')
+                    ->body('The base IP address is not valid')
+                    ->danger()
+                    ->send();
+                return;
+            }
+
+            // Validate prefix length
+            $isIpv4 = filter_var($baseIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4);
+            $maxPrefix = $isIpv4 ? 32 : 128;
+
+            if (!is_numeric($prefix) || $prefix < 0 || $prefix > $maxPrefix) {
+                Notification::make()
+                    ->title('Invalid CIDR prefix')
+                    ->body("Prefix must be between 0 and {$maxPrefix}")
+                    ->danger()
+                    ->send();
+                return;
+            }
+        } else {
+            // Validate single IP address (IPv4 or IPv6)
+            if (!filter_var($ip, FILTER_VALIDATE_IP)) {
+                Notification::make()
+                    ->title('Invalid IP address')
+                    ->body('Please enter a valid IPv4 or IPv6 address')
+                    ->danger()
+                    ->send();
+                return;
+            }
+        }
+
+        // Validate block duration
+        if (!is_numeric($this->blockDuration) || $this->blockDuration < 1) {
+            $this->blockDuration = 24;
+        }
+
+        try {
+            BlockedIp::block(
+                $ip,
+                $this->blockReason ?? 'Manual block',
+                'admin:' . auth()->id(),
+                $this->blockDuration
+            );
+
+            Notification::make()
+                ->title('IP blocked successfully')
+                ->body("IP {$ip} has been blocked for {$this->blockDuration} hours")
+                ->success()
+                ->send();
+
+            $this->blockIpAddress = null;
+            $this->blockReason = null;
+            $this->blockDuration = 24;
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('Failed to block IP')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
     }
 
     public function unblockIp(int $id): void

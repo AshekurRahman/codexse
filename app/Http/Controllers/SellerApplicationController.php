@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Seller;
 use App\Models\Setting;
 use App\Models\User;
 use App\Notifications\NewSellerApplicationNotification;
 use App\Notifications\SellerApplicationSubmitted;
+use App\Rules\SecureFileUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -60,8 +62,14 @@ class SellerApplicationController extends Controller
             return redirect()->route('seller.pending');
         }
 
+        $categories = Category::where('is_active', true)
+            ->whereNull('parent_id')
+            ->orderBy('name')
+            ->get();
+
         return view('pages.seller.apply', [
             'existingApplication' => $user->seller,
+            'categories' => $categories,
         ]);
     }
 
@@ -81,16 +89,19 @@ class SellerApplicationController extends Controller
             'store_name' => 'required|string|max:255|unique:sellers,store_name' . ($user->seller ? ',' . $user->seller->id : ''),
             'description' => 'required|string|min:50|max:1000',
             'website' => 'nullable|url|max:255',
-            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'logo' => ['nullable', SecureFileUpload::imageOnly(2)],
             'portfolio_url' => 'nullable|url|max:255',
-            'product_types' => 'required|array|min:1',
-            'product_types.*' => 'string|in:ui-kits,templates,icons,illustrations,themes,code,fonts,mockups,other',
+            'categories' => 'required|array|min:1',
+            'categories.*' => 'string',
+            'other_category' => 'nullable|string|max:255|required_if:categories.*,other',
             'experience' => 'required|string|in:beginner,intermediate,expert',
             'terms' => 'required|accepted',
         ], [
             'store_name.unique' => 'This store name is already taken. Please choose another.',
             'description.min' => 'Please provide at least 50 characters describing your store and products.',
             'terms.accepted' => 'You must agree to the Seller Terms and Conditions.',
+            'categories.required' => 'Please select at least one category.',
+            'other_category.required_if' => 'Please specify your category when selecting "Other".',
         ]);
 
         // Handle logo upload
@@ -103,6 +114,8 @@ class SellerApplicationController extends Controller
         $sellerData = [
             'store_name' => $validated['store_name'],
             'description' => $validated['description'],
+            'categories' => $validated['categories'],
+            'other_category' => in_array('other', $validated['categories']) ? ($validated['other_category'] ?? null) : null,
             'website' => $validated['website'] ?? null,
             'logo' => $logoPath,
             'status' => 'pending',

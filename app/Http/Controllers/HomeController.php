@@ -24,15 +24,16 @@ class HomeController extends Controller
             ->take(8)
             ->get();
 
-        // Cache categories for 1 hour
+        // Cache homepage categories for 1 hour
         $categories = Cache::remember('home_categories', 3600, function () {
             return Category::withCount([
                     'products' => function ($query) {
                         $query->where('status', 'published');
                     }
                 ])
-                ->whereNull('parent_id')
-                ->orderBy('name')
+                ->where('is_active', true)
+                ->where('show_on_homepage', true)
+                ->orderBy('sort_order')
                 ->get();
         });
 

@@ -19,6 +19,8 @@ class Seller extends Model
         'store_name',
         'store_slug',
         'description',
+        'categories',
+        'other_category',
         'logo',
         'banner',
         'website',
@@ -47,6 +49,7 @@ class Seller extends Model
     protected function casts(): array
     {
         return [
+            'categories' => 'array',
             'stripe_onboarding_complete' => 'boolean',
             'is_verified' => 'boolean',
             'verification_badges' => 'array',

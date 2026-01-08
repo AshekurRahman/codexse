@@ -85,10 +85,7 @@ You received a new proposal for "{{ $job->title }}" from {{ $proposal->seller->u
 <div style="background: #ffffff;">
     <div style="text-align: center; padding: 20px 40px 32px;">
         <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%); border-radius: 20px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.4);">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M14 2V8H20M16 13H8M16 17H8M10 9H8" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
+<img src="{{ asset('images/email/file-text.webp') }}" alt="Proposal" style="width: 40px; height: 40px;">
         </div>
         <h1 style="font-size: 28px; font-weight: 700; color: #111827; margin: 0 0 8px;">New Proposal Received!</h1>
         <p style="font-size: 16px; color: #6b7280; margin: 0;">Someone wants to work on your project</p>

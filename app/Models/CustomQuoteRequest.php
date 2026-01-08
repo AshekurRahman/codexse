@@ -26,6 +26,9 @@ class CustomQuoteRequest extends Model
     ];
 
     protected $casts = [
+        'buyer_id' => 'integer',
+        'seller_id' => 'integer',
+        'service_id' => 'integer',
         'budget_min' => 'decimal:2',
         'budget_max' => 'decimal:2',
         'deadline' => 'date',

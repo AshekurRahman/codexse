@@ -7,6 +7,7 @@ use App\Models\JobMilestone;
 use App\Models\ServiceOrder;
 use App\Services\EscrowService;
 use App\Services\StripeService;
+use App\Services\WebhookProtectionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Stripe\Webhook;
@@ -15,11 +16,16 @@ class EscrowController extends Controller
 {
     protected EscrowService $escrowService;
     protected StripeService $stripeService;
+    protected WebhookProtectionService $webhookProtection;
 
-    public function __construct(EscrowService $escrowService, StripeService $stripeService)
-    {
+    public function __construct(
+        EscrowService $escrowService,
+        StripeService $stripeService,
+        WebhookProtectionService $webhookProtection
+    ) {
         $this->escrowService = $escrowService;
         $this->stripeService = $stripeService;
+        $this->webhookProtection = $webhookProtection;
     }
 
     /**
@@ -295,6 +301,12 @@ class EscrowController extends Controller
                     'new_status' => $newStatus,
                 ]);
 
+                // If user's session was lost (SameSite=strict), redirect to login
+                if (!auth()->check()) {
+                    return redirect()->route('login')
+                        ->with('success', 'Payment successful! Your order has been placed. Please log in to view your order details.');
+                }
+
                 return redirect()->route('service-orders.show', $escrowable)
                     ->with('success', 'Payment successful! Your order has been placed.');
 
@@ -318,6 +330,12 @@ class EscrowController extends Controller
                     'milestone_id' => $escrowable->id,
                     'contract_id' => $contract?->id,
                 ]);
+
+                // If user's session was lost (SameSite=strict), redirect to login
+                if (!auth()->check()) {
+                    return redirect()->route('login')
+                        ->with('success', 'Milestone funded successfully! Please log in to view your contract.');
+                }
 
                 return redirect()->route('contracts.show', $contract)
                     ->with('success', 'Milestone funded successfully!');
@@ -365,43 +383,73 @@ class EscrowController extends Controller
             return response('Webhook error', 400);
         }
 
+        // Replay attack prevention: validate event hasn't been processed
+        $validation = $this->webhookProtection->validateStripeEvent($event, $request);
+        if (!$validation['valid']) {
+            Log::warning('Escrow webhook replay detected', [
+                'event_id' => $event->id,
+                'event_type' => $event->type,
+                'error' => $validation['error'],
+                'ip' => $request->ip(),
+            ]);
+            return response($validation['error'], 400);
+        }
+
+        $webhookRecord = $validation['webhook'];
+
         Log::info('Escrow webhook: Received event', [
             'type' => $event->type,
             'id' => $event->id,
         ]);
 
-        switch ($event->type) {
-            case 'payment_intent.succeeded':
-                $paymentIntent = $event->data->object;
-                $this->escrowService->handlePaymentSucceeded($paymentIntent->id);
-                Log::info('Escrow webhook: Payment succeeded', [
-                    'payment_intent_id' => $paymentIntent->id,
-                ]);
-                break;
+        try {
+            switch ($event->type) {
+                case 'payment_intent.succeeded':
+                    $paymentIntent = $event->data->object;
+                    $this->escrowService->handlePaymentSucceeded($paymentIntent->id);
+                    Log::info('Escrow webhook: Payment succeeded', [
+                        'payment_intent_id' => $paymentIntent->id,
+                    ]);
+                    break;
 
-            case 'payment_intent.payment_failed':
-                $paymentIntent = $event->data->object;
-                $this->escrowService->handlePaymentFailed($paymentIntent->id);
-                Log::warning('Escrow webhook: Payment failed', [
-                    'payment_intent_id' => $paymentIntent->id,
-                ]);
-                break;
+                case 'payment_intent.payment_failed':
+                    $paymentIntent = $event->data->object;
+                    $this->escrowService->handlePaymentFailed($paymentIntent->id);
+                    Log::warning('Escrow webhook: Payment failed', [
+                        'payment_intent_id' => $paymentIntent->id,
+                    ]);
+                    break;
 
-            case 'payment_intent.canceled':
-                $paymentIntent = $event->data->object;
-                $this->escrowService->handlePaymentFailed($paymentIntent->id);
-                Log::info('Escrow webhook: Payment canceled', [
-                    'payment_intent_id' => $paymentIntent->id,
-                ]);
-                break;
+                case 'payment_intent.canceled':
+                    $paymentIntent = $event->data->object;
+                    $this->escrowService->handlePaymentFailed($paymentIntent->id);
+                    Log::info('Escrow webhook: Payment canceled', [
+                        'payment_intent_id' => $paymentIntent->id,
+                    ]);
+                    break;
 
-            default:
-                Log::info('Escrow webhook: Unhandled event type', [
-                    'type' => $event->type,
-                ]);
+                default:
+                    Log::info('Escrow webhook: Unhandled event type', [
+                        'type' => $event->type,
+                    ]);
+            }
+
+            // Mark webhook as successfully processed
+            $webhookRecord?->markCompleted();
+
+            return response('OK', 200);
+
+        } catch (\Exception $e) {
+            $webhookRecord?->markFailed();
+
+            Log::error('Escrow webhook processing error', [
+                'event_id' => $event->id,
+                'event_type' => $event->type,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw $e;
         }
-
-        return response('OK', 200);
     }
 
     /**

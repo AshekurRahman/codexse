@@ -10,10 +10,19 @@ use Symfony\Component\HttpFoundation\Response;
 class SecurityHeaders
 {
     /**
+     * CSP nonce for inline scripts.
+     */
+    protected string $nonce;
+
+    /**
      * Security headers to protect against common web vulnerabilities.
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Generate a unique nonce for this request
+        $this->nonce = base64_encode(random_bytes(16));
+        $request->attributes->set('cspNonce', $this->nonce);
+
         $response = $next($request);
 
         // Only add headers if security is enabled
@@ -68,14 +77,15 @@ class SecurityHeaders
     protected function getContentSecurityPolicy(Request $request): string
     {
         $appUrl = parse_url(config('app.url'), PHP_URL_HOST) ?? 'localhost';
+        $nonce = $this->nonce;
 
-        // Base CSP directives
+        // Base CSP directives - using nonces instead of unsafe-inline/unsafe-eval
         $directives = [
             "default-src" => ["'self'"],
             "script-src" => [
                 "'self'",
-                "'unsafe-inline'", // Required for Livewire/Alpine
-                "'unsafe-eval'", // Required for some JS libraries
+                "'nonce-{$nonce}'", // Nonce for inline scripts (Livewire/Alpine)
+                "'strict-dynamic'", // Allow scripts loaded by nonced scripts
                 "https://cdn.jsdelivr.net",
                 "https://cdnjs.cloudflare.com",
                 "https://www.googletagmanager.com",
@@ -86,7 +96,8 @@ class SecurityHeaders
             ],
             "style-src" => [
                 "'self'",
-                "'unsafe-inline'", // Required for Tailwind/inline styles
+                "'nonce-{$nonce}'", // Nonce for inline styles
+                "'unsafe-inline'", // Fallback for older browsers and Tailwind
                 "https://fonts.googleapis.com",
                 "https://fonts.bunny.net",
                 "https://cdn.jsdelivr.net",

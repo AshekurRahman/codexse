@@ -54,9 +54,7 @@ Great news! {{ format_price($escrow->amount) }} has been released to your wallet
 <div style="background: #ffffff;">
     <div style="text-align: center; padding: 20px 40px 32px;">
         <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 20px; margin: 0 auto 24px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.4);">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2V6M12 18V22M4.93 4.93L7.76 7.76M16.24 16.24L19.07 19.07M2 12H6M18 12H22M4.93 19.07L7.76 16.24M16.24 7.76L19.07 4.93" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
-            </svg>
+<img src="{{ asset('images/email/dollar-sign.webp') }}" alt="Payment Released" style="width: 40px; height: 40px;">
         </div>
         <h1 style="font-size: 28px; font-weight: 700; color: #111827; margin: 0 0 8px;">Payment Released!</h1>
         <p style="font-size: 16px; color: #6b7280; margin: 0;">Your earnings are now in your wallet</p>

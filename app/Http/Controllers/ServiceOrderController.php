@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ServiceDelivery;
 use App\Models\ServiceOrder;
+use App\Rules\SecureFileUpload;
 use App\Services\EscrowService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -83,7 +84,7 @@ class ServiceOrderController extends Controller
             }
 
             if ($requirement->type === 'file') {
-                $rules[$key] .= '|file|max:10240';
+                $rules[$key] = [$rules[$key], 'file', SecureFileUpload::attachment(10)];
             }
         }
 

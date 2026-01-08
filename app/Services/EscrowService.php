@@ -10,6 +10,7 @@ use App\Models\ServiceOrder;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Stripe\PaymentIntent;
@@ -25,14 +26,34 @@ class EscrowService
     public function __construct(StripeService $stripeService)
     {
         $this->stripeService = $stripeService;
-        // Use service commission rate from admin settings (default 20%)
-        $this->platformFeeRate = CommissionSettings::getServiceCommissionRate();
-        $this->autoReleaseAfterDays = (int) Setting::get('escrow_auto_release_days', 3);
+        // Use service commission rate from admin settings, fallback to config
+        $this->platformFeeRate = CommissionSettings::getServiceCommissionRate()
+            ?: (config('escrow.platform_fee_percent', 20) / 100);
+
+        // Database setting takes priority, then config
+        $configAutoRelease = config('escrow.auto_release_days', 3);
+        $this->autoReleaseAfterDays = (int) Setting::get('escrow_auto_release_days', $configAutoRelease);
 
         // Set Stripe API key if configured
         if ($this->stripeService->isConfigured()) {
             Stripe::setApiKey($this->stripeService->getSecretKey());
         }
+    }
+
+    /**
+     * Get the auto-release days setting.
+     */
+    public function getAutoReleaseDays(): int
+    {
+        return $this->autoReleaseAfterDays;
+    }
+
+    /**
+     * Get the platform fee rate.
+     */
+    public function getPlatformFeeRate(): float
+    {
+        return $this->platformFeeRate;
     }
 
     /**
@@ -119,6 +140,9 @@ class EscrowService
                 'payment_intent_id' => $paymentIntent->id,
             ]);
 
+            // Log the escrow creation
+            ActivityLogService::logEscrowCreated($escrowTransaction, $payer);
+
             return [
                 'payment_intent' => $paymentIntent,
                 'escrow_transaction' => $escrowTransaction,
@@ -168,6 +192,9 @@ class EscrowService
                 'transaction_id' => $transaction->id,
                 'auto_release_at' => now()->addDays($this->autoReleaseAfterDays)->toDateTimeString(),
             ]);
+
+            // Log the escrow hold
+            ActivityLogService::logEscrowHeld($transaction);
 
             return true;
         } catch (\Exception $e) {
@@ -277,6 +304,10 @@ class EscrowService
                 'transaction_number' => $transaction->transaction_number ?? null,
                 'seller_amount' => $transaction->seller_amount,
             ]);
+
+            // Log the escrow release
+            ActivityLogService::logEscrowReleased($transaction, Auth::user(), $notes);
+
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
@@ -343,6 +374,10 @@ class EscrowService
                 'transaction_number' => $transaction->transaction_number ?? null,
                 'amount' => $transaction->amount,
             ]);
+
+            // Log the escrow refund
+            ActivityLogService::logEscrowRefunded($transaction, Auth::user(), $reason);
+
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
@@ -357,7 +392,7 @@ class EscrowService
     /**
      * Mark escrow as disputed.
      */
-    public function markAsDisputed(EscrowTransaction $transaction): bool
+    public function markAsDisputed(EscrowTransaction $transaction, ?User $disputedBy = null): bool
     {
         if (!$transaction->canDispute()) {
             return false;
@@ -366,6 +401,11 @@ class EscrowService
         $transaction->update([
             'status' => 'disputed',
         ]);
+
+        // Log the escrow dispute
+        if ($disputedBy) {
+            ActivityLogService::logEscrowDisputed($transaction, $disputedBy);
+        }
 
         return true;
     }

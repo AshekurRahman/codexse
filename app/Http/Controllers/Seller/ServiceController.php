@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Service;
 use App\Models\ServicePackage;
 use App\Models\ServiceRequirement;
+use App\Rules\SecureFileUpload;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -42,8 +43,8 @@ class ServiceController extends Controller
             'description' => 'required|string',
             'short_description' => 'nullable|string|max:500',
             'category_id' => 'required|exists:categories,id',
-            'thumbnail' => 'required|image|max:2048',
-            'gallery_images.*' => 'nullable|image|max:2048',
+            'thumbnail' => ['required', SecureFileUpload::imageOnly(2)],
+            'gallery_images.*' => ['nullable', SecureFileUpload::imageOnly(2)],
             'video_url' => 'nullable|url',
             'tags' => 'nullable|string|max:500',
 
@@ -164,8 +165,8 @@ class ServiceController extends Controller
             'description' => 'required|string',
             'short_description' => 'nullable|string|max:500',
             'category_id' => 'required|exists:categories,id',
-            'thumbnail' => 'nullable|image|max:2048',
-            'gallery_images.*' => 'nullable|image|max:2048',
+            'thumbnail' => ['nullable', SecureFileUpload::imageOnly(2)],
+            'gallery_images.*' => ['nullable', SecureFileUpload::imageOnly(2)],
             'video_url' => 'nullable|url',
             'tags' => 'nullable|string|max:500',
 

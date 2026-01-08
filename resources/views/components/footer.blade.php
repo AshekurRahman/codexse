@@ -6,7 +6,7 @@
                 <!-- Brand -->
                 <div class="col-span-2 lg:col-span-2">
                     <a href="{{ route('home') }}" class="inline-flex items-center gap-2.5 mb-4">
-                        <img src="{{ asset('images/logo-icon.svg') }}" alt="Codexse" class="h-8 w-8">
+                        <img src="{{ asset('images/logo-icon.png') }}" alt="Codexse" class="h-8 w-8">
                         <span class="text-xl font-bold text-white">Codexse</span>
                     </a>
                     <p class="text-surface-400 max-w-sm mb-6">
