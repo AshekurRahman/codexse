@@ -7,7 +7,11 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
-                <a href="{{ route('services.index', ['category' => $service->category_id]) }}" class="hover:text-primary-600">{{ $service->category->name }}</a>
+                @if($service->category)
+                    <a href="{{ route('services.index', ['category' => $service->category_id]) }}" class="hover:text-primary-600">{{ $service->category->name }}</a>
+                @else
+                    <span class="text-surface-500">Uncategorized</span>
+                @endif
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>

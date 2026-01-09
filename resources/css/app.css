@@ -1,3 +1,5 @@
+@import "flatpickr/dist/flatpickr.min.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -663,21 +665,83 @@ html.dark-transition *:after {
     animation: gradient-shift 8s ease infinite;
 }
 
-/* Testimonial card special effects */
+/* Testimonial card glassmorphism effects */
 .testimonial-card {
-    @apply card relative overflow-hidden;
+    @apply relative overflow-hidden rounded-2xl transition-all duration-500;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.dark .testimonial-card {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.testimonial-card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+        0 20px 40px rgba(99, 102, 241, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.dark .testimonial-card:hover {
+    box-shadow:
+        0 20px 40px rgba(99, 102, 241, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .testimonial-card::before {
-    content: '"';
+    content: '';
     position: absolute;
-    top: -20px;
-    left: 20px;
-    font-size: 120px;
-    font-family: Georgia, serif;
-    color: rgba(99, 102, 241, 0.1);
-    line-height: 1;
-    pointer-events: none;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.testimonial-card:hover::before {
+    opacity: 1;
+}
+
+.testimonial-card-quote {
+    @apply absolute -top-2 -right-2 w-16 h-16 rounded-full flex items-center justify-center;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+.testimonial-card-avatar {
+    @apply w-14 h-14 rounded-full object-cover;
+    border: 3px solid transparent;
+    background: linear-gradient(white, white) padding-box,
+                linear-gradient(135deg, #6366f1, #a855f7) border-box;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+}
+
+.dark .testimonial-card-avatar {
+    background: linear-gradient(#1e293b, #1e293b) padding-box,
+                linear-gradient(135deg, #6366f1, #a855f7) border-box;
+}
+
+.testimonial-card-rating {
+    @apply inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+    color: #6366f1;
+}
+
+.dark .testimonial-card-rating {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+    color: #a5b4fc;
 }
 
 /* Trust badge hover effect */
@@ -1712,4 +1776,234 @@ html.dark-transition *:after {
 
 .item-license {
     @apply text-xs text-surface-400 dark:text-surface-500;
+}
+
+/* ===== FLATPICKR DATEPICKER STYLES ===== */
+
+/* Datepicker wrapper */
+.datepicker-wrapper {
+    @apply relative;
+}
+
+.datepicker-wrapper .datepicker-icon {
+    @apply absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-surface-400 dark:text-surface-500;
+}
+
+/* Flatpickr custom theme */
+.flatpickr-calendar {
+    @apply bg-white dark:bg-surface-800 rounded-xl shadow-xl border border-surface-200 dark:border-surface-700 overflow-hidden;
+    font-family: inherit;
+    width: 320px;
+}
+
+.flatpickr-calendar.arrowTop::before,
+.flatpickr-calendar.arrowTop::after,
+.flatpickr-calendar.arrowBottom::before,
+.flatpickr-calendar.arrowBottom::after {
+    display: none;
+}
+
+.flatpickr-months {
+    @apply bg-gradient-to-r from-primary-600 to-primary-700 dark:from-primary-700 dark:to-primary-800 px-3 py-3;
+}
+
+.flatpickr-months .flatpickr-month {
+    @apply h-auto;
+}
+
+.flatpickr-current-month {
+    @apply text-white font-semibold text-base;
+    padding: 0;
+    height: auto;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    @apply bg-transparent text-white font-semibold appearance-none cursor-pointer;
+    background-image: none;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months:hover {
+    @apply bg-white/10 rounded;
+}
+
+.flatpickr-current-month input.cur-year {
+    @apply text-white font-semibold;
+}
+
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+    @apply text-white fill-white p-2 rounded-lg hover:bg-white/10 transition-colors;
+    position: static;
+    height: auto;
+}
+
+.flatpickr-months .flatpickr-prev-month svg,
+.flatpickr-months .flatpickr-next-month svg {
+    @apply w-4 h-4;
+    fill: white;
+}
+
+.flatpickr-innerContainer {
+    @apply p-3;
+}
+
+.flatpickr-weekdays {
+    @apply h-10;
+}
+
+.flatpickr-weekday {
+    @apply text-surface-500 dark:text-surface-400 font-semibold text-xs uppercase;
+}
+
+.flatpickr-days {
+    @apply border-0;
+    width: 100%;
+}
+
+.dayContainer {
+    width: 100%;
+    min-width: 100%;
+    max-width: 100%;
+}
+
+.flatpickr-day {
+    @apply rounded-lg text-surface-700 dark:text-surface-300 font-medium transition-all duration-150;
+    max-width: 40px;
+    height: 40px;
+    line-height: 40px;
+    margin: 2px;
+}
+
+.flatpickr-day:hover {
+    @apply bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-transparent;
+}
+
+.flatpickr-day.today {
+    @apply border-2 border-primary-500 dark:border-primary-400 bg-transparent;
+}
+
+.flatpickr-day.today:hover {
+    @apply bg-primary-100 dark:bg-primary-900/30;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.selected:hover {
+    @apply bg-primary-600 dark:bg-primary-500 text-white border-transparent shadow-lg shadow-primary-500/25;
+}
+
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+    @apply text-surface-400 dark:text-surface-600;
+}
+
+.flatpickr-day.prevMonthDay:hover,
+.flatpickr-day.nextMonthDay:hover {
+    @apply bg-surface-100 dark:bg-surface-700 text-surface-500 dark:text-surface-400;
+}
+
+.flatpickr-day.flatpickr-disabled,
+.flatpickr-day.flatpickr-disabled:hover {
+    @apply text-surface-300 dark:text-surface-600 cursor-not-allowed bg-transparent;
+}
+
+.flatpickr-day.inRange {
+    @apply bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-transparent shadow-none;
+    box-shadow: -5px 0 0 #e0e7ff, 5px 0 0 #e0e7ff;
+}
+
+.dark .flatpickr-day.inRange {
+    box-shadow: -5px 0 0 rgba(99, 102, 241, 0.2), 5px 0 0 rgba(99, 102, 241, 0.2);
+}
+
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+    @apply bg-primary-600 dark:bg-primary-500 text-white;
+}
+
+/* Month/Year dropdowns */
+.flatpickr-monthDropdown-months {
+    @apply bg-white dark:bg-surface-700 text-surface-900 dark:text-white rounded border border-surface-200 dark:border-surface-600;
+}
+
+.flatpickr-monthDropdown-months option {
+    @apply bg-white dark:bg-surface-700;
+}
+
+/* Numeric input for year */
+.numInputWrapper {
+    @apply inline-flex items-center;
+}
+
+.numInputWrapper input {
+    @apply bg-transparent border-0 text-white font-semibold w-16 text-center;
+}
+
+.numInputWrapper span {
+    display: none;
+}
+
+/* Time picker styles */
+.flatpickr-time {
+    @apply border-t border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/50;
+    max-height: none;
+    height: auto;
+    line-height: 1;
+}
+
+.flatpickr-time input {
+    @apply text-surface-900 dark:text-white font-medium text-lg;
+}
+
+.flatpickr-time .flatpickr-am-pm {
+    @apply text-surface-700 dark:text-surface-300 font-medium;
+}
+
+.flatpickr-time .flatpickr-time-separator {
+    @apply text-surface-400 dark:text-surface-500;
+}
+
+/* Animation */
+.flatpickr-calendar.animate.open {
+    animation: fpFadeIn 0.2s ease-out;
+}
+
+@keyframes fpFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Dark theme class for dynamic switching */
+.flatpickr-calendar.dark-theme {
+    @apply bg-surface-800 border-surface-700;
+}
+
+.flatpickr-calendar.dark-theme .flatpickr-weekday {
+    @apply text-surface-400;
+}
+
+.flatpickr-calendar.dark-theme .flatpickr-day {
+    @apply text-surface-300;
+}
+
+.flatpickr-calendar.dark-theme .flatpickr-day:hover {
+    @apply bg-primary-900/30 text-primary-300;
+}
+
+.flatpickr-calendar.dark-theme .flatpickr-day.prevMonthDay,
+.flatpickr-calendar.dark-theme .flatpickr-day.nextMonthDay {
+    @apply text-surface-600;
+}
+
+.flatpickr-calendar.dark-theme .flatpickr-time {
+    @apply bg-surface-800/50 border-surface-700;
+}
+
+.flatpickr-calendar.dark-theme .flatpickr-time input {
+    @apply text-white;
 }

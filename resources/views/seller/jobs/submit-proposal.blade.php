@@ -181,12 +181,31 @@
                                                 class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white text-sm"
                                             ></textarea>
                                         </div>
-                                        <div>
+                                        <div class="datepicker-wrapper">
                                             <input
-                                                type="date"
-                                                x-model="milestone.due_date"
-                                                class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white text-sm"
+                                                type="text"
+                                                x-ref="datepicker"
+                                                x-init="$nextTick(() => {
+                                                    const fp = flatpickr($refs.datepicker, {
+                                                        dateFormat: 'Y-m-d',
+                                                        altInput: true,
+                                                        altFormat: 'F j, Y',
+                                                        minDate: 'today',
+                                                        disableMobile: true,
+                                                        defaultDate: milestone.due_date || null,
+                                                        onChange: (dates, dateStr) => { milestone.due_date = dateStr; }
+                                                    });
+                                                    if (document.documentElement.classList.contains('dark')) {
+                                                        fp.calendarContainer?.classList.add('dark-theme');
+                                                    }
+                                                })"
+                                                readonly
+                                                placeholder="Due date"
+                                                class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white text-sm cursor-pointer"
                                             >
+                                            <svg class="datepicker-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                            </svg>
                                         </div>
                                     </div>
                                 </div>

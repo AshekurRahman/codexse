@@ -42,11 +42,25 @@
                     </div>
                     <div>
                         <label for="from" class="block text-xs font-medium text-surface-500 dark:text-surface-400 mb-1">From Date</label>
-                        <input type="date" name="from" id="from" value="{{ request('from') }}" class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white text-sm focus:border-primary-500 focus:ring-primary-500">
+                        <div x-data="datepicker({ value: '{{ request('from') }}', maxDate: 'today' })" class="datepicker-wrapper">
+                            <input type="text" name="from" id="from" x-ref="input" readonly
+                                class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white text-sm focus:border-primary-500 focus:ring-primary-500 cursor-pointer"
+                                placeholder="Select date">
+                            <svg class="datepicker-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
                     </div>
                     <div>
                         <label for="to" class="block text-xs font-medium text-surface-500 dark:text-surface-400 mb-1">To Date</label>
-                        <input type="date" name="to" id="to" value="{{ request('to') }}" class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white text-sm focus:border-primary-500 focus:ring-primary-500">
+                        <div x-data="datepicker({ value: '{{ request('to') }}', maxDate: 'today' })" class="datepicker-wrapper">
+                            <input type="text" name="to" id="to" x-ref="input" readonly
+                                class="w-full rounded-lg border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-700 text-surface-900 dark:text-white text-sm focus:border-primary-500 focus:ring-primary-500 cursor-pointer"
+                                placeholder="Select date">
+                            <svg class="datepicker-icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
                     </div>
                     <div class="flex items-end gap-2">
                         <button type="submit" class="flex-1 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium py-2.5 px-4 rounded-lg transition">

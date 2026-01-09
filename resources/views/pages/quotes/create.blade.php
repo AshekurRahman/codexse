@@ -112,8 +112,14 @@
                         <label for="deadline" class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
                             Deadline (optional)
                         </label>
-                        <input type="date" name="deadline" id="deadline" value="{{ old('deadline') }}" min="{{ now()->addDay()->format('Y-m-d') }}"
-                            class="w-full rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 px-4 py-2.5 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500">
+                        <div x-data="datepicker({ value: '{{ old('deadline') }}', minDate: 'today' })" class="datepicker-wrapper">
+                            <input type="text" name="deadline" id="deadline" x-ref="input" readonly
+                                class="w-full rounded-lg border border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-900 px-4 py-2.5 text-surface-900 dark:text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 cursor-pointer"
+                                placeholder="Select deadline date">
+                            <svg class="datepicker-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
                         @error('deadline')
                             <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                         @enderror

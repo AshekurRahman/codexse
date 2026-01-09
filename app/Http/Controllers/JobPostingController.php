@@ -9,8 +9,11 @@ use App\Models\JobPosting;
 use App\Models\JobProposal;
 use App\Rules\SecureFileUpload;
 use App\Services\EscrowService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class JobPostingController extends Controller
 {
@@ -126,13 +129,44 @@ class JobPostingController extends Controller
             'skills_required' => 'nullable|array',
             'experience_level' => 'nullable|in:entry,intermediate,expert',
             'attachments.*' => ['nullable', 'file', SecureFileUpload::attachment(10)],
+            'uploaded_files' => 'nullable|json',
             'closes_in_days' => 'nullable|integer|min:1|max:90',
             'status' => 'required|in:draft,open',
         ]);
 
         try {
-            // Handle file uploads
+            // Handle file uploads (both AJAX uploaded and traditional)
             $attachments = [];
+
+            // Handle AJAX uploaded files
+            if ($request->filled('uploaded_files')) {
+                $uploadedFiles = json_decode($request->input('uploaded_files'), true);
+                if (is_array($uploadedFiles)) {
+                    foreach ($uploadedFiles as $file) {
+                        // Validate file is in temp directory
+                        if (!Str::startsWith($file['path'], 'job-attachments/temp/' . auth()->id() . '/')) {
+                            continue;
+                        }
+
+                        // Move file from temp to permanent location
+                        $tempPath = $file['path'];
+                        $filename = basename($tempPath);
+                        $permanentPath = 'job-attachments/' . auth()->id() . '/' . $filename;
+
+                        if (Storage::disk('public')->exists($tempPath)) {
+                            Storage::disk('public')->move($tempPath, $permanentPath);
+                            $attachments[] = [
+                                'path' => $permanentPath,
+                                'name' => $file['name'],
+                                'size' => $file['size'],
+                                'type' => $file['type'] ?? 'application/octet-stream',
+                            ];
+                        }
+                    }
+                }
+            }
+
+            // Handle traditional file uploads (fallback)
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
                     $path = $file->store('job-attachments/' . auth()->id(), 'public');
@@ -440,5 +474,73 @@ class JobPostingController extends Controller
 
         return redirect()->route('jobs.my-jobs')
             ->with('success', 'Job posting closed.');
+    }
+
+    /**
+     * Upload a file via AJAX.
+     */
+    public function upload(Request $request): JsonResponse
+    {
+        $request->validate([
+            'file' => ['required', 'file', 'max:10240', SecureFileUpload::attachment(10)],
+        ]);
+
+        $file = $request->file('file');
+
+        // Generate a unique filename to prevent overwrites
+        $filename = Str::uuid() . '.' . $file->getClientOriginalExtension();
+        $path = $file->storeAs('job-attachments/temp/' . auth()->id(), $filename, 'public');
+
+        if (!$path) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to upload file.',
+            ], 500);
+        }
+
+        // Get file info
+        $isImage = Str::startsWith($file->getMimeType(), 'image/');
+
+        return response()->json([
+            'success' => true,
+            'file' => [
+                'path' => $path,
+                'name' => $file->getClientOriginalName(),
+                'size' => $file->getSize(),
+                'type' => $file->getMimeType(),
+                'url' => asset('storage/' . $path),
+                'is_image' => $isImage,
+            ],
+        ]);
+    }
+
+    /**
+     * Delete an uploaded file via AJAX.
+     */
+    public function deleteUpload(Request $request): JsonResponse
+    {
+        $request->validate([
+            'path' => 'required|string',
+        ]);
+
+        $path = $request->input('path');
+
+        // Security: Only allow deleting files in the job-attachments/temp directory for this user
+        $allowedPrefix = 'job-attachments/temp/' . auth()->id() . '/';
+        if (!Str::startsWith($path, $allowedPrefix)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid file path.',
+            ], 403);
+        }
+
+        // Delete the file
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
+
+        return response()->json([
+            'success' => true,
+        ]);
     }
 }

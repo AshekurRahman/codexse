@@ -105,7 +105,14 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">Date of Birth</label>
-                            <input type="date" name="date_of_birth" value="{{ old('date_of_birth') }}" class="w-full rounded-lg border-surface-300 dark:border-surface-600 dark:bg-surface-700 focus:border-primary-500 focus:ring-primary-500">
+                            <div x-data="datepicker({ value: '{{ old('date_of_birth') }}', maxDate: 'today' })" class="datepicker-wrapper">
+                                <input type="text" name="date_of_birth" x-ref="input" readonly
+                                    class="w-full rounded-lg border-surface-300 dark:border-surface-600 dark:bg-surface-700 focus:border-primary-500 focus:ring-primary-500 cursor-pointer"
+                                    placeholder="Select your date of birth">
+                                <svg class="datepicker-icon w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
                             @error('date_of_birth')
                                 <p class="mt-1 text-sm text-danger-600">{{ $message }}</p>
                             @enderror

@@ -4,6 +4,7 @@ import './form-validation';
 import Alpine from 'alpinejs';
 import persist from '@alpinejs/persist';
 import collapse from '@alpinejs/collapse';
+import flatpickr from 'flatpickr';
 
 // Lazy load html2canvas only when needed (saves ~147KB on initial load)
 window.html2canvas = async function(...args) {
@@ -167,6 +168,62 @@ Alpine.store('theme', {
         }
     }
 });
+
+// Datepicker Component
+Alpine.data('datepicker', (config = {}) => ({
+    instance: null,
+    value: config.value || '',
+
+    init() {
+        const isDark = document.documentElement.classList.contains('dark');
+
+        this.instance = flatpickr(this.$refs.input, {
+            dateFormat: config.dateFormat || 'Y-m-d',
+            altInput: true,
+            altFormat: config.displayFormat || 'F j, Y',
+            defaultDate: this.value || null,
+            minDate: config.minDate || null,
+            maxDate: config.maxDate || null,
+            disableMobile: true,
+            animate: true,
+            monthSelectorType: 'dropdown',
+            prevArrow: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>',
+            nextArrow: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>',
+            onReady: (selectedDates, dateStr, instance) => {
+                // Add dark mode class if needed
+                if (isDark) {
+                    instance.calendarContainer.classList.add('dark-theme');
+                }
+            },
+            onChange: (selectedDates, dateStr) => {
+                this.value = dateStr;
+                this.$refs.input.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+        });
+
+        // Watch for dark mode changes
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.attributeName === 'class') {
+                    const isDark = document.documentElement.classList.contains('dark');
+                    if (this.instance?.calendarContainer) {
+                        this.instance.calendarContainer.classList.toggle('dark-theme', isDark);
+                    }
+                }
+            });
+        });
+        observer.observe(document.documentElement, { attributes: true });
+    },
+
+    clear() {
+        this.instance?.clear();
+        this.value = '';
+    },
+
+    destroy() {
+        this.instance?.destroy();
+    }
+}));
 
 window.Alpine = Alpine;
 

@@ -691,6 +691,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/jobs/{jobPosting}/proposals/{proposal}/accept', [JobPostingController::class, 'acceptProposal'])->name('jobs.accept-proposal');
     Route::post('/jobs/{jobPosting}/proposals/{proposal}/reject', [JobPostingController::class, 'rejectProposal'])->name('jobs.reject-proposal');
     Route::post('/jobs/{jobPosting}/close', [JobPostingController::class, 'close'])->name('jobs.close');
+    Route::post('/jobs/upload', [JobPostingController::class, 'upload'])
+        ->middleware('throttle:30,1')
+        ->name('jobs.upload');
+    Route::post('/jobs/delete-upload', [JobPostingController::class, 'deleteUpload'])
+        ->middleware('throttle:60,1')
+        ->name('jobs.delete-upload');
 
     // Contracts
     Route::get('/contracts', [JobContractController::class, 'index'])->name('contracts.index');
